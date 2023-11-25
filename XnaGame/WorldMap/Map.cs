@@ -2,6 +2,7 @@
 using nkast.Aether.Physics2D.Dynamics;
 using System.Collections.Generic;
 using XnaGame.Utils;
+using System;
 
 namespace XnaGame.WorldMap
 {
@@ -14,7 +15,7 @@ namespace XnaGame.WorldMap
         public readonly Chunk[,] chunks;
         private readonly Body body;
 
-        public Map(World world, int mapWidth, int mapHeight)
+        public Map(World world, int mapWidth, int mapHeight, Func<int, int, ITile> generator)
         {
             body = new Body();
             body.Tag = this;
@@ -24,14 +25,13 @@ namespace XnaGame.WorldMap
             this.mapHeight = mapHeight;
             chunks = new Chunk[mapWidth, mapHeight];
             
-            int j;
-            for (int i = 0; i < mapWidth; i++)
-            {
+            int i, j;
+            for (i = 0; i < mapWidth; i++)
                 for (j = 0; j < mapHeight; j++)
-                {
-                    chunks[i, j] = new Chunk();
-                }
-            }
+                    chunks[i, j] = new Chunk(i, j, generator);
+            for (i = 0; i < mapWidth; i++)
+                for (j = 0; j < mapHeight; j++)
+                    chunks[i, j].Start(this, body, i, j);
         }
 
         public void Update()
@@ -158,9 +158,13 @@ namespace XnaGame.WorldMap
             public Fixture[] fixtures;
             private TileData[,] tiles;
 
-            public Chunk()
+            public Chunk(int x, int y, Func<int, int, ITile> generator)
             {
                 tiles = new TileData[chunkSize, chunkSize];
+                int j;
+                for (int i = 0; i < chunkSize; i++)
+                    for (j = 0; j < chunkSize; j++)
+                        tiles[i, j] = new TileData(generator(x*chunkSize+i, y*chunkSize+j));
                 fixtures = new Fixture[0];
             }
 
@@ -170,17 +174,27 @@ namespace XnaGame.WorldMap
                 set => tiles[x, y] = value;
             }
 
+            public void Start(IMap map, Body body, int x, int y)
+            {
+                int j;
+                for (int i = 0; i < chunkSize; i++)
+                    for (j = 0; j < chunkSize; j++)
+                    {
+                        TileData tile = tiles[i, j];
+                        tile.Tile?.Start(map, x * chunkSize + i, y * chunkSize + j, tile);
+                    }
+                UpdateColision(body, x, y);
+            }
+
             public void Update(IMap map, int x, int y)
             {
                 int j;
                 for (int i = 0; i < chunkSize; i++)
-                {
                     for (j = 0; j < chunkSize; j++)
                     {
                         TileData tile = tiles[i, j];
                         tile.Tile?.Update(map, x*chunkSize+i, y*chunkSize+j, tile);
                     }
-                }
             }
 
             public void UpdateColision(Body body, int x, int y)
@@ -194,9 +208,7 @@ namespace XnaGame.WorldMap
                 {
                     Rectangle rectangle = rectangles.Dequeue();
                     for (i = rectangle.X; i < rectangle.X + rectangle.Width; i++)
-                    {
                         for (j = rectangle.Y; j < rectangle.Y + rectangle.Height; j++)
-                        {
                             if (tiles[i, j].Tile == null)
                             {
                                 if (rectangle.Width > 1)
@@ -210,8 +222,6 @@ namespace XnaGame.WorldMap
                                 }
                                 goto SKIP;
                             }
-                        }
-                    }
                     result.Enqueue(rectangle);
                     SKIP:;
                 }

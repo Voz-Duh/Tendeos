@@ -18,8 +18,9 @@
             Tile = null;
         }
 
-        public TileData(ITile tile)
+        public TileData(ITile tile) : this()
         {
+            if (tile == null) return;
             Health = tile.Health;
             stateData = tile.GetData();
             Tile = tile;

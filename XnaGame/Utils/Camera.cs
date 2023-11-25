@@ -1,15 +1,16 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Prototype.Graphics;
 using XnaGame.Utils.Input;
 
 namespace XnaGame.Utils
 {
-    public class Camera : IMouseCamera
+    public class Camera : IMouseCamera, IGUICamera
     {
         public FVector2 Position { get; set; }
         public float Rotation { get; set; }
         public float Zoom { get; set; }
-        public FVector2 Origin { get; set; }
+        public FVector2 Origin { get; private set; }
 
         public Camera(Viewport viewport)
         {
@@ -17,6 +18,11 @@ namespace XnaGame.Utils
             Zoom = 1;
             Origin = new FVector2(viewport.Width / 2f, viewport.Height / 2f);
             Position = FVector2.Zero;
+        }
+
+        public void SetViewport(Viewport viewport)
+        {
+            Origin = new FVector2(viewport.Width / 2f, viewport.Height / 2f);
         }
 
         public Matrix GetViewMatrix()
