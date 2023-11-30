@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using XnaGame.Inventory;
+﻿using XnaGame.Inventory;
 using XnaGame.Utils;
 
 namespace XnaGame.WorldMap

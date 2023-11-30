@@ -1,17 +1,22 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using nkast.Aether.Physics2D.Dynamics;
+using XnaGame.Inventory;
+using XnaGame.UI;
 using XnaGame.Utils;
+using XnaGame.Utils.Graphics;
 using XnaGame.Utils.Input;
 using XnaGame.WorldMap;
 
 namespace XnaGame.Entities.Content
 {
-    public class Player
+    public class Player : Entity
     {
         public const int armStates = 2;
         public const float width = 9, height = 19, baseSpeed = 30, jumpPower = 60;
+        
         public readonly BodyTransform transform;
-        private readonly Camera camera;
+        public readonly InventoryContainer inventory;
+
         private readonly Sprite headSprite;
         private readonly Sprite[] armLSprites;
         private readonly Sprite[] armRSprites;
@@ -19,20 +24,21 @@ namespace XnaGame.Entities.Content
         private readonly Sprite[] legsSprites;
         private readonly Sprite[] legsMoveSprites;
 
+        private float armsRotation;
+        private byte inArm;
         private byte armsState;
         private bool onFloor;
         private bool moving;
 
-        public Player(World world, Camera camera, Sprite headSprite, Sprite armLSprite, Sprite armRSprite, Sprite bodySprite, Sprite legsSprite)
+        public Player(GUIElement GUI, Sprite headSprite, Sprite armLSprite, Sprite armRSprite, Sprite bodySprite, Sprite legsSprite)
         {
             Body body = new Body();
             body.CreateRectangle(width, height, 1, FVector2.Zero).Friction = 0;
             body.BodyType = BodyType.Dynamic;
             body.FixedRotation = true;
             body.Tag = this;
-            world.Add(body);
+            Core.world.Add(body);
             transform = new BodyTransform(body);
-            this.camera = camera;
             this.headSprite = headSprite;
             armLSprites = armLSprite.Split(armStates, 1, 1);
             armRSprites = armRSprite.Split(armStates, 1, 1);
@@ -40,9 +46,10 @@ namespace XnaGame.Entities.Content
             Sprite[] sprites = legsSprite.Split(8, 1, 1);
             legsMoveSprites = sprites[2..8];
             legsSprites = sprites[0..2];
+            inventory = new InventoryContainer(GUI, transform);
         }
 
-        public void Draw()
+        public override void Draw()
         {
             FVector2 offset = FVector2.Zero;
             int bodySprite = 0;
@@ -71,40 +78,49 @@ namespace XnaGame.Entities.Content
             
             SDraw.SpriteEffects = transform.flipX ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
             
-            SDraw.Rect(armLSprites[armsState], transform.Local2World(offset), 0, 1, 0);
+            SDraw.Rect(armLSprites[armsState], transform.Local2World(offset), armsRotation, 1, 0);
             if (onFloor && moving)
                 SDraw.Rect(legsMoveSprites[legSprite], transform.Position + FVector2.UnitY * 3, 0, 1, 0);
             else if (onFloor)
                 SDraw.Rect(legsSprites[0], transform.Position + FVector2.UnitY * 3, 0, 1, 0);
             SDraw.Rect(bodySprites[bodySprite], transform.Local2World(new FVector2(0, offset.Y)), 0, 1, 0);
-            SDraw.Rect(headSprite, transform.Local2World(offset - FVector2.UnitY * 9), 0, 1, 0);
+            SDraw.Rect(headSprite, transform.Local2World(offset - FVector2.UnitY * 5), 0, 1, 0, Origin.Center, Origin.One);
             if (!onFloor) SDraw.Rect(legsSprites[1], transform.Position + FVector2.UnitY * 3, 0, 1, 0);
-            SDraw.Rect(armRSprites[armsState], transform.Local2World(offset), 0, 1, 0);
+            inventory.items[inArm, 0].item?.With(transform, ref armsState, ref armsRotation);
+            SDraw.Rect(armRSprites[armsState], transform.Local2World(offset), armsRotation, 1, 0);
 
             SDraw.SpriteEffects = SpriteEffects.None;
         }
 
-        public void Update()
+        public override void Update()
         {
+            armsState = 0;
+            armsRotation = 0;
+
             onFloor = false;
-            transform.body.World.RayCast((fixture, point, normal, fraction) =>
-            {
-                if (fixture.Body.Tag is IMap)
+            Core.world.RayCast((fixture, point, normal, fraction) =>
                 {
-                    onFloor = true;
-                    return 0;
-                }
-                return -1;
-            }, transform.Position + new FVector2(width / 2 - 0.1f, 0), transform.Position + new FVector2(width / 2 - 0.1f, height / 2 + 0.1f));
-            transform.body.World.RayCast((fixture, point, normal, fraction) =>
-            {
-                if (fixture.Body.Tag is IMap)
+                    if (fixture.Body.Tag is IMap)
+                    {
+                        onFloor = true;
+                        return 0;
+                    }
+                    return -1;
+                },
+                transform.Position + new FVector2(width / 2 - 0.1f, 0),
+                transform.Position + new FVector2(width / 2 - 0.1f, height / 2 + 0.1f));
+            Core.world.RayCast(
+                (fixture, point, normal, fraction) =>
                 {
-                    onFloor = true;
-                    return 0;
-                }
-                return -1;
-            }, transform.Position + new FVector2(-width / 2 + 0.1f, 0), transform.Position + new FVector2(-width / 2 + 0.1f, height / 2f + 0.1f));
+                    if (fixture.Body.Tag is IMap)
+                    {
+                        onFloor = true;
+                        return 0;
+                    }
+                    return -1;
+                },
+                transform.Position + new FVector2(-width / 2 + 0.1f, 0),
+                transform.Position + new FVector2(-width / 2 + 0.1f, height / 2f + 0.1f));
 
             float yVel = transform.body.LinearVelocity.Y;
 
@@ -117,7 +133,25 @@ namespace XnaGame.Entities.Content
 
             transform.body.LinearVelocity = new FVector2(x * baseSpeed, yVel);
 
-            camera.Position = transform.Position;
+            (IItem item, int count) = inventory.items[inArm, 0];
+            item?.Use(transform, ref count);
+            if (count <= 0)
+                inventory.items[inArm, 0] = default;
+            else
+                inventory.items[inArm, 0] = (item, count);
+
+            Core.camera.Position = transform.Position;
+
+            if (Keyboard.IsPressed(Keys.D1)) inArm = 0;
+            if (Keyboard.IsPressed(Keys.D2)) inArm = 1;
+            if (Keyboard.IsPressed(Keys.D3)) inArm = 2;
+            if (Keyboard.IsPressed(Keys.D4)) inArm = 3;
+            if (Keyboard.IsPressed(Keys.D5)) inArm = 4;
+            if (Keyboard.IsPressed(Keys.Q))
+            {
+                new Item(inventory.items[inArm, 0], transform.Position);
+                inventory.items[inArm, 0] = (null, 0);
+            }
         }
     }
 }

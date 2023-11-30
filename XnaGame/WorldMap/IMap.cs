@@ -4,6 +4,7 @@ namespace XnaGame.WorldMap
 {
     public interface IMap
     {
+        bool RayCast(RayCastReportTileDelegate callback, FVector2 start, FVector2 end);
         bool TryPlaceTile(ITile tile, int x, int y);
         bool TryPlaceTile(ITile tile, (int x, int y) position);
         bool PlaceTile(ITile tile, int x, int y);

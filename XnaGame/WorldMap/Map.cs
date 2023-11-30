@@ -3,9 +3,19 @@ using nkast.Aether.Physics2D.Dynamics;
 using System.Collections.Generic;
 using XnaGame.Utils;
 using System;
+using nkast.Aether.Physics2D.Collision;
 
 namespace XnaGame.WorldMap
 {
+    /// <summary>
+    /// Called for tile when raycasting tilemap.
+    /// </summary>
+    /// <param name="data">the tile hit by the ray @param point the point of initial intersection</param>
+    /// <param name="point">the point of intersection</param>
+    /// <param name="normal">the normal vector at the point of intersection</param>
+    /// <returns>0 to terminate, fraction to clip the ray for closest hit, 1 to continue</returns>
+    public delegate void RayCastReportTileDelegate(TileData data, FVector2 point, FVector2 normal, float fraction);
+
     public class Map : IMap
     {
         public const float tileSize = 8;
@@ -24,7 +34,7 @@ namespace XnaGame.WorldMap
             this.mapWidth = mapWidth;
             this.mapHeight = mapHeight;
             chunks = new Chunk[mapWidth, mapHeight];
-            
+
             int i, j;
             for (i = 0; i < mapWidth; i++)
                 for (j = 0; j < mapHeight; j++)
@@ -91,9 +101,9 @@ namespace XnaGame.WorldMap
             var chunk = Cell2Chunk(x, y);
 
             Chunk c = chunks[chunk.x, chunk.y];
-            c[x-chunk.x*chunkSize, y-chunk.y*chunkSize] = new TileData(tile);
-            tile.Start(this, x, y, c[x-chunk.x*chunkSize, y-chunk.y*chunkSize]);
-            
+            c[x - chunk.x * chunkSize, y - chunk.y * chunkSize] = new TileData(tile);
+            tile?.Start(this, x, y, c[x - chunk.x * chunkSize, y - chunk.y * chunkSize]);
+
             c.UpdateColision(body, chunk.x, chunk.y);
 
             TileData data = GetTile(x + 1, y);
@@ -124,10 +134,10 @@ namespace XnaGame.WorldMap
 
         public bool PlaceTile(ITile tile, int x, int y)
         {
-            if (GetTile(x+1, y).Tile != null ||
-                GetTile(x-1, y).Tile != null ||
-                GetTile(x, y+1).Tile != null ||
-                GetTile(x, y-1).Tile != null)
+            if (GetTile(x + 1, y).Tile != null ||
+                GetTile(x - 1, y).Tile != null ||
+                GetTile(x, y + 1).Tile != null ||
+                GetTile(x, y - 1).Tile != null)
             {
                 SetTile(tile, x, y);
                 return true;
@@ -152,6 +162,68 @@ namespace XnaGame.WorldMap
         }
 
         public bool TryPlaceTile(ITile tile, (int x, int y) position) => TryPlaceTile(tile, position.x, position.y);
+
+        public bool VisitCell(RayCastReportTileDelegate callback, FVector2 start, FVector2 end, int x, int y)
+        {
+            var chunk = Cell2Chunk(x, y);
+
+            Chunk c = chunks[chunk.x, chunk.y];
+            TileData data = c[x - chunk.x * chunkSize, y - chunk.y * chunkSize];
+            if (data.Tile != null) {
+                Fixture fixture = c.GetFixture(x, y);
+                if (fixture != null)
+                {
+                    fixture.GetAABB(out AABB a, 0);
+                    RayCastInput input = new RayCastInput()
+                    {
+                        MaxFraction = 1,
+                        Point1 = start,
+                        Point2 = end
+                    };
+                    a.RayCast(out RayCastOutput output, ref input);
+                    callback(data, input.Point1 + output.Fraction * (input.Point2 - input.Point1), output.Normal, output.Fraction);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool RayCast(RayCastReportTileDelegate callback, FVector2 start, FVector2 end)
+        {
+            int cx = (int)MathF.Floor(start.X); // Begin/current cell coords
+            int cy = (int)MathF.Floor(start.Y);
+            int ex = (int)MathF.Floor(end.X); // End cell coords
+            int ey = (int)MathF.Floor(end.Y);
+
+            // Delta or direction
+            float dx = end.X - start.X;
+            float dy = end.Y - start.Y;
+
+            FVector2 baseStart = start;
+
+            while (cx < ex && cy < ey)
+            {
+                // find intersection "time" in x dir
+                float t0 = ((int)MathF.Ceiling(start.X) - start.X) / dx;
+                float t1 = ((int)MathF.Ceiling(start.Y) - start.Y) / dy;
+
+                if (VisitCell(callback, baseStart, end, cx, cy)) return true;
+
+                if (t0 < t1) // cross x boundary first=?
+                {
+                    ++cx;
+                    start.X += t0 * dx;
+                    start.Y += t0 * dy;
+                }
+                else
+                {
+                    ++cy;
+                    start.X += t1 * dx;
+                    start.Y += t1 * dy;
+                }
+            }
+            return false;
+        }
 
         public class Chunk
         {
@@ -225,6 +297,8 @@ namespace XnaGame.WorldMap
                     result.Enqueue(rectangle);
                     SKIP:;
                 }
+                
+                foreach (var fixture in fixtures) body.Remove(fixture);
 
                 fixtures = new Fixture[result.Count];
                 while (result.Count != 0)
@@ -251,6 +325,18 @@ namespace XnaGame.WorldMap
                         tile.Tile?.Draw(map, x*chunkSize+i, y*chunkSize+j, new FVector2(x*chunkSize+i, y*chunkSize+j)*tileSize, tile);
                     }
                 }
+            }
+
+            public Fixture GetFixture(int x, int y)
+            {
+                foreach (Fixture fixture in fixtures)
+                {
+                    fixture.GetAABB(out AABB aabb, 0);
+                    nkast.Aether.Physics2D.Common.Vector2 point = new FVector2(x, y) * tileSize;
+                    if (aabb.Contains(ref point))
+                        return fixture;
+                }
+                return null;
             }
         }
     }

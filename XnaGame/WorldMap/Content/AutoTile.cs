@@ -1,5 +1,7 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using XnaGame.Entities;
 using XnaGame.Utils;
+using XnaGame.Utils.Graphics;
+using XnaGame.Utils.Input;
 
 namespace XnaGame.WorldMap.Content
 {
@@ -7,20 +9,24 @@ namespace XnaGame.WorldMap.Content
     {
         private readonly Sprite[] sprites;
 
-        public AutoTile(byte health, Sprite sprite)
+        public AutoTile(byte health, Sprite sprite, Sprite item)
         {
             sprites = sprite.Split(4, 4, 1);
             this.health = health;
+            ItemSprite = item;
         }
 
         public string Name => throw new System.NotImplementedException();
 
         public string Description => throw new System.NotImplementedException();
+        public Sprite ItemSprite { get; init; }
 
         public byte Health => health;
         public byte health;
 
         public byte Hardness => throw new System.NotImplementedException();
+
+        public int MaxCount => 40;
 
         public void Changed(IMap map, int x, int y, TileData data)
         {
@@ -29,7 +35,7 @@ namespace XnaGame.WorldMap.Content
 
         public void Draw(IMap map, int x, int y, FVector2 drawPosition, TileData data)
         {
-            SDraw.Rect(sprites[data[0]], drawPosition, 0, 1, 0, SDraw.Origin.Zero, SDraw.Origin.Zero);
+            SDraw.Rect(sprites[data[0]], drawPosition, 0, 1, 0, Origin.Zero, Origin.Zero);
         }
 
         public byte[] GetData() => new byte[] { 0 };
@@ -39,7 +45,7 @@ namespace XnaGame.WorldMap.Content
             data[0] = UpdateTile(map, x, y);
         }
 
-        public byte UpdateTile(IMap map, int x, int y)
+        public static byte UpdateTile(IMap map, int x, int y)
         {
             byte res = 5;
             bool left = map.GetTile(x - 1, y).Tile == null, right = map.GetTile(x + 1, y).Tile == null,
@@ -76,14 +82,19 @@ namespace XnaGame.WorldMap.Content
         {
         }
 
-        public void Use()
+        public void Use(ITransform transform, ref int count)
         {
-            throw new System.NotImplementedException();
+            if (Mouse.LeftDown && !Mouse.OnGUI)
+            {
+                if (Core.map.TryPlaceTile(this, Core.map.World2Cell(Mouse.Position))) count -= 1;
+            }
         }
 
-        public byte With()
+        public void With(ITransform transform, ref byte armsState, ref float armsRotation)
         {
-            throw new System.NotImplementedException();
+            armsState = 1;
+
+            SDraw.Rect(ItemSprite, transform.Local2World(new FVector2(2, -2)));
         }
     }
 }

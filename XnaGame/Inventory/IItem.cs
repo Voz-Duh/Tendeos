@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
+using XnaGame.Entities;
+using XnaGame.Utils.Graphics;
 
 namespace XnaGame.Inventory
 {
@@ -10,7 +8,10 @@ namespace XnaGame.Inventory
     {
         string Name { get; }
         string Description { get; }
-        void Use();
-        byte With();
+        int MaxCount { get; }
+        Sprite ItemSprite { get; }
+
+        void Use(ITransform transform, ref int count);
+        void With(ITransform transform, ref byte armsState, ref float armsRotation);
     }
 }

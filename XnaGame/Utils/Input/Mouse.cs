@@ -43,8 +43,8 @@ namespace XnaGame.Utils.Input
         public static bool X2Pressed => currentKeyState.XButton2 == ButtonState.Pressed && previousKeyState.XButton2 != ButtonState.Pressed;
 
         public static Point Point => currentKeyState.Position;
-        public static FVector2 Position => Camera?.ScreenToWorldSpace(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
-        public static FVector2 GUIPosition => Camera?.ScreenToGUISpace(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
+        public static FVector2 Position => Camera?.Screen2World(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
+        public static FVector2 GUIPosition => Camera?.Screen2GUI(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
 
         public static int Scroll => currentKeyState.ScrollWheelValue;
         public static int XScroll => currentKeyState.HorizontalScrollWheelValue;

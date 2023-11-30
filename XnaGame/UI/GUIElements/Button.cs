@@ -1,5 +1,6 @@
 ﻿using System;
 using XnaGame.Utils;
+using XnaGame.Utils.Graphics;
 using XnaGame.Utils.Input;
 
 namespace XnaGame.UI.GUIElements
@@ -7,10 +8,18 @@ namespace XnaGame.UI.GUIElements
     public class Button : GUIElement
     {
         private readonly Style style;
-        private readonly Sprite icon;
+        private readonly Action<FRectangle> icon;
         private readonly Action action;
 
-        public Button(GUIElement GUI, FRectangle rectangle, Action action, Style style, Sprite icon) : base(GUI)
+        public Button(GUIElement GUI, FVector2 anchor, FRectangle rectangle, Action action, Style style, Sprite icon) : base(GUI, anchor)
+        {
+            this.rectangle = rectangle;
+            this.style = style;
+            this.icon = (rectangle) => SDraw.Rect(icon, rectangle.Center);
+            this.action = action;
+        }
+
+        public Button(GUIElement GUI, FVector2 anchor, FRectangle rectangle, Action action, Style style, Action<FRectangle> icon) : base(GUI, anchor)
         {
             this.rectangle = rectangle;
             this.style = style;
@@ -24,14 +33,14 @@ namespace XnaGame.UI.GUIElements
 
             DrawRectWindow(texture, rectangle);
 
-            SDraw.Rect(icon, rectangle.Center);
+            icon(rectangle);
 
             base.Draw(rectangle);
         }
 
-        public override void Update(FRectangle point)
+        public override void Update(FRectangle rectangle)
         {
-            base.Update(point);
+            base.Update(rectangle);
 
             if (MouseOn && Mouse.LeftReleased)
                 action();

@@ -1,26 +1,29 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using nkast.Aether.Physics2D.Dynamics;
+using SpriteFontPlus;
 using System;
-using XnaGame.Entities.Content;
+using System.Net;
+using XnaGame.Content;
+using XnaGame.State;
+using XnaGame.UI.GUIElements;
 using XnaGame.Utils;
-using XnaGame.WorldMap;
+using XnaGame.Utils.Graphics;
+using XnaGame.Utils.Input;
 
 namespace XnaGame
 {
-    public partial class Game1 : Game
+    public enum EGameState { InGame }
+
+    public class Game1 : Game
     {
-        private GraphicsDeviceManager Graphics;
-        private SpriteBatch _spriteBatch;
-        private Batch batch;
-        private World world;
+        private GraphicsDeviceManager graphics;
         private Camera camera;
-        private Player player;
-        private Map map;
+        private GameState[] states;
+        public EGameState State { private get; set; }
 
         public Game1()
         {
-            Graphics = new GraphicsDeviceManager(this);
+            graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Assets";
             IsMouseVisible = true;
             Window.AllowUserResizing = true;
@@ -29,10 +32,57 @@ namespace XnaGame
 
         protected override void Initialize()
         {
-            world = new World(new FVector2(0, 90));
             base.Initialize();
         }
 
+        protected override void LoadContent()
+        {
+            SDraw.spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            Core.camera = camera = new Camera(160, GraphicsDevice.Viewport);
+
+            Tiles.Init(Content);
+
+            Mouse.Camera = camera;
+
+            Core.font = new DynamicSpriteFontScaled(Content.LoadFileBytes("NotoSansKR-Regular.ttf"), 130, .05f);
+            //SpriteChar.LoadFont(Vars.font, GraphicsDevice, Vars.fontLibrary, FontType.NoAlpha, "Assets\\NotoSansKR-Regular.ttf", 10);
+            
+            Core.buttonStyle = new Button.Style(new Sprite(Content.Load<Texture2D>("ui/button")));
+            Core.windowStyle = new Window.Style(new Sprite(Content.Load<Texture2D>("ui/window")));
+
+            Core.icons = new Sprite(Content.Load<Texture2D>("ui/icons")).Split(2, 1, 1);
+
+            states = new[]{
+                new InGameState(this)
+            };
+        }
+
         protected void OnResize(object sender, EventArgs e) => camera.SetViewport(GraphicsDevice.Viewport);
+
+        protected override void Draw(GameTime gameTime)
+        {
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+            SDraw.Matrix = camera.GetViewMatrix();
+            SDraw.Apply();
+            states[(int)State].Draw();
+            SDraw.Matrix = camera.GetGUIMatrix();
+            SDraw.Apply();
+            states[(int)State].GUI.Draw();
+            Core.criticalGuiDraw();
+            SDraw.End();
+            base.Draw(gameTime);
+        }
+
+        protected override void Update(GameTime gameTime)
+        {
+            Keyboard.Update();
+            Mouse.Update();
+            Time.GameTime = gameTime;
+
+            states[(int)State].GUI.Reset();
+            states[(int)State].GUI.Update();
+            states[(int)State].Update();
+        }
     }
 }
