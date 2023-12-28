@@ -1,7 +1,7 @@
 ﻿using XMatrix = Microsoft.Xna.Framework.Matrix;
 using XnaGame.Utils;
 
-namespace XnaGame.Entities
+namespace XnaGame.PEntities
 {
     public class Transform : ITransform
     {

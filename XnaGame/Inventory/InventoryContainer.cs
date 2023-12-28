@@ -1,5 +1,5 @@
-﻿using XnaGame.Entities;
-using XnaGame.Entities.Content;
+﻿using XnaGame.PEntities;
+using XnaGame.PEntities.Content;
 using XnaGame.UI;
 using XnaGame.UI.GUIElements;
 using XnaGame.Utils;
@@ -22,7 +22,7 @@ namespace XnaGame.Inventory
                 on.Remove();
                 window.Remove();
                 GUI.Add(off);
-                Core.criticalGuiDraw -= DrawSelected;
+                Core.ExtraGuiDraw -= DrawSelected;
                 if (Selected.item != null)
                 {
                     int count = Add(Selected.item, Selected.count);
@@ -37,8 +37,8 @@ namespace XnaGame.Inventory
                 {
                     int _x = x, _y = y;
                     new Button(window, new FVector2(0, 0), new FRectangle(
-                        x * (slotSize + 1) + 2,
                         y * (slotSize + 1) + 2,
+                        x * (slotSize + 1) + 2,
                         slotSize, slotSize),
                         () => Get(_x, _y), Core.buttonStyle,
                         (rectangle) =>
@@ -54,7 +54,7 @@ namespace XnaGame.Inventory
                 off.Remove();
                 GUI.Add(on);
                 GUI.Add(window);
-                Core.criticalGuiDraw += DrawSelected;
+                Core.ExtraGuiDraw += DrawSelected;
             }, Core.buttonStyle, Core.OffInventoryIcon);
         }
 
@@ -70,16 +70,20 @@ namespace XnaGame.Inventory
         public void Get(int x, int y)
         {
             var item = items[x, y];
-            if (item.item == null) return;
-            if (Selected.item != item.item)
+            if (Selected.item == null && items[x, y].item == null) return;
+            if (Selected.item != item.item || item.count == item.item.MaxCount)
             {
                 items[x, y] = Selected;
                 Selected = item;
             }
             else
             {
-                int count = item.count += Selected.count;
-                if (count > item.item.MaxCount) Selected = (Selected.item, count - item.item.MaxCount);
+                int count = items[x, y].count += Selected.count;
+                if (count > item.item.MaxCount)
+                {
+                    Selected = (Selected.item, count - item.item.MaxCount);
+                    items[x, y].count = item.item.MaxCount;
+                }
                 else Selected = default;
             }
         }
@@ -89,7 +93,7 @@ namespace XnaGame.Inventory
             int _x, _y;
             for (_x = 0; _x < items.GetLength(0); _x++)
                 for (_y = 0; _y < items.GetLength(1); _y++)
-                    if (items[_x, _y].item == item)
+                    if (items[_x, _y].item == item && item != null)
                     {
                         int i = items[_x, _y].count += count;
                         if (i > item.MaxCount)

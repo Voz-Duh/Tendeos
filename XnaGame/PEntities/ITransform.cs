@@ -1,6 +1,6 @@
 ﻿using XnaGame.Utils;
 
-namespace XnaGame.Entities
+namespace XnaGame.PEntities
 {
     public interface ITransform
     {

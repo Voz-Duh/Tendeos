@@ -91,7 +91,12 @@ namespace XnaGame.UI
 
         public virtual void Update(FRectangle rectangle)
         {
-            if (MouseOn = (Parent?.MouseOn ?? true) && rectangle.Contains(Mouse.GUIPosition))
+            if (this.rectangle.Size == FVector2.Zero)
+            {
+                Mouse.OnGUI = false;
+                MouseOn = true;
+            }
+            else if (MouseOn = (Parent?.MouseOn ?? true) && rectangle.Contains(Mouse.GUIPosition))
                 Mouse.OnGUI = true;
         }
 

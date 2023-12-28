@@ -2,7 +2,7 @@
 
 namespace XnaGame.Utils
 {
-    public static class Random
+    public static class URandom
     {
         private static Rand random = Rand.Shared;
 

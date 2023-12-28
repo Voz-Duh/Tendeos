@@ -4,6 +4,12 @@ using System.Collections.Generic;
 using XnaGame.Utils;
 using System;
 using nkast.Aether.Physics2D.Collision;
+using XnaGame.PEntities.Content;
+using nkast.Aether.Physics2D.Collision.Shapes;
+using nkast.Aether.Physics2D.Common;
+using System.Linq;
+using XnaGame.Utils.Graphics;
+using XnaGame.WorldMap.Liquid;
 
 namespace XnaGame.WorldMap
 {
@@ -21,11 +27,12 @@ namespace XnaGame.WorldMap
         public const float tileSize = 8;
         public const int chunkSize = 8;
 
+        private WaterWorld waterWorld;
         private readonly int mapWidth, mapHeight;
         public readonly Chunk[,] chunks;
         private readonly Body body;
 
-        public Map(World world, int mapWidth, int mapHeight, Func<int, int, ITile> generator)
+        public Map(Liquid.Liquid[] liquids, World world, int mapWidth, int mapHeight, Func<int, int, ITile> generator)
         {
             body = new Body();
             body.Tag = this;
@@ -34,6 +41,8 @@ namespace XnaGame.WorldMap
             this.mapWidth = mapWidth;
             this.mapHeight = mapHeight;
             chunks = new Chunk[mapWidth, mapHeight];
+
+            waterWorld = new WaterWorld(chunkSize * mapWidth, chunkSize * mapHeight, liquids, (x, y) => generator(x, y) == null);
 
             int i, j;
             for (i = 0; i < mapWidth; i++)
@@ -54,6 +63,8 @@ namespace XnaGame.WorldMap
                     chunks[i, j].Update(this, i, j);
                 }
             }
+
+            waterWorld.Update();
         }
 
         public void Draw()
@@ -66,17 +77,108 @@ namespace XnaGame.WorldMap
                     chunks[i, j].Draw(this, i, j);
                 }
             }
+
+            waterWorld.Draw();
         }
+
+
+        public float Flow(Liquid.Liquid liquid, float power, int x, int y)
+        {
+            if (x < 0) return power;
+            else if (x >= chunkSize * mapWidth) return power;
+            else if (y < 0) return power;
+            else if (y >= chunkSize * mapHeight) return power;
+
+            if (waterWorld.cells[x, y] == -1) return power;
+            waterWorld.cells[x, y] = power;
+
+            return 0;
+        }
+        public float Flow(Liquid.Liquid liquid, float power, (int x, int y) position) => Flow(liquid, power, position.x, position.y);
 
         public (int x, int y) World2Cell(float x, float y) => ((int)(x / tileSize), (int)(y / tileSize));
 
         public (int x, int y) World2Cell(FVector2 position) => World2Cell(position.X, position.Y);
 
-        public FVector2 Cell2World(int x, int y) => new FVector2(x * tileSize, y * tileSize);
+        public FVector2 Cell2World(int x, int y) => new FVector2(x + .5f, y + .5f) * tileSize;
 
         public FVector2 Cell2World((int x, int y) position) => Cell2World(position.x, position.y);
 
         private (int x, int y) Cell2Chunk(int x, int y) => (x / chunkSize, y / chunkSize);
+
+        public void MineTile(int x, int y, float power)
+        {
+            if (x < 0) return;
+            else if (x >= chunkSize * mapWidth) return;
+            else if (y < 0) return;
+            else if (y >= chunkSize * mapHeight) return;
+
+            var chunk = Cell2Chunk(x, y);
+
+            Chunk c = chunks[chunk.x, chunk.y];
+            int lx = x - chunk.x * chunkSize,
+                ly = y - chunk.y * chunkSize;
+            if (c[lx, ly].Tile == null) return;
+            float h = c.Mine(chunk.x, chunk.y, lx, ly, power);
+
+            if (h > 0) return;
+
+            waterWorld.cells[x, y] = 0;
+
+            c.UpdateColision(body, chunk.x, chunk.y);
+
+            TileData data = GetTile(x + 1, y);
+            data.Tile?.Changed(this, x + 1, y, data);
+
+            data = GetTile(x - 1, y);
+            data.Tile?.Changed(this, x - 1, y, data);
+
+            data = GetTile(x, y + 1);
+            data.Tile?.Changed(this, x, y + 1, data);
+
+            data = GetTile(x, y - 1);
+            data.Tile?.Changed(this, x, y - 1, data);
+        }
+        public void MineTile((int x, int y) position, float power) => MineTile(position.x, position.y, power);
+
+        public void MineTile(int x, int y, float power, float radius)
+        {
+            for (int X = (int)(x - MathF.Floor(radius)); X <= x + MathF.Ceiling(radius); X++)
+                for (int Y = (int)(y - MathF.Floor(radius)); Y <= y + MathF.Ceiling(radius); Y++)
+                {
+                    if (X < 0) continue;
+                    else if (X >= chunkSize * mapWidth) continue;
+                    else if (Y < 0) continue;
+                    else if (Y >= chunkSize * mapHeight) continue;
+
+                    var chunk = Cell2Chunk(X, Y);
+
+                    Chunk c = chunks[chunk.x, chunk.y];
+                    int lx = X - chunk.x * chunkSize,
+                        ly = Y - chunk.y * chunkSize;
+                    if (c[lx, ly].Tile == null) continue;
+                    float h = c.Mine(chunk.x, chunk.y, lx, ly, power);
+
+                    if (h > 0) continue;
+
+                    waterWorld.cells[X, Y] = 0;
+
+                    c.UpdateColision(body, chunk.x, chunk.y);
+
+                    TileData data = GetTile(X + 1, Y);
+                    data.Tile?.Changed(this, X + 1, Y, data);
+
+                    data = GetTile(X - 1, Y);
+                    data.Tile?.Changed(this, X - 1, Y, data);
+
+                    data = GetTile(X, Y + 1);
+                    data.Tile?.Changed(this, X, Y + 1, data);
+
+                    data = GetTile(X, Y - 1);
+                    data.Tile?.Changed(this, X, Y - 1, data);
+                }
+        }
+        public void MineTile((int x, int y) position, float power, float radius) => MineTile(position.x, position.y, power, radius);
 
         public TileData GetTile(int x, int y)
         {
@@ -101,8 +203,7 @@ namespace XnaGame.WorldMap
             var chunk = Cell2Chunk(x, y);
 
             Chunk c = chunks[chunk.x, chunk.y];
-            c[x - chunk.x * chunkSize, y - chunk.y * chunkSize] = new TileData(tile);
-            tile?.Start(this, x, y, c[x - chunk.x * chunkSize, y - chunk.y * chunkSize]);
+            tile?.Start(this, x, y, c[x - chunk.x * chunkSize, y - chunk.y * chunkSize] = new TileData(tile));
 
             c.UpdateColision(body, chunk.x, chunk.y);
 
@@ -123,23 +224,64 @@ namespace XnaGame.WorldMap
 
         public bool TrySetTile(ITile tile, int x, int y)
         {
-            if (GetTile(x, y).Tile == null)
-            {
-                SetTile(tile, x, y);
-                return true;
-            }
-            return false;
+            if (x < 0) return false;
+            else if (x >= chunkSize * mapWidth) return false;
+            else if (y < 0) return false;
+            else if (y >= chunkSize * mapHeight) return false;
+
+            var chunk = Cell2Chunk(x, y);
+
+            Chunk c = chunks[chunk.x, chunk.y];
+            int lx = x - chunk.x * chunkSize,
+                ly = y - chunk.y * chunkSize;
+            if (c[lx, ly].Tile != null) return false;
+            tile?.Start(this, x, y, c[lx, ly] = new TileData(tile));
+
+            c.UpdateColision(body, chunk.x, chunk.y);
+
+            TileData data = GetTile(x + 1, y);
+            data.Tile?.Changed(this, x + 1, y, data);
+
+            data = GetTile(x - 1, y);
+            data.Tile?.Changed(this, x - 1, y, data);
+
+            data = GetTile(x, y + 1);
+            data.Tile?.Changed(this, x, y + 1, data);
+
+            data = GetTile(x, y - 1);
+            data.Tile?.Changed(this, x, y - 1, data);
+            return true;
         }
         public bool TrySetTile(ITile tile, (int x, int y) position) => TrySetTile(tile, position.x, position.y);
 
         public bool PlaceTile(ITile tile, int x, int y)
         {
-            if (GetTile(x + 1, y).Tile != null ||
-                GetTile(x - 1, y).Tile != null ||
-                GetTile(x, y + 1).Tile != null ||
-                GetTile(x, y - 1).Tile != null)
+            if (x < 0) return false;
+            else if (x >= chunkSize * mapWidth) return false;
+            else if (y < 0) return false;
+            else if (y >= chunkSize * mapHeight) return false;
+
+            TileData
+                r = GetTile(x + 1, y),
+                l = GetTile(x - 1, y),
+                d = GetTile(x, y + 1),
+                u = GetTile(x, y - 1);
+            if (r.Tile != null ||
+                l.Tile != null ||
+                d.Tile != null ||
+                u.Tile != null)
             {
-                SetTile(tile, x, y);
+                var chunk = Cell2Chunk(x, y);
+
+                Chunk c = chunks[chunk.x, chunk.y];
+                tile?.Start(this, x, y, c[x - chunk.x * chunkSize, y - chunk.y * chunkSize] = new TileData(tile));
+
+                c.UpdateColision(body, chunk.x, chunk.y);
+
+                r.Tile?.Changed(this, x + 1, y, r);
+                l.Tile?.Changed(this, x - 1, y, l);
+                d.Tile?.Changed(this, x, y + 1, d);
+                u.Tile?.Changed(this, x, y - 1, u);
                 return true;
             }
             return false;
@@ -149,13 +291,37 @@ namespace XnaGame.WorldMap
 
         public bool TryPlaceTile(ITile tile, int x, int y)
         {
-            if (GetTile(x, y).Tile == null &&
-                (GetTile(x + 1, y).Tile != null ||
-                 GetTile(x - 1, y).Tile != null ||
-                 GetTile(x, y + 1).Tile != null ||
-                 GetTile(x, y - 1).Tile != null))
+            if (x < 0) return false;
+            else if (x >= chunkSize * mapWidth) return false;
+            else if (y < 0) return false;
+            else if (y >= chunkSize * mapHeight) return false;
+
+            TileData
+                r = GetTile(x + 1, y),
+                l = GetTile(x - 1, y),
+                d = GetTile(x, y + 1),
+                u = GetTile(x, y - 1);
+            if (r.Tile != null ||
+                l.Tile != null ||
+                d.Tile != null ||
+                u.Tile != null)
             {
-                SetTile(tile, x, y);
+                var chunk = Cell2Chunk(x, y);
+
+                Chunk c = chunks[chunk.x, chunk.y];
+                int lx = x - chunk.x * chunkSize,
+                    ly = y - chunk.y * chunkSize;
+                if (c[lx, ly].Tile != null) return false;
+                tile?.Start(this, x, y, c[lx, ly] = new TileData(tile));
+
+                c.UpdateColision(body, chunk.x, chunk.y);
+
+                waterWorld.cells[x, y] = -1;
+
+                r.Tile?.Changed(this, x + 1, y, r);
+                l.Tile?.Changed(this, x - 1, y, l);
+                d.Tile?.Changed(this, x, y + 1, d);
+                u.Tile?.Changed(this, x, y - 1, u);
                 return true;
             }
             return false;
@@ -236,7 +402,7 @@ namespace XnaGame.WorldMap
                 int j;
                 for (int i = 0; i < chunkSize; i++)
                     for (j = 0; j < chunkSize; j++)
-                        tiles[i, j] = new TileData(generator(x*chunkSize+i, y*chunkSize+j));
+                        tiles[i, j] = new TileData(generator(x * chunkSize + i, y * chunkSize + j));
                 fixtures = new Fixture[0];
             }
 
@@ -265,24 +431,36 @@ namespace XnaGame.WorldMap
                     for (j = 0; j < chunkSize; j++)
                     {
                         TileData tile = tiles[i, j];
-                        tile.Tile?.Update(map, x*chunkSize+i, y*chunkSize+j, tile);
+                        tile.Tile?.Update(null, map, x * chunkSize + i, y * chunkSize + j, tile);
                     }
             }
 
             public void UpdateColision(Body body, int x, int y)
             {
+                int j, i;
+
+                foreach (var fixture in fixtures) body.Remove(fixture);
+
                 Queue<Rectangle> rectangles = new Queue<Rectangle>();
                 rectangles.Enqueue(new Rectangle(0, 0, chunkSize, chunkSize));
                 Queue<Rectangle> result = new Queue<Rectangle>();
-                
-                int j, i;
+
                 while (rectangles.Count != 0)
                 {
                     Rectangle rectangle = rectangles.Dequeue();
                     for (i = rectangle.X; i < rectangle.X + rectangle.Width; i++)
                         for (j = rectangle.Y; j < rectangle.Y + rectangle.Height; j++)
                             if (tiles[i, j].Tile == null)
-                            {
+                            {/*
+                                CustomColliderInfo? info = tiles[i, j].Tile.CustomCollider;
+                                if (info.HasValue)
+                                {
+                                    CustomColliderInfo i = info.Value;
+                                    Fixture f = new Fixture(i.shape);
+                                    Body b = body.b;
+                                }
+                                else
+                                {*/
                                 if (rectangle.Width > 1)
                                 {
                                     int w = rectangle.Width / 2,
@@ -297,20 +475,21 @@ namespace XnaGame.WorldMap
                     result.Enqueue(rectangle);
                     SKIP:;
                 }
-                
-                foreach (var fixture in fixtures) body.Remove(fixture);
 
                 fixtures = new Fixture[result.Count];
                 while (result.Count != 0)
                 {
                     Rectangle rectangle = result.Dequeue();
-                    fixtures[result.Count] = body.CreateRectangle(
+                    Fixture fixture = body.CreateRectangle(
                             rectangle.Width * tileSize, rectangle.Height * tileSize,
                             1,
                             new FVector2(
                                 x * chunkSize + rectangle.X + rectangle.Width / 2f,
                                 y * chunkSize + rectangle.Y + rectangle.Height / 2f
                                 ) * tileSize);
+                    fixture.CollisionCategories = Category.Cat1;
+                    fixture.Friction = 0;
+                    fixtures[result.Count] = fixture;
                 }
             }
 
@@ -322,7 +501,7 @@ namespace XnaGame.WorldMap
                     for (j = 0; j < chunkSize; j++)
                     {
                         TileData tile = tiles[i, j];
-                        tile.Tile?.Draw(map, x*chunkSize+i, y*chunkSize+j, new FVector2(x*chunkSize+i, y*chunkSize+j)*tileSize, tile);
+                        tile.Tile?.Draw(map, x * chunkSize + i, y * chunkSize + j, new FVector2(x * chunkSize + i, y * chunkSize + j) * tileSize, 0, tile);
                     }
                 }
             }
@@ -332,11 +511,22 @@ namespace XnaGame.WorldMap
                 foreach (Fixture fixture in fixtures)
                 {
                     fixture.GetAABB(out AABB aabb, 0);
-                    nkast.Aether.Physics2D.Common.Vector2 point = new FVector2(x, y) * tileSize;
+                    Vector2 point = new FVector2(x, y) * tileSize;
                     if (aabb.Contains(ref point))
                         return fixture;
                 }
                 return null;
+            }
+
+            public float Mine(int cx, int cy, int x, int y, float power)
+            {
+                float h = tiles[x, y].Health -= power;
+                if (h <= 0)
+                {
+                    new Item((tiles[x, y].Tile, 1), new FVector2((cx * chunkSize + x + 0.5f) * tileSize, (cy * chunkSize + y + 0.5f) * tileSize));
+                    tiles[x, y] = default;
+                }
+                return h;
             }
         }
     }

@@ -1,14 +1,15 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using nkast.Aether.Physics2D.Common;
 using nkast.Aether.Physics2D.Dynamics;
-using System;
 using System.Collections.Generic;
 using XnaGame.Content;
-using XnaGame.Entities;
-using XnaGame.Entities.Content;
+using XnaGame.PEntities.Content;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
 using XnaGame.Utils.Input;
 using XnaGame.WorldMap;
+using XnaGame.WorldMap.Liquid;
+using XnaGame.WorldMap.Structures;
 
 namespace XnaGame.State
 {
@@ -30,13 +31,13 @@ namespace XnaGame.State
 
         public override void Init()
         {
-            Core.map = map = new Map(world, mapWidth, mapHeight, (x, y) => y < 15 ? null : Tiles.test);
+            Core.map = map = new Map(new Liquid[] { Liquids.water, Liquids.foo }, world, mapWidth, mapHeight, (x, y) => y < 15 ? null : Tiles.test);
             player = new Player(GUI,
-                new Sprite(Game.Content.Load<Texture2D>("player_m_head")),
-                new Sprite(Game.Content.Load<Texture2D>("player_m_arm_l")),
-                new Sprite(Game.Content.Load<Texture2D>("player_m_arm_r")),
-                new Sprite(Game.Content.Load<Texture2D>("player_m_body")),
-                new Sprite(Game.Content.Load<Texture2D>("player_m_legs")));
+                Sprite.Load(Game.Content, "player_m_head"),
+                Sprite.Load(Game.Content, "player_m_arm_l"),
+                Sprite.Load(Game.Content, "player_m_arm_r"),
+                Sprite.Load(Game.Content, "player_m_body"),
+                Sprite.Load(Game.Content, "player_m_legs"));
         }
 
         public override void InitGUI()
@@ -46,7 +47,6 @@ namespace XnaGame.State
         public override void Draw()
         {
             map.Draw();
-            player.Draw();
             Core.entities.draw();
         }
 
@@ -59,19 +59,19 @@ namespace XnaGame.State
                 player.transform.Position = Mouse.Position;
             }
 
-            if (Mouse.RightDown)
-            {
-                (int x, int y) pos = map.World2Cell(Mouse.Position);
-                TileData data = map.GetTile(pos);
-                if (data.Tile != null)
-                {
-                    map.SetTile(null, pos);
-                    new Item((data.Tile, 1), new FVector2((pos.x + 0.5f) * Map.tileSize, (pos.y + 0.5f) * Map.tileSize));
-                }
-            }
-            map.Update();
+            if (Keyboard.IsPressed(Keys.O))
+                new Item((Items.bow, 1), Mouse.Position);
+            if (Keyboard.IsPressed(Keys.P))
+                new Item((Items.pickaxe, 1), Mouse.Position);
+            if (Keyboard.IsPressed(Keys.I))
+                new Item((Items.pickaxeSword, 1), Mouse.Position);
 
-            player.Update();
+            if (Mouse.RightPressed)
+            {
+                Entities.dummy.Spawn(Mouse.Position);
+            }
+
+            map.Update();
 
             Core.entities.update();
 

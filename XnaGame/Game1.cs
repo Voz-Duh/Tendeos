@@ -1,8 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SpriteFontPlus;
 using System;
-using System.Net;
 using XnaGame.Content;
 using XnaGame.State;
 using XnaGame.UI.GUIElements;
@@ -41,6 +39,10 @@ namespace XnaGame
 
             Core.camera = camera = new Camera(160, GraphicsDevice.Viewport);
 
+            Liquids.Init(Content);
+            Effects.Init(Content);
+            Entities.Init(Content);
+            Items.Init(Content);
             Tiles.Init(Content);
 
             Mouse.Camera = camera;
@@ -69,7 +71,7 @@ namespace XnaGame
             SDraw.Matrix = camera.GetGUIMatrix();
             SDraw.Apply();
             states[(int)State].GUI.Draw();
-            Core.criticalGuiDraw();
+            Core.extraGuiDraw();
             SDraw.End();
             base.Draw(gameTime);
         }

@@ -4,13 +4,16 @@ namespace XnaGame.WorldMap
 {
     public interface IMap
     {
-        bool RayCast(RayCastReportTileDelegate callback, FVector2 start, FVector2 end);
         bool TryPlaceTile(ITile tile, int x, int y);
         bool TryPlaceTile(ITile tile, (int x, int y) position);
         bool PlaceTile(ITile tile, int x, int y);
         bool PlaceTile(ITile tile, (int x, int y) position);
         bool TrySetTile(ITile tile, int x, int y);
         bool TrySetTile(ITile tile, (int x, int y) position);
+        void MineTile(int x, int y, float power);
+        void MineTile((int x, int y) position, float power);
+        void MineTile(int x, int y, float power, float radius);
+        void MineTile((int x, int y) position, float power, float radius);
         void SetTile(ITile tile, int x, int y);
         void SetTile(ITile tile, (int x, int y) position);
         TileData GetTile(int x, int y);

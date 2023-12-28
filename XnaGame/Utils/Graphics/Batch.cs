@@ -1,23 +1,24 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System;
+using XnaGame.PEntities.Content;
 
 namespace XnaGame.Utils.Graphics
 {
     public class Batch
     {
-        GraphicsDevice GraphicsDevice;
+        private GraphicsDevice GraphicsDevice;
 
-        VertexBuffer vertexBuffer;
+        private VertexBuffer vertexBuffer;
 
-        BasicEffect basicEffect;
-        readonly Matrix world = Matrix.CreateTranslation(0, 0, 0);
-        readonly Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+        private BasicEffect basicEffect;
+        private readonly static Matrix world = Matrix.CreateTranslation(0, 0, 0);
+        private readonly static Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
 
-        VertexPositionColorNormalTexture[] vertices;
-        int primitives;
+        private VertexPositionColorNormalTexture[] vertices;
+        private int primitives;
 
-        PrimitiveType primitiveType;
+        private PrimitiveType primitiveType;
         public Color Color { private get; set; } = Color.White;
         public FVector2 UV { private get; set; } = FVector2.Zero;
         public Vector3 Normal { private get; set; } = Vector3.Zero;
@@ -30,15 +31,15 @@ namespace XnaGame.Utils.Graphics
             basicEffect = new BasicEffect(GraphicsDevice);
         }
 
-        public void Begin(PrimitiveType primitiveType, int size = 4086, Matrix? projection = null)
+        public void Begin(PrimitiveType primitiveType, int size = 4086, Matrix? matrix = null)
         {
             if (Batching) throw new NotSupportedException("You cannot Begin batch while other batch not ended.");
             Batching = true;
             primitives = 0;
             this.primitiveType = primitiveType;
-            basicEffect.World = world;
+            basicEffect.World = matrix ?? world;
             basicEffect.View = view;
-            basicEffect.Projection = projection ?? Matrix.CreateOrthographicOffCenter(
+            basicEffect.Projection = Matrix.CreateOrthographicOffCenter(
                 GraphicsDevice.Viewport.X, GraphicsDevice.Viewport.X + GraphicsDevice.Viewport.Width,
                 GraphicsDevice.Viewport.Y + GraphicsDevice.Viewport.Height, GraphicsDevice.Viewport.Y,
                 0.01f, 1000);

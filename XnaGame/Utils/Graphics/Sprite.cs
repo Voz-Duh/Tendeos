@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace XnaGame.Utils.Graphics
@@ -15,7 +16,7 @@ namespace XnaGame.Utils.Graphics
         public Sprite(Sprite sprite, Rectangle rect)
         {
             Texture = sprite.Texture;
-            Rect = new Rectangle(rect.Location + sprite.Rect.Location, rect.Size);
+            Rect = new Rectangle(sprite.Rect.Location + rect.Location, rect.Size);
         }
 
         public Sprite(Texture2D texture)
@@ -45,9 +46,9 @@ namespace XnaGame.Utils.Graphics
 
                     int x = col * (subTextureWidth + padding),
                         y = row * (subTextureHeight + padding);
-                    Rectangle subTextureRect = new Rectangle(x, y, subTextureWidth, subTextureHeight);
+                    Rectangle subTextureRect = new Rectangle(Rect.X + x, Rect.Y + y, subTextureWidth, subTextureHeight);
 
-                    subTextures[row * columns + col] = new Sprite(this, subTextureRect);
+                    subTextures[row * columns + col] = new Sprite(Texture, subTextureRect);
                 }
             }
 
@@ -65,6 +66,8 @@ namespace XnaGame.Utils.Graphics
             a = new Sprite(this, new Rectangle(Rect.X, Rect.Y, Rect.Width, y));
             b = new Sprite(this, new Rectangle(Rect.X, y, Rect.Width, Rect.Height - y));
         }
+
+        public static Sprite Load(ContentManager content, string path) => new Sprite(content.Load<Texture2D>(path));
 
         public static implicit operator Texture2D(Sprite sprite) => sprite.Texture;
     }

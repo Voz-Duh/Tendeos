@@ -2,7 +2,7 @@
 {
     public struct TileData
     {
-        public byte Health { get; init; }
+        public float Health { get; set; }
         private byte[] stateData;
         public byte this[int i]
         {

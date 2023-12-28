@@ -1,14 +1,9 @@
 ﻿using AVector2 = nkast.Aether.Physics2D.Common.Vector2;
 using XVector2 = Microsoft.Xna.Framework.Vector2;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using System;
 
 namespace XnaGame.Utils
 {
@@ -49,6 +44,21 @@ namespace XnaGame.Utils
             X = value;
             Y = value;
         }
+
+        public static FVector2 UpOf(float angle)
+        {
+            angle = MathHelper.ToRadians(angle);
+            return new FVector2(-MathF.Sin(angle), MathF.Cos(angle));
+        }
+        public static FVector2 LeftOf(float angle) => -UpOf(angle);
+
+        public static FVector2 RightOf(float angle)
+        {
+            angle = MathHelper.ToRadians(angle);
+            return new FVector2(MathF.Cos(angle), MathF.Sin(angle));
+        }
+        public static FVector2 LefOf(float angle) => -RightOf(angle);
+
 
         public static implicit operator FVector2(System.Numerics.Vector2 value)
         {
@@ -690,8 +700,10 @@ namespace XnaGame.Utils
         }
 
         public static implicit operator AVector2(FVector2 a) => new AVector2(a.X, a.Y);
-        public static implicit operator XVector2(FVector2 a) => new XVector2(a.X, a.Y);
         public static implicit operator FVector2(AVector2 a) => new FVector2(a.X, a.Y);
+        public static implicit operator XVector2(FVector2 a) => new XVector2(a.X, a.Y);
         public static implicit operator FVector2(XVector2 a) => new FVector2(a.X, a.Y);
+        public static implicit operator Vector3(FVector2 a) => new Vector3(a.X, a.Y, 0);
+        public static implicit operator FVector2(Vector3 a) => new FVector2(a.X, a.Y);
     }
 }
