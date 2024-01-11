@@ -25,7 +25,7 @@ namespace XnaGame.Utils
         public void SetViewport(Viewport viewport)
         {
             Scale = viewport.Height / ScreenHeight;
-            WorldViewport = new FVector2(viewport.Width / viewport.Height * ScreenHeight, ScreenHeight);
+            WorldViewport = new FVector2((float)viewport.Width / viewport.Height * ScreenHeight, ScreenHeight);
 
             Origin = new FVector2(viewport.Width / 2f, viewport.Height / 2f);
         }
