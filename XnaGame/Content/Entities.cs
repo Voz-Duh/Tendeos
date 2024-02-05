@@ -18,8 +18,8 @@ namespace XnaGame.Content
 
         public static void Init(ContentManager content)
         {
-            projectile = new Projectile(FVector2.Zero, 0, 200, 1, Sprite.Load(content, "arrow"));
-            dummy = new Enemy(10, 25, new FVector2(10, 20),
+            projectile = new Projectile(Vec2.Zero, 0, 200, 1, Sprite.Load(content, "arrow"));
+            dummy = new Enemy(10, 25, new Vec2(10, 20),
                 new GroundComponent(Sprite.Load(content, "dummy"), 5, 15, 5),
                 new LootDropComponent(75, 3..6, Tiles.Get<ITile>("test")));
         }

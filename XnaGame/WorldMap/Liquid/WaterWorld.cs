@@ -197,7 +197,7 @@ namespace XnaGame.WorldMap.Liquid
                     for (int m = 0; m < march.Length; m++)
                     {
                         (bool lu, bool u, bool ru, bool l, bool r, bool ld, bool d, bool rd,
-                            (FVector2 a, FVector2 b, FVector2 c, byte at, byte bt, byte ct, FVector2 ac, FVector2 bc, FVector2 cc)[] triangles) marching = march[m];
+                            (Vec2 a, Vec2 b, Vec2 c, byte at, byte bt, byte ct, Vec2 ac, Vec2 bc, Vec2 cc)[] triangles) marching = march[m];
                         if ((marching.l ? bl : !bl) && (marching.r ? br : !br) && (marching.d ? bd : !bd) && (marching.u ? bu : !bu) &&
                             (marching.rd ? brd : !brd) && (marching.ru ? bru : !bru) && (marching.ld ? bld : !bld) && (marching.lu ? blu : !blu))
                         {
@@ -207,9 +207,9 @@ namespace XnaGame.WorldMap.Liquid
                                     ap = GetByType(at, false, false, false, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, false, false, false, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, false, false, false, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new FVector2(i, j) + ac + a * ap) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + bc + b * bp) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + cc + c * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ac + a * ap) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + bc + b * bp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + cc + c * cp) * tileSize);
                             }
                             has = true;
                             break;
@@ -223,9 +223,9 @@ namespace XnaGame.WorldMap.Liquid
                                     ap = GetByType(at, true, true, false, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, true, true, false, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, true, true, false, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new FVector2(i, j) + IC(ac) - a * ap) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + IC(bc) - b * bp) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + IC(cc) - c * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(ac) - a * ap) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(bc) - b * bp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(cc) - c * cp) * tileSize);
                             }
                             has = true;
                             break;
@@ -239,9 +239,9 @@ namespace XnaGame.WorldMap.Liquid
                                     ap = GetByType(at, false, true, true, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, false, true, true, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, false, true, true, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new FVector2(i, j) + ICX(IC(new FVector2(ac.Y, ac.X))) - IX(new FVector2(a.Y, a.X)) * ap) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + ICX(IC(new FVector2(bc.Y, bc.X))) - IX(new FVector2(b.Y, b.X)) * bp) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + ICX(IC(new FVector2(cc.Y, cc.X))) - IX(new FVector2(c.Y, c.X)) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(new Vec2(ac.Y, ac.X))) - IX(new Vec2(a.Y, a.X)) * ap) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(new Vec2(bc.Y, bc.X))) - IX(new Vec2(b.Y, b.X)) * bp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(new Vec2(cc.Y, cc.X))) - IX(new Vec2(c.Y, c.X)) * cp) * tileSize);
                             }
                             has = true;
                             break;
@@ -255,9 +255,9 @@ namespace XnaGame.WorldMap.Liquid
                                     ap = GetByType(at, true, false, true, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, true, false, true, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, true, false, true, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new FVector2(i, j) + ICX(new FVector2(ac.Y, ac.X)) + IX(new FVector2(a.Y, a.X)) * ap) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + ICX(new FVector2(bc.Y, bc.X)) + IX(new FVector2(b.Y, b.X)) * bp) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + ICX(new FVector2(cc.Y, cc.X)) + IX(new FVector2(c.Y, c.X)) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(new Vec2(ac.Y, ac.X)) + IX(new Vec2(a.Y, a.X)) * ap) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(new Vec2(bc.Y, bc.X)) + IX(new Vec2(b.Y, b.X)) * bp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(new Vec2(cc.Y, cc.X)) + IX(new Vec2(c.Y, c.X)) * cp) * tileSize);
                             }
                             has = true;
                             break;
@@ -272,9 +272,9 @@ namespace XnaGame.WorldMap.Liquid
                                     ap = GetByType(at, true, false, false, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, true, false, false, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, true, false, false, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new FVector2(i, j) + ICX(ac) + IX(a) * ap) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + ICX(bc) + IX(b) * bp) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + ICX(cc) + IX(c) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(ac) + IX(a) * ap) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(bc) + IX(b) * bp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(cc) + IX(c) * cp) * tileSize);
                             }
                             has = true;
                             break;
@@ -288,9 +288,9 @@ namespace XnaGame.WorldMap.Liquid
                                     ap = GetByType(at, false, true, false, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, false, true, false, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, false, true, false, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new FVector2(i, j) + ICX(IC(ac)) - IX(a) * ap) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + ICX(IC(bc)) - IX(b) * bp) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + ICX(IC(cc)) - IX(c) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(ac)) - IX(a) * ap) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(bc)) - IX(b) * bp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(cc)) - IX(c) * cp) * tileSize);
                             }
                             has = true;
                             break;
@@ -304,9 +304,9 @@ namespace XnaGame.WorldMap.Liquid
                                     ap = GetByType(at, false, false, true, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, false, false, true, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, false, false, true, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new FVector2(i, j) + IC(new FVector2(ac.Y, ac.X)) - new FVector2(a.Y, a.X) * ap) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + IC(new FVector2(bc.Y, bc.X)) - new FVector2(b.Y, b.X) * bp) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + IC(new FVector2(cc.Y, cc.X)) - new FVector2(c.Y, c.X) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(new Vec2(ac.Y, ac.X)) - new Vec2(a.Y, a.X) * ap) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(new Vec2(bc.Y, bc.X)) - new Vec2(b.Y, b.X) * bp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(new Vec2(cc.Y, cc.X)) - new Vec2(c.Y, c.X) * cp) * tileSize);
                             }
                             has = true;
                             break;
@@ -320,9 +320,9 @@ namespace XnaGame.WorldMap.Liquid
                                     ap = GetByType(at, true, true, true, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, true, true, true, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, true, true, true, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new FVector2(i, j) + new FVector2(ac.Y, ac.X) + new FVector2(a.Y, a.X) * ap) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + new FVector2(bc.Y, bc.X) + new FVector2(b.Y, b.X) * bp) * tileSize);
-                                batch.Vertex((new FVector2(i, j) + new FVector2(cc.Y, cc.X) + new FVector2(c.Y, c.X) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + new Vec2(ac.Y, ac.X) + new Vec2(a.Y, a.X) * ap) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + new Vec2(bc.Y, bc.X) + new Vec2(b.Y, b.X) * bp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + new Vec2(cc.Y, cc.X) + new Vec2(c.Y, c.X) * cp) * tileSize);
                             }
                             has = true;
                             break;
@@ -330,12 +330,12 @@ namespace XnaGame.WorldMap.Liquid
                     }
                     if (!has)
                     {
-                        batch.Vertex(new FVector2(i, j) * tileSize);
-                        batch.Vertex(new FVector2(i+1, j) * tileSize);
-                        batch.Vertex(new FVector2(i, j+1) * tileSize);
-                        batch.Vertex(new FVector2(i+1, j+1) * tileSize);
-                        batch.Vertex(new FVector2(i + 1, j) * tileSize);
-                        batch.Vertex(new FVector2(i, j + 1) * tileSize);
+                        batch.Vertex(new Vec2(i, j) * tileSize);
+                        batch.Vertex(new Vec2(i+1, j) * tileSize);
+                        batch.Vertex(new Vec2(i, j+1) * tileSize);
+                        batch.Vertex(new Vec2(i+1, j+1) * tileSize);
+                        batch.Vertex(new Vec2(i + 1, j) * tileSize);
+                        batch.Vertex(new Vec2(i, j + 1) * tileSize);
                     }
                 }
             batch.End();
@@ -452,12 +452,12 @@ namespace XnaGame.WorldMap.Liquid
             });
         }
 
-        private FVector2 IC(FVector2 c) => new FVector2(1) - c;
-        private FVector2 ICX(FVector2 c) => new FVector2(1-c.X, c.Y);
-        private FVector2 ICY(FVector2 c) => new FVector2(c.X, 1-c.Y);
+        private Vec2 IC(Vec2 c) => new Vec2(1) - c;
+        private Vec2 ICX(Vec2 c) => new Vec2(1-c.X, c.Y);
+        private Vec2 ICY(Vec2 c) => new Vec2(c.X, 1-c.Y);
 
-        private FVector2 IX(FVector2 c) => new FVector2(-c.X, c.Y);
-        private FVector2 IY(FVector2 c) => new FVector2(c.X, -c.Y);
+        private Vec2 IX(Vec2 c) => new Vec2(-c.X, c.Y);
+        private Vec2 IY(Vec2 c) => new Vec2(c.X, -c.Y);
 
         /*
          * Types:
@@ -472,16 +472,16 @@ namespace XnaGame.WorldMap.Liquid
          * 8 - up right population
          * 9 - ignore
          */
-        readonly (bool lu, bool u, bool ru, bool l, bool r, bool ld, bool d, bool rd, (FVector2 a, FVector2 b, FVector2 c, byte at, byte bt, byte ct, FVector2 ac, FVector2 bc, FVector2 cc)[])[]
+        readonly (bool lu, bool u, bool ru, bool l, bool r, bool ld, bool d, bool rd, (Vec2 a, Vec2 b, Vec2 c, byte at, byte bt, byte ct, Vec2 ac, Vec2 bc, Vec2 cc)[])[]
             march =
-            new (bool, bool, bool, bool, bool, bool, bool, bool, (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[])[]
+            new (bool, bool, bool, bool, bool, bool, bool, bool, (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[])[]
         {
             #region 1
             (
             false, false, false,
             false,        false,
             false, false, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, .5f), new(0, -.5f), new(-.5f, 0), 0, 0, 0, new(.5f, .5f), new(.5f, .5f), new(.5f, .5f)),
                 (new(0, .5f), new(0, -.5f), new(.5f, 0), 0, 0, 0, new(.5f, .5f), new(.5f, .5f), new(.5f, .5f)),
@@ -490,7 +490,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, false,
             false,        false,
             false, false, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, .5f), new(0, -.5f), new(-.5f, 0), 0, 0, 0, new(.5f, .5f), new(.5f, .5f), new(.5f, .5f)),
                 (new(0, .5f), new(0, -.5f), new(.5f, 0), 0, 0, 0, new(.5f, .5f), new(.5f, .5f), new(.5f, .5f)),
@@ -499,7 +499,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, true,
             false,        false,
             false, false, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, .5f), new(0, -.5f), new(-.5f, 0), 0, 0, 0, new(.5f, .5f), new(.5f, .5f), new(.5f, .5f)),
                 (new(0, .5f), new(0, -.5f), new(.5f, 0), 0, 0, 0, new(.5f, .5f), new(.5f, .5f), new(.5f, .5f)),
@@ -508,7 +508,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, true,
             false,        false,
             false, false, true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, .5f), new(0, -.5f), new(-.5f, 0), 0, 0, 0, new(.5f, .5f), new(.5f, .5f), new(.5f, .5f)),
                 (new(0, .5f), new(0, -.5f), new(.5f, 0), 0, 0, 0, new(.5f, .5f), new(.5f, .5f), new(.5f, .5f)),
@@ -517,7 +517,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, true,
             false,        false,
             true, false, true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, .5f), new(0, -.5f), new(-.5f, 0), 0, 0, 0, new(.5f, .5f), new(.5f, .5f), new(.5f, .5f)),
                 (new(0, .5f), new(0, -.5f), new(.5f, 0), 0, 0, 0, new(.5f, .5f), new(.5f, .5f), new(.5f, .5f)),
@@ -528,7 +528,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, false,
             false,        false,
             false, true,  false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(0, -1), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, 1)),
             }),
@@ -536,7 +536,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, true,
             false,        false,
             false, true,  false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(0, -1), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, 1)),
             }),
@@ -544,7 +544,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, true,
             false,        false,
             false, true,  false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(0, -1), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, 1)),
             }),
@@ -552,7 +552,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, false,
             false,        false,
             true, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(0, -1), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, 1)),
             }),
@@ -560,7 +560,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, false,
             false,        false,
             false, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(0, -1), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, 1)),
             }),
@@ -568,7 +568,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, true,
             false,        false,
             true, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(0, -1), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, 1)),
             }),
@@ -576,7 +576,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, true,
             false,        false,
             false, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(0, -1), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, 1)),
             }),
@@ -584,7 +584,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, false,
             false,        false,
             false, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(0, -1), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, 1)),
             }),
@@ -592,7 +592,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, true,
             false,        false,
             false, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(0, -1), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, 1)),
             }),
@@ -600,7 +600,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, true,
             false,        false,
             true, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(0, -1), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, 1)),
             }),
@@ -610,7 +610,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true, true,
             false,        true,
             false, false, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, 0), new(0, 1), new(-1, 0), 9, 2, 4, new(1, 0), new(1, 0), new(1, 0)),
             }),
@@ -618,7 +618,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true, true,
             false,        true,
             true, false, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, 0), new(0, 1), new(-1, 0), 9, 2, 4, new(1, 0), new(1, 0), new(1, 0)),
             }),
@@ -626,7 +626,7 @@ namespace XnaGame.WorldMap.Liquid
             true, true, true,
             false,        true,
             false, false, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, 0), new(0, 1), new(-1, 0), 9, 2, 4, new(1, 0), new(1, 0), new(1, 0)),
             }),
@@ -634,7 +634,7 @@ namespace XnaGame.WorldMap.Liquid
             true, true, true,
             false,        true,
             true, false, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, 0), new(0, 1), new(-1, 0), 9, 2, 4, new(1, 0), new(1, 0), new(1, 0)),
             }),
@@ -642,7 +642,7 @@ namespace XnaGame.WorldMap.Liquid
             true, true, true,
             false,        true,
             false, false, true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, 0), new(0, 1), new(-1, 0), 9, 2, 4, new(1, 0), new(1, 0), new(1, 0)),
             }),
@@ -650,7 +650,7 @@ namespace XnaGame.WorldMap.Liquid
             true, true, true,
             false,        true,
             true, false, true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, 0), new(0, 1), new(-1, 0), 9, 2, 4, new(1, 0), new(1, 0), new(1, 0)),
             }),
@@ -660,7 +660,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, false,
             false,        true,
             false, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(.5f, 0), new(-.5f, 0), new(.5f, .5f), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(.5f, .5f), new(-.5f, -.5f), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -671,7 +671,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, true,
             false,        true,
             false, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(.5f, 0), new(-.5f, 0), new(.5f, .5f), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(.5f, .5f), new(-.5f, -.5f), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -682,7 +682,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, false,
             false,        true,
             false, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(.5f, 0), new(-.5f, 0), new(.5f, .5f), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(.5f, .5f), new(-.5f, -.5f), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -693,7 +693,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, true,
             false,        true,
             false, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(.5f, 0), new(-.5f, 0), new(.5f, .5f), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(.5f, .5f), new(-.5f, -.5f), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -704,7 +704,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, true,
             false,        true,
             true, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(.5f, 0), new(-.5f, 0), new(.5f, .5f), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(.5f, .5f), new(-.5f, -.5f), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -715,7 +715,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, true,
             false,        true,
             true, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(.5f, 0), new(-.5f, 0), new(.5f, .5f), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(.5f, .5f), new(-.5f, -.5f), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -728,7 +728,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true,  false,
             false,        false,
             false, true,  false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(.5f, 0), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(-.5f, 0), new(.5f, 0), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -739,7 +739,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true,  true,
             false,        false,
             true, true,  false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(.5f, 0), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(-.5f, 0), new(.5f, 0), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -750,7 +750,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true,  false,
             false,        false,
             false, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(.5f, 0), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(-.5f, 0), new(.5f, 0), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -761,7 +761,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true,  true,
             false,        false,
             false, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(.5f, 0), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(-.5f, 0), new(.5f, 0), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -772,7 +772,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true,  false,
             false,        false,
             true, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(.5f, 0), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(-.5f, 0), new(.5f, 0), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -783,7 +783,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true,  true,
             false,        false,
             true, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(.5f, 0), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(-.5f, 0), new(.5f, 0), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -794,7 +794,7 @@ namespace XnaGame.WorldMap.Liquid
             true, true,  true,
             false,        false,
             true, true,  true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(-.5f, 0), new(.5f, 0), new(.5f, 0), 3, 3, 0, new(.5f, 1), new(.5f, 1), new(.5f, .5f)),
                 (new(-.5f, 0), new(-.5f, 0), new(.5f, 0), 3, 0, 0, new(.5f, 1), new(.5f, .5f), new(.5f, .5f)),
@@ -807,7 +807,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, false,
             true,        true,
             true, true, true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, 0), new(0, 0), new(0, -1), 9, 9, 1, new(0, 1), new(1, 1), new(0, 1)),
                 (new(0, -1), new(0, 0), new(0, -1), 1, 9, 2, new(0, 1), new(1, 1), new(1, 1)),
@@ -816,7 +816,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, true,
             true,        true,
             true, true, true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, 0), new(0, 0), new(0, -1), 9, 9, 1, new(0, 1), new(1, 1), new(0, 1)),
                 (new(0, -1), new(0, 0), new(0, -1), 1, 9, 2, new(0, 1), new(1, 1), new(1, 1)),
@@ -825,7 +825,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, true,
             true,        true,
             true, true, true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, 0), new(0, 0), new(0, -1), 9, 9, 1, new(0, 1), new(1, 1), new(0, 1)),
                 (new(0, -1), new(0, 0), new(0, -1), 1, 9, 2, new(0, 1), new(1, 1), new(1, 1)),
@@ -836,7 +836,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, false,
             true,        true,
             true, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, -1), new(0, .5f), new(1, 0), 1, 2, 3, new(0, 1), new(1, .5f), new(0, 1)),
                 (new(0, -1), new(0, .5f), new(0, -.5f), 1, 2, 2, new(0, 1), new(1, .5f), new(1, .5f)),
@@ -846,7 +846,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, false,
             true,        true,
             true, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, -1), new(0, .5f), new(1, 0), 1, 2, 3, new(0, 1), new(1, .5f), new(0, 1)),
                 (new(0, -1), new(0, .5f), new(0, -.5f), 1, 2, 2, new(0, 1), new(1, .5f), new(1, .5f)),
@@ -856,7 +856,7 @@ namespace XnaGame.WorldMap.Liquid
             false, false, true,
             true,        true,
             true, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, -1), new(0, .5f), new(1, 0), 1, 2, 3, new(0, 1), new(1, .5f), new(0, 1)),
                 (new(0, -1), new(0, .5f), new(0, -.5f), 1, 2, 2, new(0, 1), new(1, .5f), new(1, .5f)),
@@ -866,7 +866,7 @@ namespace XnaGame.WorldMap.Liquid
             true, false, true,
             true,        true,
             true, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, -1), new(0, .5f), new(1, 0), 1, 2, 3, new(0, 1), new(1, .5f), new(0, 1)),
                 (new(0, -1), new(0, .5f), new(0, -.5f), 1, 2, 2, new(0, 1), new(1, .5f), new(1, .5f)),
@@ -878,7 +878,7 @@ namespace XnaGame.WorldMap.Liquid
             true, true, true,
             true,        true,
             true, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(1, 0), new(0, 1), new(0, 0), 3, 2, 9, new(0, 1), new(1, 0), new(0, 0)),
                 (new(1, 0), new(0, 0), new(0, 0), 3, 9, 9, new(0, 1), new(0, 1), new(0, 0)),
@@ -890,7 +890,7 @@ namespace XnaGame.WorldMap.Liquid
             true, true, false,
             true,        true,
             false, true, true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(1, 0), new(0, -1), new(0, 1), 4, 2, 1, new(0, 0), new(1, 1), new(0, 0)),
                 (new(-1, 0), new(0, 1), new(0, -1), 3, 1, 2, new(1, 1), new(0, 0), new(1, 1)),
@@ -903,7 +903,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true, false,
             true,        true,
             false, false, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, .5f), new(0, -.5f), new(-.5f, 0), 1, 1, 4, new(0, .5f), new(0, .5f), new(.5f, 0)),
                 (new(0, .5f), new(0, -.5f), new(.5f, 0), 2, 2, 4, new(1, .5f), new(1, .5f), new(.5f, 0)),
@@ -914,7 +914,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true, false,
             true,        true,
             false, false, true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, .5f), new(0, -.5f), new(-.5f, 0), 1, 1, 4, new(0, .5f), new(0, .5f), new(.5f, 0)),
                 (new(0, .5f), new(0, -.5f), new(.5f, 0), 2, 2, 4, new(1, .5f), new(1, .5f), new(.5f, 0)),
@@ -925,7 +925,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true, false,
             true,        true,
             true, false, true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, .5f), new(0, -.5f), new(-.5f, 0), 1, 1, 4, new(0, .5f), new(0, .5f), new(.5f, 0)),
                 (new(0, .5f), new(0, -.5f), new(.5f, 0), 2, 2, 4, new(1, .5f), new(1, .5f), new(.5f, 0)),
@@ -937,7 +937,7 @@ namespace XnaGame.WorldMap.Liquid
             true, true, false,
             true,        true,
             false, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, 0), new(1, 0), new(0, 1), 9, 4, 1, new(0, 0), new(0, 0), new(0, 0)),
                 (new(1, 0), new(0, 1), new(0, .5f), 4, 1, 2, new(0, 0), new(0, 0), new(1, .5f)),
@@ -950,7 +950,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true, false,
             true,        true,
             true, true, true,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, 0), new(0, -1), new(-.5f, 0), 9, 1, 4, new(0, 1), new(0, 1), new(.5f, 0)),
                 (new(0, 0), new(0, -1), new(.5f, 0), 9, 2, 4, new(1, 1), new(1, 1), new(.5f, 0)),
@@ -961,7 +961,7 @@ namespace XnaGame.WorldMap.Liquid
             false, true, false,
             true,        true,
             false, true, false,
-            new (FVector2, FVector2, FVector2, byte, byte, byte, FVector2, FVector2, FVector2)[]
+            new (Vec2, Vec2, Vec2, byte, byte, byte, Vec2, Vec2, Vec2)[]
             {
                 (new(0, -.5f), new(-.5f, 0), new(.5f, 0), 1, 4, 4, new(0, .5f), new(.5f, 0), new(.5f, 0)),
                 (new(0, -.5f), new(0, .5f), new(.5f, 0), 1, 1, 4, new(0, .5f), new(0, .5f), new(.5f, 0)),

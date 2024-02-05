@@ -7,7 +7,7 @@ namespace XnaGame.UI.GUIElements
     {
         private readonly Style style;
 
-        public Window(GUIElement GUI, FVector2 anchor, FRectangle rectangle, Style style) : base(GUI, anchor)
+        public Window(GUIElement GUI, Vec2 anchor, FRectangle rectangle, Style style) : base(GUI, anchor)
         {
             this.rectangle = rectangle;
             this.style = style;

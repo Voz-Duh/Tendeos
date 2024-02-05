@@ -11,7 +11,7 @@ namespace XnaGame.UI.GUIElements
         private readonly Action<FRectangle> icon;
         private readonly Action action;
 
-        public Button(GUIElement GUI, FVector2 anchor, FRectangle rectangle, Action action, Style style, Sprite icon) : base(GUI, anchor)
+        public Button(GUIElement GUI, Vec2 anchor, FRectangle rectangle, Action action, Style style, Sprite icon) : base(GUI, anchor)
         {
             this.rectangle = rectangle;
             this.style = style;
@@ -19,7 +19,7 @@ namespace XnaGame.UI.GUIElements
             this.action = action;
         }
 
-        public Button(GUIElement GUI, FVector2 anchor, FRectangle rectangle, Action action, Style style, Action<FRectangle> icon) : base(GUI, anchor)
+        public Button(GUIElement GUI, Vec2 anchor, FRectangle rectangle, Action action, Style style, Action<FRectangle> icon) : base(GUI, anchor)
         {
             this.rectangle = rectangle;
             this.style = style;

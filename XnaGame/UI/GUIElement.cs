@@ -18,9 +18,9 @@ namespace XnaGame.UI
         public bool MouseOn { get; private set; }
 
         public GUIElement Parent { get; private set; }
-        public FVector2 Anchor { get; }
+        public Vec2 Anchor { get; }
 
-        public GUIElement(GUIElement parent, FVector2 anchor)
+        public GUIElement(GUIElement parent, Vec2 anchor)
         {
             Anchor = anchor;
             parent?.Add(this);
@@ -49,12 +49,12 @@ namespace XnaGame.UI
 
         public void Remove() => Parent.Remove(this);
 
-        public FVector2 GetAnchoredPosition(FVector2 point, FRectangle rectangle) => rectangle.Location + (rectangle.Size - this.rectangle.Size) * Anchor + point;
+        public Vec2 GetAnchoredPosition(Vec2 point, FRectangle rectangle) => rectangle.Location + (rectangle.Size - this.rectangle.Size) * Anchor + point;
 
-        public void Draw() => BaseDraw(new FRectangle(FVector2.Zero, Camera.WorldViewport));
+        public void Draw() => BaseDraw(new FRectangle(Vec2.Zero, Camera.WorldViewport));
         public void BaseDraw(FRectangle rectangle)
         {
-            FRectangle rect = this.rectangle.Size == FVector2.Zero ? rectangle : new FRectangle(GetAnchoredPosition(this.rectangle.Location, rectangle), this.rectangle.Size);
+            FRectangle rect = this.rectangle.Size == Vec2.Zero ? rectangle : new FRectangle(GetAnchoredPosition(this.rectangle.Location, rectangle), this.rectangle.Size);
             Draw(rect);
 
             DrawAction(rect);
@@ -65,10 +65,10 @@ namespace XnaGame.UI
 
         }
 
-        public void Update() => BaseUpdate(new FRectangle(FVector2.Zero, Camera.WorldViewport));
+        public void Update() => BaseUpdate(new FRectangle(Vec2.Zero, Camera.WorldViewport));
         public void BaseUpdate(FRectangle rectangle)
         {
-            FRectangle rect = this.rectangle.Size == FVector2.Zero ? rectangle : new FRectangle(GetAnchoredPosition(this.rectangle.Location, rectangle), this.rectangle.Size);
+            FRectangle rect = this.rectangle.Size == Vec2.Zero ? rectangle : new FRectangle(GetAnchoredPosition(this.rectangle.Location, rectangle), this.rectangle.Size);
             Update(rect);
 
             if (MouseOn)
@@ -91,7 +91,7 @@ namespace XnaGame.UI
 
         public virtual void Update(FRectangle rectangle)
         {
-            if (this.rectangle.Size == FVector2.Zero)
+            if (this.rectangle.Size == Vec2.Zero)
             {
                 Mouse.OnGUI = false;
                 MouseOn = true;
@@ -111,15 +111,15 @@ namespace XnaGame.UI
 
             SDraw.Rect(texture[0], rectangle.Location, null, 0, 0, Origin.Zero, Origin.Zero);
             SDraw.Rect(texture[1], new FRectangle(rectangle.X + t00w, rectangle.Y, rectangle.Width - t00w - t22w, t00h), 0);
-            SDraw.Rect(texture[2], new FVector2(rectangle.Right - t22w, rectangle.Y), null, 0, 0, Origin.Zero, Origin.Zero);
+            SDraw.Rect(texture[2], new Vec2(rectangle.Right - t22w, rectangle.Y), null, 0, 0, Origin.Zero, Origin.Zero);
 
             SDraw.Rect(texture[3], new FRectangle(rectangle.X, rectangle.Y + t00h, t00w, rectangle.Height - t00h - t22h), 0);
             SDraw.Rect(texture[4], new FRectangle(rectangle.X + t00w, rectangle.Y + t00h, rectangle.Width - t00w - t22w, rectangle.Height - t00h - t22h), 0);
             SDraw.Rect(texture[5], new FRectangle(rectangle.Right - t22w, rectangle.Y + t00h, t22w, rectangle.Height - t00h - t22h), 0);
 
-            SDraw.Rect(texture[6], new FVector2(rectangle.X, rectangle.Top - t22h), null, 0, 0, Origin.Zero, Origin.Zero);
+            SDraw.Rect(texture[6], new Vec2(rectangle.X, rectangle.Top - t22h), null, 0, 0, Origin.Zero, Origin.Zero);
             SDraw.Rect(texture[7], new FRectangle(rectangle.X + t00w, rectangle.Top - t22h, rectangle.Width - t00w - t22w, t22h), 0);
-            SDraw.Rect(texture[8], new FVector2(rectangle.Right - t22w, rectangle.Top - t22h), null, 0, 0, Origin.Zero, Origin.Zero);
+            SDraw.Rect(texture[8], new Vec2(rectangle.Right - t22w, rectangle.Top - t22h), null, 0, 0, Origin.Zero, Origin.Zero);
         }
 
         #endregion

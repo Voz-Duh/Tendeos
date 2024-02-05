@@ -1,11 +1,9 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-using nkast.Aether.Physics2D.Dynamics;
 using XnaGame.Inventory;
 using XnaGame.UI;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
 using XnaGame.Utils.Input;
-using XnaGame.WorldMap;
 
 namespace XnaGame.PEntities.Content
 {
@@ -26,7 +24,7 @@ namespace XnaGame.PEntities.Content
 
         private readonly ArmData armData;
 
-        private FVector2 offset;
+        private Vec2 offset;
 
         private byte inArm;
 
@@ -41,18 +39,10 @@ namespace XnaGame.PEntities.Content
 
         public Player(GUIElement GUI, Sprite headSprite, Sprite armLSprite, Sprite armRSprite, Sprite bodySprite, Sprite legsSprite) : base()
         {
-            Body body = new Body();
-            Fixture fixture = body.CreateSmoothRectangle(1, width, height, 1, FVector2.Zero);
-            fixture.Friction = 0;
-            fixture.CollisionCategories = Category.Cat2;
-            fixture.CollidesWith = Category.Cat1;
+            Collider collider = Physics.Create(width, height, 1, 0);
+            collider.tag = this;
 
-            body.BodyType = BodyType.Dynamic;
-            body.FixedRotation = true;
-            body.Tag = this;
-            body.SleepingAllowed = false;
-            Core.world.Add(body);
-            transform = new BodyTransform(body);
+            transform = new BodyTransform(collider);
             this.headSprite = headSprite;
             armLSprites = armLSprite.Split(armStates, armStateLines, 1);
             armRSprites = armRSprite.Split(armStates, armStateLines, 1);
@@ -68,7 +58,7 @@ namespace XnaGame.PEntities.Content
 
         public override void Draw()
         {
-            offset = FVector2.Zero;
+            offset = Vec2.Zero;
             int bodySprite = 0;
             int legSprite;
             if (onFloor)
@@ -79,12 +69,12 @@ namespace XnaGame.PEntities.Content
 
                     switch (anim)
                     {
-                        case 0: offset = new FVector2(1, 1); bodySprite = 1; break;
-                        case 1: offset = new FVector2(1, 0); bodySprite = 1; break;
-                        case 2: offset = new FVector2(1, 0); bodySprite = 2; break;
-                        case 3: offset = new FVector2(1, 1); bodySprite = 1; break;
-                        case 4: offset = new FVector2(1, 0); bodySprite = 1; break;
-                        case 5: offset = new FVector2(1, 0); bodySprite = 2; break;
+                        case 0: offset = new Vec2(1, 1); bodySprite = 1; break;
+                        case 1: offset = new Vec2(1, 0); bodySprite = 1; break;
+                        case 2: offset = new Vec2(1, 0); bodySprite = 2; break;
+                        case 3: offset = new Vec2(1, 1); bodySprite = 1; break;
+                        case 4: offset = new Vec2(1, 0); bodySprite = 1; break;
+                        case 5: offset = new Vec2(1, 0); bodySprite = 2; break;
                     }
 
                     legSprite = anim;
@@ -103,19 +93,19 @@ namespace XnaGame.PEntities.Content
 
             SDraw.SpriteEffects = transform.flipX ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
 
-            SDraw.Rect(armLSprites[armsState], transform.Local2World(offset + new FVector2(2, -4)), armLRotation, 1, 0);
+            SDraw.Rect(armLSprites[armsState], transform.Local2World(offset + new Vec2(2, -4)), armLRotation, 1, 0);
             if (onFloor && moving)
-                SDraw.Rect(legsMoveSprites[legSprite], transform.Position + FVector2.UnitY * 3, 0, 1, 0);
+                SDraw.Rect(legsMoveSprites[legSprite], transform.Position + Vec2.UnitY * 3, 0, 1, 0);
             else if (onFloor)
-                SDraw.Rect(legsSprites[0], transform.Position + FVector2.UnitY * 3, 0, 1, 0);
-            SDraw.Rect(bodySprites[bodySprite], transform.Local2World(new FVector2(0, offset.Y)), 0, 1, 0);
-            SDraw.Rect(headSprite, transform.Local2World(offset - FVector2.UnitY * 5), 0, 1, 0, Origin.Center, Origin.One);
-            if (!onFloor) SDraw.Rect(legsSprites[1], transform.Position + FVector2.UnitY * 3, 0, 1, 0);
+                SDraw.Rect(legsSprites[0], transform.Position + Vec2.UnitY * 3, 0, 1, 0);
+            SDraw.Rect(bodySprites[bodySprite], transform.Local2World(new Vec2(0, offset.Y)), 0, 1, 0);
+            SDraw.Rect(headSprite, transform.Local2World(offset - Vec2.UnitY * 5), 0, 1, 0, Origin.Center, Origin.One);
+            if (!onFloor) SDraw.Rect(legsSprites[1], transform.Position + Vec2.UnitY * 3, 0, 1, 0);
             IItem item = inventory.items[0, inArm].item;
             if (!item?.Flip ?? false) SDraw.SpriteEffects = SpriteEffects.None;
             item?.With(this, armsState, armLRotation, armRRotation, armData);
             if (!item?.Flip ?? false) SDraw.SpriteEffects = transform.flipX ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
-            SDraw.Rect(armRSprites[armsState], transform.Local2World(offset + new FVector2(-2, -4)), armRRotation, 1, 0);
+            SDraw.Rect(armRSprites[armsState], transform.Local2World(offset + new Vec2(-2, -4)), armRRotation, 1, 0);
 
             SDraw.SpriteEffects = SpriteEffects.None;
         }
@@ -127,28 +117,15 @@ namespace XnaGame.PEntities.Content
             armLRotation = armRRotation = 0;
 
             onFloor = false;
-            FVector2 floorVelocity = FVector2.Zero;
-            RayCastReportFixtureDelegate rayCast = (fixture, point, normal, fraction) =>
-            {
-                if (fixture.Body.Tag is IMap)
-                {
-                    onFloor = true;
-                    floorVelocity = fixture.Body.GetLinearVelocityFromWorldPoint(point);
-                    return 0;
-                }
-                return -1;
-            };
-            Core.world.RayCast(rayCast,
-                transform.Position,
-                transform.Position + FVector2.UnitY * (height / 2 + 0.1f));
-            Core.world.RayCast(rayCast,
-                transform.Position + new FVector2(width / 2 - 0.1f, 0),
-                transform.Position + new FVector2(width / 2 - 0.1f, height / 2 + 0.1f));
-            Core.world.RayCast(rayCast,
-                transform.Position + new FVector2(-width / 2 + 0.1f, 0),
-                transform.Position + new FVector2(-width / 2 + 0.1f, height / 2f + 0.1f));
+            RaycastMapDelegate rayCast = (point, normal, dist) => onFloor = true;
+            Physics.RaycastMap(rayCast,
+                transform.Position + new Vec2(width / 2 - 0.1f, 0),
+                new Vec2(0, height / 2f + 0.2f));
+            Physics.RaycastMap(rayCast,
+                transform.Position + new Vec2(-width / 2 + 0.1f, 0),
+                new Vec2(0, height / 2f + 0.2f));
 
-            float yVel = transform.body.LinearVelocity.Y;
+            float yVel = transform.body.velocity.Y;
 
             int x = 0;
             if (Keyboard.IsDown(Keys.D)) x++;
@@ -164,10 +141,9 @@ namespace XnaGame.PEntities.Content
 
             if (onFloor && Keyboard.IsDown(Keys.Space)) yVel = -jumpPower;
 
-            transform.body.LinearVelocity = new FVector2(x * baseSpeed, yVel) + floorVelocity;
+            transform.body.velocity = new Vec2(x * baseSpeed, yVel);
 
             Core.camera.Position = transform.Position;
-
 
             if (!item?.Animated ?? true) armsAnimationTimer = 0;
             armData.Clear();
@@ -182,12 +158,10 @@ namespace XnaGame.PEntities.Content
             if (Keyboard.IsPressed(Keys.D3)) ChangeArm(2);
             if (Keyboard.IsPressed(Keys.D4)) ChangeArm(3);
             if (Keyboard.IsPressed(Keys.D5)) ChangeArm(4);
-            if (Keyboard.IsPressed(Keys.Q))
+            if (inventory.items[0, inArm].item != null && Keyboard.IsPressed(Keys.Q))
             {
-                if (inventory.items[0, inArm].item == null) goto SKIP;
                 new Item(inventory.items[0, inArm], transform.Position);
                 inventory.items[0, inArm] = default;
-                SKIP:;
             }
         }
 
@@ -202,8 +176,8 @@ namespace XnaGame.PEntities.Content
         public float Local2World(float degrees) => transform.Local2World(degrees);
         public float World2Local(float degrees) => transform.World2Local(degrees);
 
-        public FVector2 Local2World(FVector2 point) => transform.Local2World(point + offset);
-        public FVector2 World2Local(FVector2 point) => transform.World2Local(point - offset);
+        public Vec2 Local2World(Vec2 point) => transform.Local2World(point + offset);
+        public Vec2 World2Local(Vec2 point) => transform.World2Local(point - offset);
 
         public static byte GetState(int index, int line) => (byte)(index + line * armStates);
     }

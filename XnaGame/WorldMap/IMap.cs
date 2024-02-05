@@ -19,8 +19,8 @@ namespace XnaGame.WorldMap
         TileData GetTile(int x, int y);
         TileData GetTile((int x, int y) position);
         (int x, int y) World2Cell(float x, float y);
-        (int x, int y) World2Cell(FVector2 position);
-        FVector2 Cell2World(int x, int y);
-        FVector2 Cell2World((int x, int y) position);
+        (int x, int y) World2Cell(Vec2 position);
+        Vec2 Cell2World(int x, int y);
+        Vec2 Cell2World((int x, int y) position);
     }
 }

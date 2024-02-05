@@ -17,7 +17,7 @@ namespace XnaGame.Inventory
 
         public InventoryContainer(GUIElement GUI, ITransform transform)
         {
-            on = new Button(null, new FVector2(0, 0), new FRectangle(0, 0, slotSize, slotSize), () =>
+            on = new Button(null, new Vec2(0, 0), new FRectangle(0, 0, slotSize, slotSize), () =>
             {
                 on.Remove();
                 window.Remove();
@@ -26,17 +26,17 @@ namespace XnaGame.Inventory
                 if (Selected.item != null)
                 {
                     int count = Add(Selected.item, Selected.count);
-                    if (count != 0) new Item((Selected.item, count), transform.Local2World(FVector2.Zero));
+                    if (count != 0) new Item((Selected.item, count), transform.Local2World(Vec2.Zero));
                 }
                 Selected = default;
             }, Core.buttonStyle, Core.OnInventoryIcon);
-            window = new Window(null, new FVector2(0, 0), new FRectangle(slotSize + 1, 0, items.GetLength(0) * (slotSize + 1) + 3, items.GetLength(1) * (slotSize + 1) + 3), Core.windowStyle);
+            window = new Window(null, new Vec2(0, 0), new FRectangle(slotSize + 1, 0, items.GetLength(0) * (slotSize + 1) + 3, items.GetLength(1) * (slotSize + 1) + 3), Core.windowStyle);
 
             for (int x = 0; x < items.GetLength(0); x++)
                 for (int y = 0; y < items.GetLength(1); y++)
                 {
                     int _x = x, _y = y;
-                    new Button(window, new FVector2(0, 0), new FRectangle(
+                    new Button(window, new Vec2(0, 0), new FRectangle(
                         y * (slotSize + 1) + 2,
                         x * (slotSize + 1) + 2,
                         slotSize, slotSize),
@@ -45,11 +45,11 @@ namespace XnaGame.Inventory
                         {
                             if (items[_x, _y].item == null) return;
                             SDraw.Rect(items[_x, _y].item.ItemSprite, rectangle.Center);
-                            SDraw.Text(Core.font, $"{items[_x, _y].count}개", rectangle.Center + FVector2.One * -4, 1, 0, Origin.Zero, Origin.Zero);
+                            SDraw.Text(Core.font, $"{items[_x, _y].count}개", rectangle.Center + Vec2.One * -4, 1, 0, Origin.Zero, Origin.Zero);
                         });
                 }
 
-            off = new Button(GUI, new FVector2(0, 0), new FRectangle(0, 0, slotSize, slotSize), () =>
+            off = new Button(GUI, new Vec2(0, 0), new FRectangle(0, 0, slotSize, slotSize), () =>
             {
                 off.Remove();
                 GUI.Add(on);
@@ -62,7 +62,7 @@ namespace XnaGame.Inventory
         {
             if (Selected.item == null) return;
             SDraw.Rect(Selected.item.ItemSprite, Mouse.GUIPosition);
-            SDraw.Text(Core.font, $"{Selected.count}개", Mouse.GUIPosition + FVector2.One * -4, 1, 0, Origin.Zero, Origin.Zero);
+            SDraw.Text(Core.font, $"{Selected.count}개", Mouse.GUIPosition + Vec2.One * -4, 1, 0, Origin.Zero, Origin.Zero);
         }
 
         public (IItem item, int count) Selected { get; private set; }

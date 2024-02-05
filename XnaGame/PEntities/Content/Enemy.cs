@@ -1,5 +1,4 @@
-﻿using nkast.Aether.Physics2D.Dynamics;
-using System;
+﻿using System;
 using XnaGame.Utils;
 using XnaGame.WorldMap;
 
@@ -10,19 +9,19 @@ namespace XnaGame.PEntities.Content
         public readonly EnemyData data;
         private readonly IEnemyComponent[] components;
         private readonly float viewRadius;
-        private readonly FVector2 size;
+        private readonly Vec2 size;
         private readonly bool seeAnytime;
         public readonly float maxHealth;
         public readonly BodyTransform transform;
 
-        public FVector2 lastPlayerPosition;
+        public Vec2 lastPlayerPosition;
 
         public byte state = 0;
         public bool baseState = false;
         public bool checkPosition = false;
         public float health;
 
-        public Enemy(float health, float viewRadius, FVector2 size, params IEnemyComponent[] components)
+        public Enemy(float health, float viewRadius, Vec2 size, params IEnemyComponent[] components)
         {
             this.components = components;
             this.viewRadius = viewRadius * Map.tileSize;
@@ -32,7 +31,7 @@ namespace XnaGame.PEntities.Content
             this.health = health;
         }
 
-        public Enemy(float health, float viewRadius, FVector2 size, bool seeAnytime, params IEnemyComponent[] components)
+        public Enemy(float health, float viewRadius, Vec2 size, bool seeAnytime, params IEnemyComponent[] components)
         {
             this.components = components;
             this.viewRadius = viewRadius * Map.tileSize;
@@ -42,21 +41,14 @@ namespace XnaGame.PEntities.Content
             this.health = health;
         }
 
-        private Enemy(FVector2 position, IEnemyComponent[] components, float health, float viewRadius, FVector2 size, bool seeAnytime = false)
+        private Enemy(Vec2 position, IEnemyComponent[] components, float health, float viewRadius, Vec2 size, bool seeAnytime = false)
         {
-            Body body = new Body();
-            Fixture fixture = body.CreateSmoothRectangle(1, size.X, size.Y, 1, FVector2.Zero);
-            fixture.Friction = 0;
-            fixture.CollisionCategories = Category.Cat2;
-            fixture.CollidesWith = Category.Cat1;
+            Collider collider = Physics.Create(size.X, size.Y, 1, 0);
+            
+            collider.tag = this;
+            collider.position = position;
 
-            body.BodyType = BodyType.Dynamic;
-            body.FixedRotation = true;
-            body.Tag = this;
-            body.SleepingAllowed = false;
-            body.Position = position;
-            Core.world.Add(body);
-            transform = new BodyTransform(body);
+            transform = new BodyTransform(collider);
             data = new EnemyData();
             this.components = components;
             this.viewRadius = viewRadius;
@@ -66,7 +58,7 @@ namespace XnaGame.PEntities.Content
             this.health = health;
         }
 
-        public Enemy Spawn(FVector2 position)
+        public Enemy Spawn(Vec2 position)
         {
             var clone = new Enemy(position, components, health, viewRadius, size, seeAnytime);
             Core.AddEntity(clone.Draw, clone.Update);
@@ -85,18 +77,10 @@ namespace XnaGame.PEntities.Content
         public override void Update()
         {
             if (seeAnytime) baseState = true;
-            else if (FVector2.Distance(Core.player.transform.Position, transform.Position) <= viewRadius)
+            else if (Vec2.Distance(Core.player.transform.Position, transform.Position) <= viewRadius)
             {
                 bool see = true;
-                Core.world.RayCast((fixture, point, normal, fraction) =>
-                    {
-                        if (fixture.Body.Tag is IMap)
-                        {
-                            see = false;
-                            return 0;
-                        }
-                        return -1;
-                    },
+                Physics.LinecastMap((point, normal, fraction) => see = false,
                     transform.Position,
                     Core.player.transform.Position);
                 if (baseState = see)
@@ -122,7 +106,7 @@ namespace XnaGame.PEntities.Content
                 data.current = component.GetType().Name;
                 component.CheckState(this, data);
             }
-            if (FVector2.Distance(transform.Position, lastPlayerPosition) < MathF.Max(size.X, size.Y))
+            if (Vec2.Distance(transform.Position, lastPlayerPosition) < MathF.Max(size.X, size.Y))
                 checkPosition = false;
         }
 
@@ -160,7 +144,7 @@ namespace XnaGame.PEntities.Content
 
         public virtual void Die()
         {
-            transform.body.World.Remove(transform.body);
+            Physics.Destroy(transform.body);
             Remove();
             foreach (IEnemyComponent component in components)
             {

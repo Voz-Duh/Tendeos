@@ -5,14 +5,14 @@ namespace XnaGame.Utils
 {
     public class Effect : Entity
     {
-        public FVector2 position;
+        public Vec2 position;
         public float rotation;
-        private FVector2
-            emitLivetime = FVector2.One,
-            emitRotation = FVector2.Zero,
-            emitSize = FVector2.One,
-            emitSpeed = FVector2.Zero,
-            emits = FVector2.One;
+        private Vec2
+            emitLivetime = Vec2.One,
+            emitRotation = Vec2.Zero,
+            emitSize = Vec2.One,
+            emitSpeed = Vec2.Zero,
+            emits = Vec2.One;
         private Sprite[] emitAnimation;
         private float frameRate;
         private Particle[] particles;
@@ -24,7 +24,7 @@ namespace XnaGame.Utils
         {
         }
 
-        private Effect(FVector2 position, float rotation, FVector2 emitLivetime, FVector2 emitRotation, FVector2 emitSize, FVector2 emitSpeed, FVector2 emits, Sprite[] emitAnimation, float frameRate, Particle[] particles, float maxTime)
+        private Effect(Vec2 position, float rotation, Vec2 emitLivetime, Vec2 emitRotation, Vec2 emitSize, Vec2 emitSpeed, Vec2 emits, Sprite[] emitAnimation, float frameRate, Particle[] particles, float maxTime)
         {
             this.position = position;
             this.rotation = rotation;
@@ -39,7 +39,7 @@ namespace XnaGame.Utils
             this.maxTime = maxTime;
         }
 
-        public Effect Spawn(FVector2 position, float angle)
+        public Effect Spawn(Vec2 position, float angle)
         {
             int len = URandom.Int((int)emits.X, (int)emits.Y);
             float maxTime = 0;
@@ -68,7 +68,7 @@ namespace XnaGame.Utils
             {
                 Particle p = particles[i];
                 if (timer > p.livetime) continue;
-                SDraw.Rect(emitAnimation[emitAnimation.Animation(frameRate, timer)], p.position + FVector2.RightOf(p.rotation + rotation) * timer * p.speed, p.rotation + rotation, p.size);
+                SDraw.Rect(emitAnimation[emitAnimation.Animation(frameRate, timer)], p.position + Vec2.RightOf(p.rotation + rotation) * timer * p.speed, p.rotation + rotation, p.size);
             }
         }
 
@@ -79,20 +79,20 @@ namespace XnaGame.Utils
         }
 
         #region Sets
-        public void SetLivetime(float min, float max) => emitLivetime = new FVector2(min, max);
-        public void SetLivetime(float value) => emitLivetime = new FVector2(value);
+        public void SetLivetime(float min, float max) => emitLivetime = new Vec2(min, max);
+        public void SetLivetime(float value) => emitLivetime = new Vec2(value);
 
-        public void SetRotation(float min, float max) => emitRotation = new FVector2(min, max);
-        public void SetRotation(float value) => emitRotation = new FVector2(value);
+        public void SetRotation(float min, float max) => emitRotation = new Vec2(min, max);
+        public void SetRotation(float value) => emitRotation = new Vec2(value);
 
-        public void SetSize(float min, float max) => emitSize = new FVector2(min, max);
-        public void SetSize(float value) => emitSize = new FVector2(value);
+        public void SetSize(float min, float max) => emitSize = new Vec2(min, max);
+        public void SetSize(float value) => emitSize = new Vec2(value);
 
-        public void SetSpeed(float min, float max) => emitSpeed = new FVector2(min, max);
-        public void SetSpeed(float value) => emitSpeed = new FVector2(value);
+        public void SetSpeed(float min, float max) => emitSpeed = new Vec2(min, max);
+        public void SetSpeed(float value) => emitSpeed = new Vec2(value);
 
-        public void SetEmits(int min, int max) => emits = new FVector2(min, max);
-        public void SetEmits(int value) => emits = new FVector2(value);
+        public void SetEmits(int min, int max) => emits = new Vec2(min, max);
+        public void SetEmits(int value) => emits = new Vec2(value);
 
         public void SetDraw(Sprite sprite) => emitAnimation = new Sprite[] { sprite };
         public void SetDraw(Sprite[] animation, float frameRate, bool livetime = false)
@@ -101,7 +101,7 @@ namespace XnaGame.Utils
             this.frameRate = frameRate;
             if (livetime)
             {
-                emitLivetime = new FVector2((animation.Length-1) * frameRate);
+                emitLivetime = new Vec2((animation.Length-1) * frameRate);
             }
         }
         #endregion
@@ -109,7 +109,7 @@ namespace XnaGame.Utils
         private struct Particle
         {
             public float livetime, rotation, size, speed;
-            public FVector2 position;
+            public Vec2 position;
         }
     }
 }

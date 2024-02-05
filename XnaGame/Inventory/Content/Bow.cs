@@ -38,8 +38,8 @@ namespace XnaGame.Inventory.Content
         public void Use(ITransform transform, ref byte armsState, ref float armLRotation, ref float armRRotation, ref int count, ref float timer, ArmData armData)
         {
             int frame = 0;
-            FVector2 basePosition = transform.Local2World(new FVector2(2, -4));
-            FVector2 position = basePosition - Mouse.Position;
+            Vec2 basePosition = transform.Local2World(new Vec2(2, -4));
+            Vec2 position = basePosition - Mouse.Position;
             armLRotation = MathHelper.ToDegrees(MathF.Atan2(position.Y, position.X)) + 90;
             position.Normalize();
 
@@ -54,7 +54,7 @@ namespace XnaGame.Inventory.Content
                 timer = 0;
             }
 
-            FVector2 rp = transform.Local2World(new FVector2(-2, -4)) - (basePosition - position * arrowOffset.max);
+            Vec2 rp = transform.Local2World(new Vec2(-2, -4)) - (basePosition - position * arrowOffset.max);
             position = basePosition - position * MathHelper.Lerp(arrowOffset.max, arrowOffset.min, frame / (float)(sprites.Length-1));
             armRRotation = MathHelper.ToDegrees(MathF.Atan2(rp.Y, rp.X)) + 90;
 
@@ -69,10 +69,10 @@ namespace XnaGame.Inventory.Content
         public void With(ITransform transform, byte armsState, float armLRotation, float armRRotation, ArmData armData)
         {
             armData.Get(out int frame, "frame");
-            armData.Get(out FVector2 position, "position");
+            armData.Get(out Vec2 position, "position");
 
-            FVector2 offset = FVector2.UpOf(armLRotation) * this.offset;
-            SDraw.Rect(sprites[frame], transform.Local2World(new FVector2(2, -4)) + offset, armLRotation + 90);
+            Vec2 offset = Vec2.UpOf(armLRotation) * this.offset;
+            SDraw.Rect(sprites[frame], transform.Local2World(new Vec2(2, -4)) + offset, armLRotation + 90);
             SDraw.Rect(projectile().sprite, position + offset, armLRotation + 90, 1, 0, Origin.Zero);
         }
     }

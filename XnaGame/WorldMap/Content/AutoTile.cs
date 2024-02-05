@@ -1,11 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
-using nkast.Aether.Physics2D.Dynamics;
 using XnaGame.Inventory;
 using XnaGame.PEntities;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
 using XnaGame.Utils.Input;
-using XnaGame.WorldMap.Structures;
 
 namespace XnaGame.WorldMap.Content
 {
@@ -36,7 +34,7 @@ namespace XnaGame.WorldMap.Content
             data[0] = UpdateTile(map, x, y);
         }
 
-        public void Draw(IMap map, int x, int y, FVector2 drawPosition, float angle, TileData data)
+        public void Draw(IMap map, int x, int y, Vec2 drawPosition, float angle, TileData data)
         {
             float g = data.Health / Health;
             SDraw.Rect(sprites[data[0]], new Color(g, g, g), drawPosition, angle, 1, 0, Origin.Zero, Origin.Zero);
@@ -82,7 +80,7 @@ namespace XnaGame.WorldMap.Content
             return res;
         }
 
-        public void Update(ITiledBody body, IMap map, int x, int y, TileData data)
+        public void Update(IMap map, int x, int y, TileData data)
         {
         }
 
@@ -98,7 +96,7 @@ namespace XnaGame.WorldMap.Content
 
         public void With(ITransform transform, byte armsState, float armLRotation, float armRRotation, ArmData armData)
         {
-            SDraw.Rect(ItemSprite, transform.Local2World(new FVector2(2, -2)));
+            SDraw.Rect(ItemSprite, transform.Local2World(new Vec2(2, -2)));
         }
     }
 }

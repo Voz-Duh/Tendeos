@@ -45,17 +45,17 @@ namespace XnaGame.Inventory.Content
         public void Use(ITransform transform, ref byte armsState, ref float armLRotation, ref float armRRotation, ref int count, ref float timer, ArmData armData)
         {
             armsState = state;
-            FVector2 basePosition = transform.Local2World(new FVector2(0, -4));
-            FVector2 lposition = basePosition - Mouse.Position;
+            Vec2 basePosition = transform.Local2World(new Vec2(0, -4));
+            Vec2 lposition = basePosition - Mouse.Position;
             lposition.Normalize();
             float baseAngle = MathHelper.ToDegrees(MathF.Atan2(lposition.Y, lposition.X));
             float angle = baseAngle + (side ? swingAngle : -swingAngle) + 90;
-            FVector2 armPosition = basePosition + FVector2.UpOf(angle) * offset;
+            Vec2 armPosition = basePosition + Vec2.UpOf(angle) * offset;
 
-            FVector2 p = transform.Local2World(new FVector2(2, -4)) - armPosition;
+            Vec2 p = transform.Local2World(new Vec2(2, -4)) - armPosition;
             armLRotation = MathHelper.ToDegrees(MathF.Atan2(p.Y, p.X)) + 90;
 
-            p = transform.Local2World(new FVector2(-2, -4)) - armPosition;
+            p = transform.Local2World(new Vec2(-2, -4)) - armPosition;
             armRRotation = MathHelper.ToDegrees(MathF.Atan2(p.Y, p.X)) + 90;
 
             if (Mouse.LeftDown)
@@ -63,7 +63,7 @@ namespace XnaGame.Inventory.Content
                 timer += Time.Delta * swingPerSecond;
                 while (timer >= 1)
                 {
-                    FVector2 attackPosition = basePosition - lposition * attackOffset;
+                    Vec2 attackPosition = basePosition - lposition * attackOffset;
                     Attack(attackPosition);
                     Effects.slashMedium.Spawn(attackPosition, baseAngle + 180);
                     side = !side;
@@ -83,17 +83,17 @@ namespace XnaGame.Inventory.Content
 
         public void With(ITransform transform, byte armsState, float armLRotation, float armRRotation, ArmData armData)
         {
-            armData.Get(out FVector2 position, "armPosition");
+            armData.Get(out Vec2 position, "armPosition");
             armData.Get(out float angle, "angle");
 
             SDraw.Rect(sprite, position, angle + 90, 1, 0, Origin.Zero);
         }
 
-        public virtual void Attack(FVector2 point)
+        public virtual void Attack(Vec2 point)
         {
             foreach (Enemy enemy in Core.GetEntities<Enemy>())
             {
-                if (FVector2.Distance(enemy.transform.Position, point) <= attackRange)
+                if (Vec2.Distance(enemy.transform.Position, point) <= attackRange)
                 {
                     enemy.Hit(damage);
                 }

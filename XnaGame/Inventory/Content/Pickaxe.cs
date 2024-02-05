@@ -14,7 +14,7 @@ namespace XnaGame.Inventory.Content
             this.radius = radius;
         }
 
-        public override void Attack(FVector2 point)
+        public override void Attack(Vec2 point)
         {
             base.Attack(point);
             Core.map.MineTile(Core.map.World2Cell(point), power, radius);

@@ -44,7 +44,7 @@ namespace XnaGame.PEntities.Content.EnemyComponents
                     speed -= drag * Time.Delta;
                     if (speed < 0) speed = 0;
                 }
-            enemy.transform.body.LinearVelocity = new FVector2(speed, enemy.transform.body.LinearVelocity.Y);
+            enemy.transform.body.velocity.X = speed;
 
             data.Set("speed", speed);
         }
@@ -78,7 +78,7 @@ namespace XnaGame.PEntities.Content.EnemyComponents
                 speed -= acceleration * Time.Delta;
                 if (speed < -maxSpeed) speed = -maxSpeed;
             }
-            enemy.transform.body.LinearVelocity = new FVector2(speed, enemy.transform.body.LinearVelocity.Y);
+            enemy.transform.body.velocity.X = speed;
 
             data.Set("speed", speed);
         }

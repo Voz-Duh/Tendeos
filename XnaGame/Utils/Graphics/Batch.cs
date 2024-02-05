@@ -20,7 +20,7 @@ namespace XnaGame.Utils.Graphics
 
         private PrimitiveType primitiveType;
         public Color Color { private get; set; } = Color.White;
-        public FVector2 UV { private get; set; } = FVector2.Zero;
+        public Vec2 UV { private get; set; } = Vec2.Zero;
         public Vector3 Normal { private get; set; } = Vector3.Zero;
 
         public bool Batching { get; private set; }
@@ -50,7 +50,7 @@ namespace XnaGame.Utils.Graphics
 
         public void Vertex(Vector3 vector) => Vertex3(vector.X, vector.Y, vector.Z);
 
-        public void Vertex(FVector2 vector) => Vertex3(vector.X, vector.Y, 0);
+        public void Vertex(Vec2 vector) => Vertex3(vector.X, vector.Y, 0);
 
         public void Vertex3(float x, float y, float z)
         {

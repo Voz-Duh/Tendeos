@@ -6,8 +6,8 @@
 
         public static FRectangle Zero => zeroRect;
 
-        public FVector2 Location { get; set; }
-        public FVector2 Size { get; set; }
+        public Vec2 Location { get; set; }
+        public Vec2 Size { get; set; }
 
         public float Left => Location.X;
         public float Right => Location.X + Size.X;
@@ -21,7 +21,7 @@
         public float Width => Size.X;
         public float Height => Size.Y;
 
-        public FVector2 Center => Location + Size / 2;
+        public Vec2 Center => Location + Size / 2;
 
         public static bool operator ==(FRectangle value1, FRectangle value2)
         {
@@ -43,7 +43,7 @@
             return true;
         }
 
-        public FRectangle(FVector2 location, FVector2 size)
+        public FRectangle(Vec2 location, Vec2 size)
         {
             Location = location;
             Size = size;
@@ -51,11 +51,11 @@
 
         public FRectangle(float x, float y, float width, float height)
         {
-            Location = new FVector2(x, y);
-            Size = new FVector2(width, height);
+            Location = new Vec2(x, y);
+            Size = new Vec2(width, height);
         }
 
-        public bool Contains(FVector2 point) =>
+        public bool Contains(Vec2 point) =>
             point.X >= Left &&
             point.Y >= Bottom &&
             point.X <= Right &&

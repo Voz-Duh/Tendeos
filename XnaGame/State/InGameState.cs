@@ -1,15 +1,10 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using nkast.Aether.Physics2D.Common;
-using nkast.Aether.Physics2D.Dynamics;
-using System.Collections.Generic;
-using XnaGame.Content;
+﻿using XnaGame.Content;
 using XnaGame.PEntities.Content;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
 using XnaGame.Utils.Input;
 using XnaGame.WorldMap;
 using XnaGame.WorldMap.Liquid;
-using XnaGame.WorldMap.Structures;
 
 namespace XnaGame.State
 {
@@ -17,7 +12,6 @@ namespace XnaGame.State
     {
         public const float gravity = 9.8f * Map.tileSize;
 
-        private readonly World world;
         private Player player;
         private Map map;
 
@@ -25,13 +19,13 @@ namespace XnaGame.State
 
         public InGameState(Game1 game) : base(game)
         {
-            Core.world = world = new World(new FVector2(0, gravity));
             Setup();
         }
 
         public override void Init()
         {
-            Core.map = map = new Map(new Liquid[] { Liquids.water, Liquids.foo }, world, mapWidth, mapHeight, (x, y) => y < 15 ? null : Tiles.test);
+            Physics.meter = Physics.tileSize = Map.tileSize;
+            Physics.map = Core.map = map = new Map(new Liquid[] { Liquids.water, Liquids.foo }, mapWidth, mapHeight, (x, y) => y < 15 ? null : Tiles.test);
             player = new Player(GUI,
                 Sprite.Load(Game.Content, "player_m_head"),
                 Sprite.Load(Game.Content, "player_m_arm_l"),
@@ -75,7 +69,7 @@ namespace XnaGame.State
 
             Core.entities.update();
 
-            world.Step(Time.Delta);
+            Physics.Process(Time.Delta);
         }
     }
 }

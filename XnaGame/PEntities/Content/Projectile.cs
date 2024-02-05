@@ -3,30 +3,29 @@ using System;
 using XnaGame.State;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
-using XnaGame.WorldMap;
 
 namespace XnaGame.PEntities.Content
 {
     public class Projectile : Entity
     {
-        private FVector2 velocity;
-        private FVector2 position;
+        private Vec2 velocity;
+        private Vec2 position;
         private readonly float speed;
         private readonly float damage;
         public readonly Sprite sprite;
-        private FVector2 hitNormal;
+        private Vec2 hitNormal;
         private float rotation;
 
-        public Projectile(FVector2 position, float rotation, float speed, float damage, Sprite sprite)
+        public Projectile(Vec2 position, float rotation, float speed, float damage, Sprite sprite)
         {
             this.position = position;
             this.speed = speed;
-            velocity = Matrix.CreateRotationZ(MathHelper.ToRadians(rotation)).Right * speed;
+            velocity = Vec2.RightOf(rotation) * speed;
             this.damage = damage;
             this.sprite = sprite;
         }
 
-        public Projectile Spawn(FVector2 position, float rotation, float power)
+        public Projectile Spawn(Vec2 position, float rotation, float power)
         {
             var clone = new Projectile(position, rotation, speed * power, damage, sprite);
             Core.AddEntity(clone.Draw, clone.Update);
@@ -41,27 +40,25 @@ namespace XnaGame.PEntities.Content
         public override void Update()
         {
             bool collided = false;
-            Core.world.RayCast((fixture, point, normal, fraction) =>
+            Physics.Raycast((collider, point, normal, fraction) =>
             {
-                if (fixture.Body.Tag is IMap)
+                if (collider == null)
                 {
-                    position = point + normal * 0.1f;
+                    position = point;
                     collided = true;
                     hitNormal = normal;
-                    velocity = FVector2.Zero;
-                    return 0;
+                    velocity = Vec2.Zero;
+                    return true;
                 }
-
-                if (fixture.Body.Tag is Enemy enemy)
+                if (collider.tag is Enemy enemy)
                 {
                     position = point + normal * 0.1f;
                     Remove();
                     enemy.Hit(damage);
-                    return 0;
+                    return true;
                 }
-
-                return -1;
-            }, position, position + (velocity == FVector2.Zero ? -hitNormal : velocity * Time.Delta));
+                return false;
+            }, position, velocity == Vec2.Zero ? -hitNormal : velocity * Time.Delta, true);
             if (!collided)
             {
                 position += velocity * Time.Delta;

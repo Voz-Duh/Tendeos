@@ -39,115 +39,115 @@ namespace XnaGame.Utils.Graphics
                 texture.Rect,
                 color,
                 MathHelper.ToRadians(rotation),
-                FVector2.Zero,
-                position.Size / new FVector2(texture.Rect.Width, texture.Rect.Height),
+                Vec2.Zero,
+                position.Size / new Vec2(texture.Rect.Width, texture.Rect.Height),
                 SpriteEffects,
                 depth
             );
 
-        public static void Rect(Sprite texture, FVector2 position, float rotation = 0, float scale = 1, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
+        public static void Rect(Sprite texture, Vec2 position, float rotation = 0, float scale = 1, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
             Rect(texture, Color.White, position, rotation, scale, depth, xOrigin, yOrigin);
 
-        public static void Rect(Sprite texture, Color color, FVector2 position, float rotation = 0, float scale = 1, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
+        public static void Rect(Sprite texture, Color color, Vec2 position, float rotation = 0, float scale = 1, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
             spriteBatch.Draw(
                 texture,
                 position,
                 texture.Rect,
                 color,
                 MathHelper.ToRadians(rotation),
-                new FVector2(texture.Rect.Width * GetOrigin(xOrigin), texture.Rect.Height * GetOrigin(yOrigin)),
+                new Vec2(texture.Rect.Width * GetOrigin(xOrigin), texture.Rect.Height * GetOrigin(yOrigin)),
                 scale,
                 SpriteEffects,
                 depth
             );
 
-        public static void Rect(Sprite texture, FVector2 position, FVector2? scale, float rotation = 0, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
+        public static void Rect(Sprite texture, Vec2 position, Vec2? scale, float rotation = 0, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
             Rect(texture, Color.White, position, scale, rotation, depth, xOrigin, yOrigin);
 
-        public static void Rect(Sprite texture, Color color, FVector2 position, FVector2? scale, float rotation = 0, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
+        public static void Rect(Sprite texture, Color color, Vec2 position, Vec2? scale, float rotation = 0, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
             spriteBatch.Draw(
                 texture,
                 position,
                 texture.Rect,
                 color,
                 MathHelper.ToRadians(rotation),
-                new FVector2(texture.Rect.Width * GetOrigin(xOrigin), texture.Rect.Height * GetOrigin(yOrigin)),
-                scale ?? FVector2.One,
+                new Vec2(texture.Rect.Width * GetOrigin(xOrigin), texture.Rect.Height * GetOrigin(yOrigin)),
+                scale ?? Vec2.One,
                 SpriteEffects,
                 depth
             );
 
-        public static void Text(DynamicSpriteFontScaled font, string text, FVector2 position, float scale = 1, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
+        public static void Text(DynamicSpriteFontScaled font, string text, Vec2 position, float scale = 1, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
             Text(font, Color.White, text, position, scale, depth, xOrigin, yOrigin);
 
-        public static void Text(DynamicSpriteFontScaled font, string text, FVector2 position, FVector2? scale, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
+        public static void Text(DynamicSpriteFontScaled font, string text, Vec2 position, Vec2? scale, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
             Text(font, Color.White, text, position, scale, depth, xOrigin, yOrigin);
 
-        public static void Text(DynamicSpriteFontScaled font, Color color, string text, FVector2 position, float scale = 1, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center)
+        public static void Text(DynamicSpriteFontScaled font, Color color, string text, Vec2 position, float scale = 1, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center)
         {
-            FVector2 size = font.dynamic.MeasureString(text) * scale * font.scale;
+            Vec2 size = font.dynamic.MeasureString(text) * scale * font.scale;
             font.dynamic.DrawString(spriteBatch,
                 text,
-                position - new FVector2(size.X * GetOrigin(xOrigin), size.Y * GetOrigin(yOrigin)),
+                position - new Vec2(size.X * GetOrigin(xOrigin), size.Y * GetOrigin(yOrigin)),
                 color,
-                new FVector2(scale) * font.scale,
+                new Vec2(scale) * font.scale,
                 depth
             );
         }
 
-        public static void Text(DynamicSpriteFontScaled font, Color color, string text, FVector2 position, FVector2? scale, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center)
+        public static void Text(DynamicSpriteFontScaled font, Color color, string text, Vec2 position, Vec2? scale, float depth = 0, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center)
         {
-            FVector2 size = font.dynamic.MeasureString(text) * font.scale;
-            size *= scale ?? FVector2.One;
+            Vec2 size = font.dynamic.MeasureString(text) * font.scale;
+            size *= scale ?? Vec2.One;
             font.dynamic.DrawString(spriteBatch,
                 text,
-                position - new FVector2(size.X * GetOrigin(xOrigin), size.Y * GetOrigin(yOrigin)),
+                position - new Vec2(size.X * GetOrigin(xOrigin), size.Y * GetOrigin(yOrigin)),
                 color,
-                (scale ?? FVector2.One) * font.scale,
+                (scale ?? Vec2.One) * font.scale,
                 depth
             );
         }
 
-        public static void RectXLine(Sprite texture, FVector2 a, FVector2 b, float depth = 0, float scale = 1, Origin yOrigin = Origin.Center)
+        public static void RectXLine(Sprite texture, Vec2 a, Vec2 b, float depth = 0, float scale = 1, Origin yOrigin = Origin.Center)
         {
-            FVector2 diff = b - a;
+            Vec2 diff = b - a;
 
-            FVector2 position = a;
+            Vec2 position = a;
             float rotation = MathHelper.ToDegrees((float)Math.Atan2(diff.Y, diff.X));
 
-            Rect(texture, position, new FVector2(diff.Length() / texture.Width, scale), rotation, depth, Origin.Zero, yOrigin);
+            Rect(texture, position, new Vec2(diff.Length() / texture.Width, scale), rotation, depth, Origin.Zero, yOrigin);
         }
 
-        public static void RectYLine(Sprite texture, FVector2 a, FVector2 b, float depth = 0, float scale = 1, Origin xOrigin = Origin.Center)
+        public static void RectYLine(Sprite texture, Vec2 a, Vec2 b, float depth = 0, float scale = 1, Origin xOrigin = Origin.Center)
         {
-            FVector2 diff = b - a;
+            Vec2 diff = b - a;
 
-            FVector2 position = a;
+            Vec2 position = a;
             float rotation = MathHelper.ToDegrees((float)Math.Atan2(-diff.X, diff.Y));
 
-            Rect(texture, position, new FVector2(scale, diff.Length() / texture.Height), rotation, depth, xOrigin, Origin.Zero);
+            Rect(texture, position, new Vec2(scale, diff.Length() / texture.Height), rotation, depth, xOrigin, Origin.Zero);
         }
 
-        public static void RectXArrow(Sprite line, Sprite texture, FVector2 a, FVector2 b, float depth = 0, float scale = 1, Origin yOrigin = Origin.Center)
+        public static void RectXArrow(Sprite line, Sprite texture, Vec2 a, Vec2 b, float depth = 0, float scale = 1, Origin yOrigin = Origin.Center)
         {
-            FVector2 diff = b - a;
+            Vec2 diff = b - a;
 
-            FVector2 position = a;
+            Vec2 position = a;
             float rotation = MathHelper.ToDegrees((float)Math.Atan2(diff.Y, diff.X));
 
-            Rect(line, position, new FVector2(diff.Length() / line.Width, scale), rotation, depth, Origin.Zero, yOrigin);
+            Rect(line, position, new Vec2(diff.Length() / line.Width, scale), rotation, depth, Origin.Zero, yOrigin);
 
             Rect(texture, b, rotation, 1, depth, Origin.Center, yOrigin);
         }
 
-        public static void RectYArrow(Sprite line, Sprite texture, FVector2 a, FVector2 b, float depth = 0, float scale = 1, Origin xOrigin = Origin.Center)
+        public static void RectYArrow(Sprite line, Sprite texture, Vec2 a, Vec2 b, float depth = 0, float scale = 1, Origin xOrigin = Origin.Center)
         {
-            FVector2 diff = b - a;
+            Vec2 diff = b - a;
 
-            FVector2 position = a;
+            Vec2 position = a;
             float rotation = MathHelper.ToDegrees((float)Math.Atan2(-diff.X, diff.Y));
 
-            Rect(line, position, new FVector2(scale, diff.Length() / line.Height), rotation, depth, xOrigin, Origin.Zero);
+            Rect(line, position, new Vec2(scale, diff.Length() / line.Height), rotation, depth, xOrigin, Origin.Zero);
 
             Rect(texture, b, rotation, 1, depth, Origin.Center, xOrigin);
         }

@@ -8,34 +8,29 @@ namespace XnaGame.PEntities;
 public class BodyTransform : ITransform
 {
     public bool flipX;
-    public float Rotation
+    public Vec2 Position
     {
-        get => body.Rotation;
-        set => body.Rotation = value;
-    }
-    public FVector2 Position
-    {
-        get => body.Position;
-        set => body.Position = value;
+        get => body.position;
+        set => body.position = value;
     }
 
 
-    public readonly Body body;
+    public readonly Collider body;
 
-    public BodyTransform(Body body)
+    public BodyTransform(Collider body)
     {
         this.body = body;
     }
 
-    public BodyTransform(Body body, bool flipX)
+    public BodyTransform(Collider body, bool flipX)
     {
         this.body = body;
         this.flipX = flipX;
     }
 
-    public float Local2World(float degrees) => degrees + MathHelper.ToDegrees(body.Rotation);
-    public float World2Local(float degrees) => degrees - MathHelper.ToDegrees(body.Rotation);
+    public float Local2World(float degrees) => degrees;
+    public float World2Local(float degrees) => degrees;
 
-    public FVector2 Local2World(FVector2 point) => body.GetWorldPoint(flipX ? new FVector2(-point.X, point.Y) : point);
-    public FVector2 World2Local(FVector2 point) => body.GetLocalPoint(flipX ? new FVector2(-point.X, point.Y) : point);
+    public Vec2 Local2World(Vec2 point) => Position + (flipX ? new Vec2(-point.X, point.Y) : point);
+    public Vec2 World2Local(Vec2 point) => Position - (flipX ? new Vec2(-point.X, point.Y) : point);
 }
