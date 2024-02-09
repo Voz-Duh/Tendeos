@@ -10,24 +10,27 @@ namespace XnaGame.PEntities.Content
     {
         private Vec2 velocity;
         private Vec2 position;
-        private readonly float speed;
-        private readonly float damage;
+        public float Speed { get; set; }
+        public float Damage { get; set; }
         public readonly Sprite sprite;
         private Vec2 hitNormal;
         private float rotation;
 
-        public Projectile(Vec2 position, float rotation, float speed, float damage, Sprite sprite)
+        public Projectile(Sprite sprite)
         {
-            this.position = position;
-            this.speed = speed;
-            velocity = Vec2.RightOf(rotation) * speed;
-            this.damage = damage;
+            velocity = Vec2.RightOf(rotation) * Speed;
             this.sprite = sprite;
         }
 
         public Projectile Spawn(Vec2 position, float rotation, float power)
         {
-            var clone = new Projectile(position, rotation, speed * power, damage, sprite);
+            var clone = new Projectile(sprite)
+            {
+                Speed = Speed * power,
+                Damage = Damage,
+                velocity = Vec2.RightOf(rotation) * Speed,
+                position = position
+            };
             Core.AddEntity(clone.Draw, clone.Update);
             return clone;
         }
@@ -54,7 +57,7 @@ namespace XnaGame.PEntities.Content
                 {
                     position = point + normal * 0.1f;
                     Remove();
-                    enemy.Hit(damage);
+                    enemy.Hit(Damage);
                     return true;
                 }
                 return false;

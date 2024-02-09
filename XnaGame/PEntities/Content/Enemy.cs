@@ -1,6 +1,6 @@
 ﻿using System;
 using XnaGame.Utils;
-using XnaGame.WorldMap;
+using XnaGame.World;
 
 namespace XnaGame.PEntities.Content
 {

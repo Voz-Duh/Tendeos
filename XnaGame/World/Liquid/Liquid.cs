@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace XnaGame.WorldMap.Liquid
+namespace XnaGame.World.Liquid
 {
     public class Liquid
     {

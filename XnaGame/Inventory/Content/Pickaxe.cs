@@ -1,23 +1,23 @@
 ﻿using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
+using XnaGame.Utils.Input;
 
 namespace XnaGame.Inventory.Content
 {
     public class Pickaxe : MeleeWeapon
     {
-        private readonly float power;
-        private readonly float radius;
+        public float Power { get; set; }
+        public float Radius { get; set; }
 
-        public Pickaxe(float power, float radius, float swingAngle, float swingPerSecond, byte state, float offset, float attackOffset, float damage, float attackRange, Sprite sprite, Sprite item) : base(swingAngle, swingPerSecond, state, offset, attackOffset, damage, attackRange, sprite, item)
+        public Pickaxe(Sprite sprite, Sprite item) : base(sprite, item)
         {
-            this.power = power;
-            this.radius = radius;
+            CanRight = true;
         }
 
         public override void Attack(Vec2 point)
         {
             base.Attack(point);
-            Core.map.MineTile(Core.map.World2Cell(point), power, radius);
+            Core.map.MineTile(Mouse.LeftDown, Core.map.World2Cell(point), Power, Radius);
         }
     }
 }

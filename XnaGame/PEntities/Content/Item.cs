@@ -2,7 +2,7 @@
 using XnaGame.State;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
-using XnaGame.WorldMap;
+using XnaGame.World;
 
 namespace XnaGame.PEntities.Content
 {

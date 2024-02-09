@@ -1,19 +1,10 @@
 ﻿using XnaGame.Utils;
 using System;
 using XnaGame.PEntities.Content;
-using XnaGame.WorldMap.Liquid;
+using XnaGame.World.Liquid;
 
-namespace XnaGame.WorldMap
+namespace XnaGame.World
 {
-    /// <summary>
-    /// Called for tile when raycasting tilemap.
-    /// </summary>
-    /// <param name="data">the tile hit by the ray @param point the point of initial intersection</param>
-    /// <param name="point">the point of intersection</param>
-    /// <param name="normal">the normal vector at the point of intersection</param>
-    /// <returns>0 to terminate, fraction to clip the ray for closest hit, 1 to continue</returns>
-    public delegate void RayCastReportTileDelegate(TileData data, Vec2 point, Vec2 normal, float fraction);
-
     public class Map : IMap
     {
         public const float tileSize = 8;
@@ -22,19 +13,23 @@ namespace XnaGame.WorldMap
         private WaterWorld waterWorld;
         private readonly int mapWidth, mapHeight;
         public readonly Chunk[,] chunks;
+        public ITile ignore;
 
-        public Map(Liquid.Liquid[] liquids, int mapWidth, int mapHeight, Func<int, int, ITile> generator)
+        public int FullWidth => mapWidth * chunkSize;
+        public int FullHeight => mapHeight * chunkSize;
+
+        public Map(int mapWidth, int mapHeight, WorldGenerator generator)
         {
             this.mapWidth = mapWidth;
             this.mapHeight = mapHeight;
             chunks = new Chunk[mapWidth, mapHeight];
 
-            waterWorld = new WaterWorld(chunkSize * mapWidth, chunkSize * mapHeight, liquids, (x, y) => generator(x, y) == null);
+            waterWorld = new WaterWorld(chunkSize * mapWidth, chunkSize * mapHeight, generator);
 
             int i, j;
             for (i = 0; i < mapWidth; i++)
                 for (j = 0; j < mapHeight; j++)
-                    chunks[i, j] = new Chunk(i, j, generator);
+                    chunks[i, j] = new Chunk(i, j, generator, waterWorld);
             for (i = 0; i < mapWidth; i++)
                 for (j = 0; j < mapHeight; j++)
                     chunks[i, j].Start(this, i, j);
@@ -93,7 +88,7 @@ namespace XnaGame.WorldMap
 
         private (int x, int y) Cell2Chunk(int x, int y) => (x / chunkSize, y / chunkSize);
 
-        public void MineTile(int x, int y, float power)
+        public void MineTile(bool top, int x, int y, float power)
         {
             if (x < 0) return;
             else if (x >= chunkSize * mapWidth) return;
@@ -105,28 +100,28 @@ namespace XnaGame.WorldMap
             Chunk c = chunks[chunk.x, chunk.y];
             int lx = x - chunk.x * chunkSize,
                 ly = y - chunk.y * chunkSize;
-            if (c[lx, ly].Tile == null) return;
-            float h = c.Mine(chunk.x, chunk.y, lx, ly, power);
+            if (c[top, lx, ly].Tile == null) return;
+            float h = c.Mine(top, chunk.x, chunk.y, lx, ly, power);
 
             if (h > 0) return;
 
             waterWorld.cells[x, y] = 0;
 
-            TileData data = GetTile(x + 1, y);
-            data.Tile?.Changed(this, x + 1, y, data);
+            TileData data = GetTile(top, x + 1, y);
+            data.Tile?.Changed(top, this, x + 1, y, data);
 
-            data = GetTile(x - 1, y);
-            data.Tile?.Changed(this, x - 1, y, data);
+            data = GetTile(top, x - 1, y);
+            data.Tile?.Changed(top, this, x - 1, y, data);
 
-            data = GetTile(x, y + 1);
-            data.Tile?.Changed(this, x, y + 1, data);
+            data = GetTile(top, x, y + 1);
+            data.Tile?.Changed(top, this, x, y + 1, data);
 
-            data = GetTile(x, y - 1);
-            data.Tile?.Changed(this, x, y - 1, data);
+            data = GetTile(top, x, y - 1);
+            data.Tile?.Changed(top, this, x, y - 1, data);
         }
-        public void MineTile((int x, int y) position, float power) => MineTile(position.x, position.y, power);
+        public void MineTile(bool top, (int x, int y) position, float power) => MineTile(top, position.x, position.y, power);
 
-        public void MineTile(int x, int y, float power, float radius)
+        public void MineTile(bool top, int x, int y, float power, float radius)
         {
             for (int X = (int)(x - MathF.Floor(radius)); X <= x + MathF.Ceiling(radius); X++)
                 for (int Y = (int)(y - MathF.Floor(radius)); Y <= y + MathF.Ceiling(radius); Y++)
@@ -141,29 +136,29 @@ namespace XnaGame.WorldMap
                     Chunk c = chunks[chunk.x, chunk.y];
                     int lx = X - chunk.x * chunkSize,
                         ly = Y - chunk.y * chunkSize;
-                    if (c[lx, ly].Tile == null) continue;
-                    float h = c.Mine(chunk.x, chunk.y, lx, ly, power);
+                    if (c[top, lx, ly].Tile == null) continue;
+                    float h = c.Mine(top, chunk.x, chunk.y, lx, ly, power);
 
                     if (h > 0) continue;
 
                     waterWorld.cells[X, Y] = 0;
 
-                    TileData data = GetTile(X + 1, Y);
-                    data.Tile?.Changed(this, X + 1, Y, data);
+                    TileData data = GetTile(top, X + 1, Y);
+                    data.Tile?.Changed(top, this, X + 1, Y, data);
 
-                    data = GetTile(X - 1, Y);
-                    data.Tile?.Changed(this, X - 1, Y, data);
+                    data = GetTile(top, X - 1, Y);
+                    data.Tile?.Changed(top, this, X - 1, Y, data);
 
-                    data = GetTile(X, Y + 1);
-                    data.Tile?.Changed(this, X, Y + 1, data);
+                    data = GetTile(top, X, Y + 1);
+                    data.Tile?.Changed(top, this, X, Y + 1, data);
 
-                    data = GetTile(X, Y - 1);
-                    data.Tile?.Changed(this, X, Y - 1, data);
+                    data = GetTile(top, X, Y - 1);
+                    data.Tile?.Changed(top, this, X, Y - 1, data);
                 }
         }
-        public void MineTile((int x, int y) position, float power, float radius) => MineTile(position.x, position.y, power, radius);
+        public void MineTile(bool top, (int x, int y) position, float power, float radius) => MineTile(top, position.x, position.y, power, radius);
 
-        public TileData GetTile(int x, int y)
+        public TileData GetTile(bool top, int x, int y)
         {
             if (x < 0) return default;
             else if (x >= chunkSize * mapWidth) return default;
@@ -171,13 +166,15 @@ namespace XnaGame.WorldMap
             else if (y >= chunkSize * mapHeight) return default;
 
             var chunk = Cell2Chunk(x, y);
-            return chunks[chunk.x, chunk.y][x - chunk.x * chunkSize, y - chunk.y * chunkSize];
+            return chunks[chunk.x, chunk.y][top, x - chunk.x * chunkSize, y - chunk.y * chunkSize];
         }
 
-        public TileData GetTile((int x, int y) position) => GetTile(position.x, position.y);
+        public TileData GetTile(bool top, (int x, int y) position) => GetTile(top, position.x, position.y);
 
-        public void SetTile(ITile tile, int x, int y)
+        public void SetTile(bool top, ITile tile, int x, int y)
         {
+            if (tile == ignore) return;
+
             if (x < 0) return;
             else if (x >= chunkSize * mapWidth) return;
             else if (y < 0) return;
@@ -186,25 +183,28 @@ namespace XnaGame.WorldMap
             var chunk = Cell2Chunk(x, y);
 
             Chunk c = chunks[chunk.x, chunk.y];
-            tile?.Start(this, x, y, c[x - chunk.x * chunkSize, y - chunk.y * chunkSize] = new TileData(tile));
+            TileData data = c[top, x - chunk.x * chunkSize, y - chunk.y * chunkSize] = new TileData(tile);
+            tile?.Start(top, this, x, y, data);
 
-            TileData data = GetTile(x + 1, y);
-            data.Tile?.Changed(this, x + 1, y, data);
+            data = GetTile(top, x + 1, y);
+            data.Tile?.Changed(top, this, x + 1, y, data);
 
-            data = GetTile(x - 1, y);
-            data.Tile?.Changed(this, x - 1, y, data);
+            data = GetTile(top, x - 1, y);
+            data.Tile?.Changed(top, this, x - 1, y, data);
 
-            data = GetTile(x, y + 1);
-            data.Tile?.Changed(this, x, y + 1, data);
+            data = GetTile(top, x, y + 1);
+            data.Tile?.Changed(top, this, x, y + 1, data);
 
-            data = GetTile(x, y - 1);
-            data.Tile?.Changed(this, x, y - 1, data);
+            data = GetTile(top, x, y - 1);
+            data.Tile?.Changed(top, this, x, y - 1, data);
         }
 
-        public void SetTile(ITile tile, (int x, int y) position) => SetTile(tile, position.x, position.y);
+        public void SetTile(bool top, ITile tile, (int x, int y) position) => SetTile(top, tile, position.x, position.y);
 
-        public bool TrySetTile(ITile tile, int x, int y)
+        public bool TrySetTile(bool top, ITile tile, int x, int y)
         {
+            if (tile == ignore) return false;
+
             if (x < 0) return false;
             else if (x >= chunkSize * mapWidth) return false;
             else if (y < 0) return false;
@@ -215,159 +215,136 @@ namespace XnaGame.WorldMap
             Chunk c = chunks[chunk.x, chunk.y];
             int lx = x - chunk.x * chunkSize,
                 ly = y - chunk.y * chunkSize;
-            if (c[lx, ly].Tile != null) return false;
-            tile?.Start(this, x, y, c[lx, ly] = new TileData(tile));
+            if (c[top, lx, ly].Tile != null) return false;
+            TileData data = c[top, lx, ly] = new TileData(tile);
+            tile?.Start(top, this, x, y, data);
 
-            TileData data = GetTile(x + 1, y);
-            data.Tile?.Changed(this, x + 1, y, data);
+            data = GetTile(top, x + 1, y);
+            data.Tile?.Changed(top, this, x + 1, y, data);
 
-            data = GetTile(x - 1, y);
-            data.Tile?.Changed(this, x - 1, y, data);
+            data = GetTile(top, x - 1, y);
+            data.Tile?.Changed(top, this, x - 1, y, data);
 
-            data = GetTile(x, y + 1);
-            data.Tile?.Changed(this, x, y + 1, data);
+            data = GetTile(top, x, y + 1);
+            data.Tile?.Changed(top, this, x, y + 1, data);
 
-            data = GetTile(x, y - 1);
-            data.Tile?.Changed(this, x, y - 1, data);
+            data = GetTile(top, x, y - 1);
+            data.Tile?.Changed(top, this, x, y - 1, data);
             return true;
         }
-        public bool TrySetTile(ITile tile, (int x, int y) position) => TrySetTile(tile, position.x, position.y);
+        public bool TrySetTile(bool top, ITile tile, (int x, int y) position) => TrySetTile(top, tile, position.x, position.y);
 
-        public bool PlaceTile(ITile tile, int x, int y)
+        public bool PlaceTile(bool top, ITile tile, int x, int y)
         {
+            if (tile == ignore) return false;
+
             if (x < 0) return false;
             else if (x >= chunkSize * mapWidth) return false;
             else if (y < 0) return false;
             else if (y >= chunkSize * mapHeight) return false;
 
             TileData
-                r = GetTile(x + 1, y),
-                l = GetTile(x - 1, y),
-                d = GetTile(x, y + 1),
-                u = GetTile(x, y - 1);
+                r = GetTile(top, x + 1, y),
+                l = GetTile(top, x - 1, y),
+                d = GetTile(top, x, y + 1),
+                u = GetTile(top, x, y - 1);
             if (r.Tile != null ||
                 l.Tile != null ||
                 d.Tile != null ||
-                u.Tile != null)
+                u.Tile != null ||
+                GetTile(!top, x+1, y).Tile != null ||
+                GetTile(!top, x-1, y).Tile != null ||
+                GetTile(!top, x, y+1).Tile != null ||
+                GetTile(!top, x, y-1).Tile != null ||
+                GetTile(!top, x, y).Tile != null)
             {
                 var chunk = Cell2Chunk(x, y);
 
                 Chunk c = chunks[chunk.x, chunk.y];
-                tile?.Start(this, x, y, c[x - chunk.x * chunkSize, y - chunk.y * chunkSize] = new TileData(tile));
+                TileData data = c[top, x - chunk.x * chunkSize, y - chunk.y * chunkSize] = new TileData(tile);
+                tile?.Start(top, this, x, y, data);
 
-                r.Tile?.Changed(this, x + 1, y, r);
-                l.Tile?.Changed(this, x - 1, y, l);
-                d.Tile?.Changed(this, x, y + 1, d);
-                u.Tile?.Changed(this, x, y - 1, u);
+                r.Tile?.Changed(top, this, x + 1, y, r);
+                l.Tile?.Changed(top, this, x - 1, y, l);
+                d.Tile?.Changed(top, this, x, y + 1, d);
+                u.Tile?.Changed(top, this, x, y - 1, u);
                 return true;
             }
             return false;
         }
 
-        public bool PlaceTile(ITile tile, (int x, int y) position) => PlaceTile(tile, position.x, position.y);
+        public bool PlaceTile(bool top, ITile tile, (int x, int y) position) => PlaceTile(top, tile, position.x, position.y);
 
-        public bool TryPlaceTile(ITile tile, int x, int y)
+        public bool TryPlaceTile(bool top, ITile tile, int x, int y)
         {
+            if (tile == ignore) return false;
+
             if (x < 0) return false;
             else if (x >= chunkSize * mapWidth) return false;
             else if (y < 0) return false;
             else if (y >= chunkSize * mapHeight) return false;
 
             TileData
-                r = GetTile(x + 1, y),
-                l = GetTile(x - 1, y),
-                d = GetTile(x, y + 1),
-                u = GetTile(x, y - 1);
+                r = GetTile(top, x + 1, y),
+                l = GetTile(top, x - 1, y),
+                d = GetTile(top, x, y + 1),
+                u = GetTile(top, x, y - 1);
             if (r.Tile != null ||
                 l.Tile != null ||
                 d.Tile != null ||
-                u.Tile != null)
+                u.Tile != null ||
+                GetTile(!top, x+1, y).Tile != null ||
+                GetTile(!top, x-1, y).Tile != null ||
+                GetTile(!top, x, y+1).Tile != null ||
+                GetTile(!top, x, y-1).Tile != null ||
+                GetTile(!top, x, y).Tile != null)
             {
                 var chunk = Cell2Chunk(x, y);
 
                 Chunk c = chunks[chunk.x, chunk.y];
                 int lx = x - chunk.x * chunkSize,
                     ly = y - chunk.y * chunkSize;
-                if (c[lx, ly].Tile != null) return false;
-                tile?.Start(this, x, y, c[lx, ly] = new TileData(tile));
+                if (c[top, lx, ly].Tile != null) return false;
+                TileData data = c[top, lx, ly] = new TileData(tile);
+                tile?.Start(top, this, x, y, data);
 
                 waterWorld.cells[x, y] = -1;
 
-                r.Tile?.Changed(this, x + 1, y, r);
-                l.Tile?.Changed(this, x - 1, y, l);
-                d.Tile?.Changed(this, x, y + 1, d);
-                u.Tile?.Changed(this, x, y - 1, u);
+                r.Tile?.Changed(top, this, x + 1, y, r);
+                l.Tile?.Changed(top, this, x - 1, y, l);
+                d.Tile?.Changed(top, this, x, y + 1, d);
+                u.Tile?.Changed(top, this, x, y - 1, u);
                 return true;
             }
             return false;
         }
 
-        public bool TryPlaceTile(ITile tile, (int x, int y) position) => TryPlaceTile(tile, position.x, position.y);
-
-        public bool VisitCell(RayCastReportTileDelegate callback, Vec2 start, Vec2 end, int x, int y)
-        {
-            var chunk = Cell2Chunk(x, y);
-
-            Chunk c = chunks[chunk.x, chunk.y];
-            TileData data = c[x - chunk.x * chunkSize, y - chunk.y * chunkSize];
-            
-            return false;
-        }
-
-        public bool RayCast(RayCastReportTileDelegate callback, Vec2 start, Vec2 end)
-        {
-            int cx = (int)MathF.Floor(start.X); // Begin/current cell coords
-            int cy = (int)MathF.Floor(start.Y);
-            int ex = (int)MathF.Floor(end.X); // End cell coords
-            int ey = (int)MathF.Floor(end.Y);
-
-            // Delta or direction
-            float dx = end.X - start.X;
-            float dy = end.Y - start.Y;
-
-            Vec2 baseStart = start;
-
-            while (cx < ex && cy < ey)
-            {
-                // find intersection "time" in x dir
-                float t0 = ((int)MathF.Ceiling(start.X) - start.X) / dx;
-                float t1 = ((int)MathF.Ceiling(start.Y) - start.Y) / dy;
-
-                if (VisitCell(callback, baseStart, end, cx, cy)) return true;
-
-                if (t0 < t1) // cross x boundary first=?
-                {
-                    ++cx;
-                    start.X += t0 * dx;
-                    start.Y += t0 * dy;
-                }
-                else
-                {
-                    ++cy;
-                    start.X += t1 * dx;
-                    start.Y += t1 * dy;
-                }
-            }
-            return false;
-        }
+        public bool TryPlaceTile(bool top, ITile tile, (int x, int y) position) => TryPlaceTile(top, tile, position.x, position.y);
 
         public class Chunk
         {
-            private TileData[,] tiles;
+            private TileData[,] tiles, walls;
 
-            public Chunk(int x, int y, Func<int, int, ITile> generator)
+            public Chunk(int x, int y, WorldGenerator generator, WaterWorld waterWorld)
             {
                 tiles = new TileData[chunkSize, chunkSize];
+                walls = new TileData[chunkSize, chunkSize];
                 int j;
                 for (int i = 0; i < chunkSize; i++)
                     for (j = 0; j < chunkSize; j++)
-                        tiles[i, j] = new TileData(generator(x * chunkSize + i, y * chunkSize + j));
+                    {
+                        int X = x * chunkSize + i, Y = y * chunkSize + j;
+                        ITile tile = generator.GetTile(X, Y);
+                        tiles[i, j] = new TileData(tile);
+                        walls[i, j] = new TileData(generator.GetWalls(X, Y));
+                        if (tile != null) waterWorld.cells[X, Y] = waterWorld.render[X, Y] = -1;
+                    }
             }
 
-            public TileData this[int x, int y]
+            public TileData this[bool type, int x, int y]
             {
-                get => tiles[x, y];
-                set => tiles[x, y] = value;
+                get => (type ? tiles : walls)[x, y];
+                set => (type ? tiles : walls)[x, y] = value;
             }
 
             public void Start(IMap map, int x, int y)
@@ -376,8 +353,10 @@ namespace XnaGame.WorldMap
                 for (int i = 0; i < chunkSize; i++)
                     for (j = 0; j < chunkSize; j++)
                     {
-                        TileData tile = tiles[i, j];
-                        tile.Tile?.Start(map, x * chunkSize + i, y * chunkSize + j, tile);
+                        TileData tile = walls[i, j];
+                        tile.Tile?.Start(false, map, x * chunkSize + i, y * chunkSize + j, tile);
+                        tile = tiles[i, j];
+                        tile.Tile?.Start(true, map, x * chunkSize + i, y * chunkSize + j, tile);
                     }
             }
 
@@ -449,19 +428,21 @@ namespace XnaGame.WorldMap
                 {
                     for (j = 0; j < chunkSize; j++)
                     {
-                        TileData tile = tiles[i, j];
-                        tile.Tile?.Draw(map, x * chunkSize + i, y * chunkSize + j, new Vec2(x * chunkSize + i, y * chunkSize + j) * tileSize, 0, tile);
+                        TileData tile = walls[i, j];
+                        tile.Tile?.Draw(false, map, x * chunkSize + i, y * chunkSize + j, new Vec2(x * chunkSize + i, y * chunkSize + j) * tileSize, 0, tile);
+                        tile = tiles[i, j];
+                        tile.Tile?.Draw(true, map, x * chunkSize + i, y * chunkSize + j, new Vec2(x * chunkSize + i, y * chunkSize + j) * tileSize, 0, tile);
                     }
                 }
             }
 
-            public float Mine(int cx, int cy, int x, int y, float power)
+            public float Mine(bool type, int cx, int cy, int x, int y, float power)
             {
-                float h = tiles[x, y].Health -= power;
+                float h = (type ? tiles : walls)[x, y].Health -= power;
                 if (h <= 0)
                 {
-                    new Item((tiles[x, y].Tile, 1), new Vec2((cx * chunkSize + x + 0.5f) * tileSize, (cy * chunkSize + y + 0.5f) * tileSize));
-                    tiles[x, y] = default;
+                    new Item(((type ? tiles : walls)[x, y].Tile, 1), new Vec2((cx * chunkSize + x + 0.5f) * tileSize, (cy * chunkSize + y + 0.5f) * tileSize));
+                    (type ? tiles : walls)[x, y] = default;
                 }
                 return h;
             }

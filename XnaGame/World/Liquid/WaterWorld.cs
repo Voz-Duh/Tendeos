@@ -3,7 +3,7 @@ using System;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
 
-namespace XnaGame.WorldMap.Liquid
+namespace XnaGame.World.Liquid
 {
     public class WaterWorld
     {
@@ -13,12 +13,11 @@ namespace XnaGame.WorldMap.Liquid
         public readonly float[,] render;
         public readonly int width;
         public readonly int height;
-        private readonly Liquid[] liquids;
 
         private float timer = 0;
         private const float time = .01f;
 
-        public WaterWorld(int width, int height, Liquid[] liquids, Func<int, int, bool> generator)
+        public WaterWorld(int width, int height, WorldGenerator generator)
         {
             cells = new float[width, height];
             render = new float[width, height];
@@ -27,12 +26,11 @@ namespace XnaGame.WorldMap.Liquid
             {
                 for (int j = 0; j < height; j++)
                 {
-                    render[i, j] = cells[i, j] = generator(i, j) ? 0 : -1;
+                    render[i, j] = cells[i, j] = generator.GetWater(i, j) ? 1 : 0;
                 }
             }
             this.width = width;
             this.height = height;
-            this.liquids = liquids;
         }
         public bool CanFlow(float other)
         {
@@ -193,7 +191,7 @@ namespace XnaGame.WorldMap.Liquid
                         blu = lu > 0.1;
 
                     bool has = false;
-                    batch.Color = liquids[0].Color;
+                    batch.Color = Color.Aqua;
                     for (int m = 0; m < march.Length; m++)
                     {
                         (bool lu, bool u, bool ru, bool l, bool r, bool ld, bool d, bool rd,

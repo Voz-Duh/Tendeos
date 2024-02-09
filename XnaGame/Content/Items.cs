@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -18,9 +17,35 @@ namespace XnaGame.Content
 
         public static void Init(ContentManager content)
         {
-            bow = new Bow(Entities.Get<Projectile>("projectile"), (-1, 7), -1f, 1, Sprite.Load(content, "bow").Split(5, 1, 1), Sprite.Load(content, "bow_item"));
-            pickaxe = new Pickaxe(1, 1, 65, 2, 2, 6, 16, 2, 3, Sprite.Load(content, "pickaxe"), Sprite.Load(content, "pickaxe_item"));
-            pickaxeSword = new MeleeWeapon(65, 5, 2, 6, 16, 1f, 3, Sprite.Load(content, "pickaxe"), Sprite.Load(content, "pickaxe_item"));
+            bow = new Bow(Sprite.Load(content, "bow").Split(5, 1, 1), Sprite.Load(content, "bow_item"))
+            {
+                Projectile = Entities.Get<Projectile>("projectile"),
+                ArrowOffset = (-1, 7),
+                Offset = -1,
+                Power = 1
+            };
+            pickaxe = new Pickaxe(Sprite.Load(content, "pickaxe"), Sprite.Load(content, "pickaxe_item"))
+            {
+                Power = 1,
+                Radius = 1,
+                SwingAngle = 65,
+                SwingPerSecond = 2,
+                State = 2,
+                Offset = 6,
+                AttackOffset = 16,
+                Damage = 2,
+                AttackRange = 3
+            };
+            pickaxeSword = new MeleeWeapon( Sprite.Load(content, "pickaxe"), Sprite.Load(content, "pickaxe_item"))
+            {
+                SwingAngle = 65,
+                SwingPerSecond = 5,
+                State = 2,
+                Offset = 6,
+                AttackOffset = 16,
+                Damage = 1,
+                AttackRange = 3
+            };
         }
 
         public static Func<T> Get<T>(string value) where T : IItem
@@ -36,6 +61,8 @@ namespace XnaGame.Content
             };
         }
 
-        private static Dictionary<string, IItem> cash = new Dictionary<string, IItem>();
+        private static readonly Dictionary<string, IItem> cash = new Dictionary<string, IItem>();
     }
+
+    public delegate IItem ItemRef();
 }

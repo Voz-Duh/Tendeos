@@ -1,26 +1,35 @@
 ﻿using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
-using System;
 using System.Collections.Generic;
 using System.Reflection;
-using XnaGame.Inventory;
 using XnaGame.Utils.Graphics;
-using XnaGame.WorldMap;
-using XnaGame.WorldMap.Content;
+using XnaGame.World;
+using XnaGame.World.Content;
 
 namespace XnaGame.Content
 {
     public static class Tiles
     {
-        public static ITile test;
+        public static ITile ignore, test, stone;
 
         public static void Init(ContentManager content)
         {
-            test = new AutoTile(2, Sprite.Load(content, "tiles/test"), Sprite.Load(content, "tiles/test_item"));
+            ignore = new TileTag();
+            test = new AutoTile(Sprite.Load(content, "tiles/test"), Sprite.Load(content, "tiles/test_item"))
+            {
+                Hardness = 1,
+                Health = 2
+            };
+            stone = new AutoTile(Sprite.Load(content, "tiles/stone"), Sprite.Load(content, "tiles/stone_item"))
+            {
+                ShadowIntensity = 0.1f,
+                Hardness = 2,
+                Health = 4
+            };
         }
 
-        public static Func<T> Get<T>(string value) where T : ITile
+        public static TileRef Get<T>(string value) where T : ITile
         {
+            if (value == "air") return () => null;
             FieldInfo t = typeof(Tiles).GetField(value);
             return () =>
             {
@@ -32,6 +41,14 @@ namespace XnaGame.Content
             };
         }
 
-        private static Dictionary<string, ITile> cash = new Dictionary<string, ITile>();
+        public static ItemRef GetItem(string value)
+        {
+            var @ref = Get<ITile>(value);
+            return () => @ref();
+        }
+
+        private static readonly Dictionary<string, ITile> cash = new Dictionary<string, ITile>();
     }
+
+    public delegate ITile TileRef();
 }

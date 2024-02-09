@@ -1,9 +1,7 @@
-﻿using XMatrix = Microsoft.Xna.Framework.Matrix;
-using XnaGame.Utils;
-using nkast.Aether.Physics2D.Dynamics;
-using Microsoft.Xna.Framework;
+﻿using XnaGame.Utils;
 
 namespace XnaGame.PEntities;
+
 
 public class BodyTransform : ITransform
 {

@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Content;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using XnaGame.WorldMap.Liquid;
+using XnaGame.World.Liquid;
 
 namespace XnaGame.Content
 {
@@ -30,6 +30,8 @@ namespace XnaGame.Content
             };
         }
 
-        private static Dictionary<string, Liquid> cash = new Dictionary<string, Liquid>();
+        private static readonly Dictionary<string, Liquid> cash = new Dictionary<string, Liquid>();
     }
+
+    public delegate Liquid LiquidRef();
 }

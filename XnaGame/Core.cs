@@ -1,12 +1,11 @@
-﻿using nkast.Aether.Physics2D.Dynamics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using XnaGame.PEntities;
 using XnaGame.PEntities.Content;
 using XnaGame.UI.GUIElements;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
-using XnaGame.WorldMap;
+using XnaGame.World;
 
 namespace XnaGame
 {
@@ -23,7 +22,6 @@ namespace XnaGame
 
         public static (Action draw, Action update) entities = (() => { }, () => { });
         public static Player player;
-        public static World world;
         public static IMap map;
         public static Camera camera;
         public static Action extraGuiDraw = () => { };

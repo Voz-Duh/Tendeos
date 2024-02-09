@@ -23,6 +23,8 @@ namespace XnaGame.Utils.Graphics
         public Vec2 UV { private get; set; } = Vec2.Zero;
         public Vector3 Normal { private get; set; } = Vector3.Zero;
 
+        public BlendState BlendState;
+
         public bool Batching { get; private set; }
 
         public Batch(GraphicsDevice GraphicsDevice)
@@ -44,6 +46,7 @@ namespace XnaGame.Utils.Graphics
                 GraphicsDevice.Viewport.Y + GraphicsDevice.Viewport.Height, GraphicsDevice.Viewport.Y,
                 0.01f, 1000);
             basicEffect.VertexColorEnabled = true;
+            BlendState = BlendState.AlphaBlend;
 
             vertices = new VertexPositionColorNormalTexture[size];
         }
@@ -75,6 +78,7 @@ namespace XnaGame.Utils.Graphics
             RasterizerState rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.None;
             GraphicsDevice.RasterizerState = rasterizerState;
+            GraphicsDevice.BlendState = BlendState;
 
             foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
             {

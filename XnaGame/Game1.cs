@@ -15,8 +15,8 @@ namespace XnaGame
     public class Game1 : Game
     {
         private GraphicsDeviceManager graphics;
-        private Camera camera;
-        private GameState[] states;
+        public Camera camera;
+        public GameState[] states;
         public EGameState State { private get; set; }
 
         public Game1()
@@ -44,6 +44,7 @@ namespace XnaGame
             Entities.Init(Content);
             Items.Init(Content);
             Tiles.Init(Content);
+            Structures.Init(Content);
 
             Mouse.Camera = camera;
 
@@ -60,7 +61,11 @@ namespace XnaGame
             };
         }
 
-        protected void OnResize(object sender, EventArgs e) => camera.SetViewport(GraphicsDevice.Viewport);
+        protected void OnResize(object sender, EventArgs e)
+        {
+            camera.SetViewport(GraphicsDevice.Viewport);
+            states[(int)State].OnResize();
+        }
 
         protected override void Draw(GameTime gameTime)
         {
@@ -68,6 +73,8 @@ namespace XnaGame
             SDraw.Matrix = camera.GetViewMatrix();
             SDraw.Apply();
             states[(int)State].Draw();
+            SDraw.End();
+            states[(int)State].AfterDraw();
             SDraw.Matrix = camera.GetGUIMatrix();
             SDraw.Apply();
             states[(int)State].GUI.Draw();

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using XnaGame.WorldMap;
+using XnaGame.World;
 
 namespace XnaGame.Utils
 {
@@ -23,12 +23,12 @@ namespace XnaGame.Utils
 
     public static class Physics
     {
-        static readonly Queue<int> free = new Queue<int>();
-        static int length;
+        static readonly Queue<uint> free = new Queue<uint>();
+        static uint length;
         static readonly RaycastHitInfo[] colliderRays = new RaycastHitInfo[256];
-        static int hitsCount;
+        static uint hitsCount;
         static readonly ColliderInfo[] colliders = new ColliderInfo[255];
-        public const int VELOCITY_ITERATIONS = 4;
+        public const uint VELOCITY_ITERATIONS = 4;
         public const float VELOCITY_DIFFERENT = 1f / VELOCITY_ITERATIONS;
         public static Vec2 gravity = new Vec2(0, 9.8f);
         public static float meter, tileSize;
@@ -37,7 +37,7 @@ namespace XnaGame.Utils
         public static Collider Create(float width, float height, float evenness, float elastic)
         {
             var col = new Collider() { Size = new(width, height), evenness = evenness, elastic = elastic };
-            if (free.TryDequeue(out int f) && f < length)
+            if (free.TryDequeue(out uint f))
             {
                 colliders[f].collider = col;
                 col.index = f;
@@ -56,7 +56,6 @@ namespace XnaGame.Utils
             colliders[collider.index].collider = null;
             colliders[collider.index].last = colliders[collider.index].current = false;
             free.Enqueue(collider.index);
-            return;
         }
 
         public static void Raycast(RaycastDelegate action, Vec2 origin, Vec2 direction, float maxDistance, bool map = false)
@@ -87,7 +86,7 @@ namespace XnaGame.Utils
                 var (pcx, pcy) = Physics.map.World2Cell(new Vec2(px, py));
                 for (int x = mcx; x <= pcx; x++)
                     for (int y = mcy; y <= pcy; y++)
-                        if (Physics.map.GetTile(x, y).Tile != null
+                        if (Physics.map.GetTile(true, x, y).Tile != null
                             && RaycastMap(x, y, origin, direction, maxDistance, out Vec2 point, out Vec2 normal, out float distance)
                             && distance > rdistance)
                         {
@@ -131,7 +130,7 @@ namespace XnaGame.Utils
             var (pcx, pcy) = map.World2Cell(new Vec2(px, py));
             for (int x = mcx; x <= pcx; x++)
                 for (int y = mcy; y <= pcy; y++)
-                    if (map.GetTile(x, y).Tile != null
+                    if (map.GetTile(true, x, y).Tile != null
                         && RaycastMap(x, y, origin, direction, maxDistance, out Vec2 point, out Vec2 normal, out float distance)
                         && distance > rdistance)
                     {
@@ -241,7 +240,7 @@ namespace XnaGame.Utils
                         for (int x = mx; x <= px; x++)
                             for (int y = my; y <= py; y++)
                             {
-                                TileData tile = map.GetTile(x, y);
+                                TileData tile = map.GetTile(true, x, y);
                                 if (tile.Tile != null)
                                 {
                                     float bx = x * tileSize, by = y * tileSize;
@@ -291,7 +290,7 @@ namespace XnaGame.Utils
 
     public class Collider : IColliderEvents
     {
-        public int index;
+        public uint index;
         public Vec2 halfSize;
         public Vec2 Size
         {

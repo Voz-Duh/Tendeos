@@ -1,9 +1,9 @@
-﻿namespace XnaGame.WorldMap
+﻿namespace XnaGame.World
 {
     public struct TileData
     {
         public float Health { get; set; }
-        private byte[] stateData;
+        private readonly byte[] stateData;
         public byte this[int i]
         {
             get => stateData[i];

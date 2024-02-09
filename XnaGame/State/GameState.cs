@@ -24,6 +24,8 @@ namespace XnaGame.State
         public abstract void Update();
         public abstract void Draw();
         public abstract void InitGUI();
+        public virtual void OnResize() { }
+        public virtual void AfterDraw() { }
 
         public void SetValue(string name, object value) => GetType().GetField(name).SetValue(this, value);
         public T GetValue<T>(string name) => (T)GetType().GetField(name).GetValue(this);

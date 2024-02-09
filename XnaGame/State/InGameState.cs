@@ -1,10 +1,11 @@
-﻿using XnaGame.Content;
+﻿using Microsoft.Xna.Framework;
+using XnaGame.Content;
 using XnaGame.PEntities.Content;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
 using XnaGame.Utils.Input;
-using XnaGame.WorldMap;
-using XnaGame.WorldMap.Liquid;
+using XnaGame.World;
+using XnaGame.World.Shadows;
 
 namespace XnaGame.State
 {
@@ -14,6 +15,7 @@ namespace XnaGame.State
 
         private Player player;
         private Map map;
+        private ShadowMatrix shadowMatrix;
 
         private int mapWidth = 16, mapHeight = 10;
 
@@ -21,11 +23,15 @@ namespace XnaGame.State
         {
             Setup();
         }
-
+        uint a, b;
         public override void Init()
         {
             Physics.meter = Physics.tileSize = Map.tileSize;
-            Physics.map = Core.map = map = new Map(new Liquid[] { Liquids.water, Liquids.foo }, mapWidth, mapHeight, (x, y) => y < 15 ? null : Tiles.test);
+            Physics.map = Core.map = map = new Map(mapWidth, mapHeight, new WorldGenerator());
+            map.ignore = Tiles.ignore;
+            shadowMatrix = new ShadowMatrix(map, Game.camera);
+            a = shadowMatrix.Create(Color.White, 0, 0, 1, 8);
+            b = shadowMatrix.Create(Color.Red, 25, 16, 1, 16);
             player = new Player(GUI,
                 Sprite.Load(Game.Content, "player_m_head"),
                 Sprite.Load(Game.Content, "player_m_arm_l"),
@@ -43,6 +49,10 @@ namespace XnaGame.State
             map.Draw();
             Core.entities.draw();
         }
+        public override void AfterDraw()
+        {
+            shadowMatrix.Draw();
+        }
 
         public override void Update()
         {
@@ -59,8 +69,13 @@ namespace XnaGame.State
                 new Item((Items.pickaxe, 1), Mouse.Position);
             if (Keyboard.IsPressed(Keys.I))
                 new Item((Items.pickaxeSword, 1), Mouse.Position);
+            if (Keyboard.IsPressed(Keys.T))
+            {
+                var (x, y) = map.World2Cell(Mouse.Position);
+                Structures.test.Spawn(map, x, y);
+            }
 
-            if (Mouse.RightPressed)
+            if (Keyboard.IsPressed(Keys.L))
             {
                 Entities.dummy.Spawn(Mouse.Position);
             }
@@ -70,6 +85,10 @@ namespace XnaGame.State
             Core.entities.update();
 
             Physics.Process(Time.Delta);
+            shadowMatrix.SetPosition(a, Core.player.transform.Position);
+            shadowMatrix.SetPosition(b, Mouse.Position);
         }
+
+        public override void OnResize() => shadowMatrix.Resize();
     }
 }

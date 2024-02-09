@@ -6,16 +6,13 @@ namespace XnaGame.PEntities.Content.EnemyComponents
     public class GroundComponent : IEnemyComponent
     {
         private readonly Sprite sprite;
-        private readonly float acceleration;
-        private readonly float maxSpeed;
-        private readonly float drag;
+        public float Acceleration { get; set; }
+        public float MaxSpeed { get; set; }
+        public float Drag { get; set; }
 
-        public GroundComponent(Sprite sprite, float acceleration, float maxSpeed, float drag)
+        public GroundComponent(Sprite sprite)
         {
             this.sprite = sprite;
-            this.acceleration = acceleration;
-            this.maxSpeed = maxSpeed;
-            this.drag = drag;
         }
 
         public void Draw(Enemy enemy, EnemyData data)
@@ -36,12 +33,12 @@ namespace XnaGame.PEntities.Content.EnemyComponents
             if (speed != 0)
                 if (speed < 0)
                 {
-                    speed += drag * Time.Delta;
+                    speed += Drag * Time.Delta;
                     if (speed > 0) speed = 0;
                 }
                 else 
                 {
-                    speed -= drag * Time.Delta;
+                    speed -= Drag * Time.Delta;
                     if (speed < 0) speed = 0;
                 }
             enemy.transform.body.velocity.X = speed;
@@ -62,21 +59,21 @@ namespace XnaGame.PEntities.Content.EnemyComponents
             {
                 if (speed < 0)
                 {
-                    speed += drag * Time.Delta;
+                    speed += Drag * Time.Delta;
                     if (speed > 0) speed = 0;
                 }
-                speed += acceleration * Time.Delta;
-                if (speed > maxSpeed) speed = maxSpeed;
+                speed += Acceleration * Time.Delta;
+                if (speed > MaxSpeed) speed = MaxSpeed;
             }
             else
             {
                 if (speed > 0)
                 {
-                    speed -= drag * Time.Delta;
+                    speed -= Drag * Time.Delta;
                     if (speed < 0) speed = 0;
                 }
-                speed -= acceleration * Time.Delta;
-                if (speed < -maxSpeed) speed = -maxSpeed;
+                speed -= Acceleration * Time.Delta;
+                if (speed < -MaxSpeed) speed = -MaxSpeed;
             }
             enemy.transform.body.velocity.X = speed;
 

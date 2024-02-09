@@ -1,5 +1,5 @@
 ﻿using System;
-using XnaGame.Inventory;
+using XnaGame.Content;
 using XnaGame.Utils;
 
 namespace XnaGame.PEntities.Content.EnemyComponents
@@ -8,9 +8,9 @@ namespace XnaGame.PEntities.Content.EnemyComponents
     {
         private readonly float chance;
         private readonly Range range;
-        private readonly Func<IItem> item;
+        private readonly ItemRef item;
 
-        public LootDropComponent(float chance, Range range, Func<IItem> item)
+        public LootDropComponent(float chance, Range range, ItemRef item)
         {
             this.chance = chance;
             this.range = range;

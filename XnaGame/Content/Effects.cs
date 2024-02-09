@@ -34,6 +34,8 @@ namespace XnaGame.Content
             };
         }
 
-        private static Dictionary<string, Effect> cash = new Dictionary<string, Effect>();
+        private static readonly Dictionary<string, Effect> cash = new Dictionary<string, Effect>();
     }
+
+    public delegate Effect EffectRef();
 }

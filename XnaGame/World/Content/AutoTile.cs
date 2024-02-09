@@ -5,53 +5,57 @@ using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
 using XnaGame.Utils.Input;
 
-namespace XnaGame.WorldMap.Content
+namespace XnaGame.World.Content
 {
     public class AutoTile : ITile
     {
-        public string Name => throw new System.NotImplementedException();
-        public string Description => throw new System.NotImplementedException();
-        public int MaxCount => 40;
+        public static readonly Color dark = new Color(0.56f, 0.5f, 0.51f);
+
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public int MaxCount { get; set; } = 100;
         public Sprite ItemSprite { get; init; }
+        public bool Wallable { get; set; } = true;
         public bool Flip => true;
         public bool Animated => false;
 
-        public float Health { get; init; }
-        public byte Hardness => throw new System.NotImplementedException();
-        public int Mass => 10;
+        public float Health { get; set; } = 1;
+        public byte Hardness { get; set; } = 0;
+
+        public bool ShadowAvailable { get; set; } = true;
+        public float ShadowIntensity { get; set; } = float.MaxValue;
 
         private readonly Sprite[] sprites;
 
-        public AutoTile(float health, Sprite sprite, Sprite item)
+        public AutoTile(Sprite sprite, Sprite item)
         {
             sprites = sprite.Split(4, 4, 1);
-            Health = health;
             ItemSprite = item;
         }
 
-        public void Changed(IMap map, int x, int y, TileData data)
+        public void Changed(bool top, IMap map, int x, int y, TileData data)
         {
-            data[0] = UpdateTile(map, x, y);
+            data[0] = UpdateTile(top, map, x, y);
         }
 
-        public void Draw(IMap map, int x, int y, Vec2 drawPosition, float angle, TileData data)
+        public void Draw(bool top, IMap map, int x, int y, Vec2 drawPosition, float angle, TileData data)
         {
             float g = data.Health / Health;
-            SDraw.Rect(sprites[data[0]], new Color(g, g, g), drawPosition, angle, 1, 0, Origin.Zero, Origin.Zero);
+            SDraw.Rect(sprites[data[0]], new Color(top ? new Vector3(g) : new Vector3(g) * dark.ToVector3()), drawPosition, angle, 1, 0, Origin.Zero, Origin.Zero);
         }
 
         public byte[] GetData() => new byte[] { 0 };
 
-        public void Start(IMap map, int x, int y, TileData data)
+        public void Start(bool top, IMap map, int x, int y, TileData data)
         {
-            data[0] = UpdateTile(map, x, y);
+            data[0] = UpdateTile(top, map, x, y);
         }
 
-        public static byte UpdateTile(IMap map, int x, int y)
+        public static byte UpdateTile(bool top, IMap map, int x, int y)
         {
             byte res = 5;
-            bool left = map.GetTile(x - 1, y).Tile == null, right = map.GetTile(x + 1, y).Tile == null,
-                 down = map.GetTile(x, y - 1).Tile == null, up = map.GetTile(x, y + 1).Tile == null;
+            bool left = map.GetTile(top, x - 1, y).Tile == null, right = map.GetTile(top, x + 1, y).Tile == null,
+                 down = map.GetTile(top, x, y - 1).Tile == null, up = map.GetTile(top, x, y + 1).Tile == null;
             bool lr = left && right,
                  du = down && up;
 
@@ -88,9 +92,12 @@ namespace XnaGame.WorldMap.Content
         {
             armsState = 1;
 
-            if (Mouse.LeftDown && !Mouse.OnGUI)
+            if (!Mouse.OnGUI)
             {
-                if (Core.map.TryPlaceTile(this, Core.map.World2Cell(Mouse.Position))) count -= 1;
+                if (Mouse.LeftDown)
+                    if (Core.map.TryPlaceTile(true, this, Core.map.World2Cell(Mouse.Position))) count -= 1;
+                if (Mouse.RightDown)
+                    if (Core.map.TryPlaceTile(false, this, Core.map.World2Cell(Mouse.Position))) count -= 1;
             }
         }
 

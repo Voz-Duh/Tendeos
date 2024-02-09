@@ -6,51 +6,46 @@ using XnaGame.PEntities.Content;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
 using XnaGame.Utils.Input;
-using XnaGame.WorldMap;
+using XnaGame.World;
 
 namespace XnaGame.Inventory.Content
 {
     public class MeleeWeapon : IItem
     {
-        public string Name => throw new NotImplementedException();
-        public string Description => throw new NotImplementedException();
+        public string Name { get; set; }
+        public string Description { get; set; }
         public int MaxCount => 1;
         public Sprite ItemSprite { get; init; }
         public bool Flip => false;
         public bool Animated => true;
 
-        private readonly float swingAngle;
-        private readonly float swingPerSecond;
-        private readonly byte state;
-        private readonly float offset;
-        private readonly float attackOffset;
-        private readonly float damage;
-        private readonly float attackRange;
-        private readonly Sprite sprite;
+        public float SwingAngle { get; set; }
+        public float SwingPerSecond { get; set; }
+        public byte State { get; set; }
+        public float Offset { get; set; }
+        public float AttackOffset { get; set; }
+        public float Damage { get; set; }
+        public float AttackRange{ get; set; }
+        private Sprite sprite;
+        public bool CanRight { get; set; } = false;
+
         private static bool side;
 
-        public MeleeWeapon(float swingAngle, float swingPerSecond, byte state, float offset, float attackOffset, float damage, float attackRange, Sprite sprite, Sprite item)
+        public MeleeWeapon(Sprite sprite, Sprite item)
         {
-            this.swingAngle = swingAngle;
-            this.swingPerSecond = swingPerSecond;
-            this.state = state;
-            this.offset = offset;
-            this.attackOffset = attackOffset;
-            this.damage = damage;
-            this.attackRange = attackRange * Map.tileSize;
             this.sprite = sprite;
             ItemSprite = item;
         }
 
         public void Use(ITransform transform, ref byte armsState, ref float armLRotation, ref float armRRotation, ref int count, ref float timer, ArmData armData)
         {
-            armsState = state;
+            armsState = State;
             Vec2 basePosition = transform.Local2World(new Vec2(0, -4));
             Vec2 lposition = basePosition - Mouse.Position;
             lposition.Normalize();
             float baseAngle = MathHelper.ToDegrees(MathF.Atan2(lposition.Y, lposition.X));
-            float angle = baseAngle + (side ? swingAngle : -swingAngle) + 90;
-            Vec2 armPosition = basePosition + Vec2.UpOf(angle) * offset;
+            float angle = baseAngle + (side ? SwingAngle : -SwingAngle) + 90;
+            Vec2 armPosition = basePosition + Vec2.UpOf(angle) * Offset;
 
             Vec2 p = transform.Local2World(new Vec2(2, -4)) - armPosition;
             armLRotation = MathHelper.ToDegrees(MathF.Atan2(p.Y, p.X)) + 90;
@@ -58,12 +53,12 @@ namespace XnaGame.Inventory.Content
             p = transform.Local2World(new Vec2(-2, -4)) - armPosition;
             armRRotation = MathHelper.ToDegrees(MathF.Atan2(p.Y, p.X)) + 90;
 
-            if (Mouse.LeftDown)
+            if (Mouse.LeftDown || (CanRight && Mouse.RightDown))
             {
-                timer += Time.Delta * swingPerSecond;
+                timer += Time.Delta * SwingPerSecond;
                 while (timer >= 1)
                 {
-                    Vec2 attackPosition = basePosition - lposition * attackOffset;
+                    Vec2 attackPosition = basePosition - lposition * AttackOffset;
                     Attack(attackPosition);
                     Effects.slashMedium.Spawn(attackPosition, baseAngle + 180);
                     side = !side;
@@ -93,9 +88,9 @@ namespace XnaGame.Inventory.Content
         {
             foreach (Enemy enemy in Core.GetEntities<Enemy>())
             {
-                if (Vec2.Distance(enemy.transform.Position, point) <= attackRange)
+                if (Vec2.Distance(enemy.transform.Position, point) <= AttackRange*Map.tileSize)
                 {
-                    enemy.Hit(damage);
+                    enemy.Hit(Damage);
                 }
             }
         }
