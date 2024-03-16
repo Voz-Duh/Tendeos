@@ -1,6 +1,4 @@
-﻿using Microsoft.Xna.Framework;
-
-namespace XnaGame.Utils.Input
+﻿namespace XnaGame.Utils.Input
 {
     public interface IMouseCamera
     {

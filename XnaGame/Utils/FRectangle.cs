@@ -67,6 +67,8 @@
             x <= Right &&
             y <= Top;
 
+        public void Translate(Vec2 location) => Location = location;
+
         public static FRectangle operator +(FRectangle left, FRectangle right) => new FRectangle(left.Location + right.Location, left.Size);
     }
 }

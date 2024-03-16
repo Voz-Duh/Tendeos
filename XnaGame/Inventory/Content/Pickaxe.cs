@@ -1,6 +1,6 @@
 ﻿using XnaGame.Utils;
-using XnaGame.Utils.Graphics;
 using XnaGame.Utils.Input;
+using XnaGame.World;
 
 namespace XnaGame.Inventory.Content
 {
@@ -9,15 +9,15 @@ namespace XnaGame.Inventory.Content
         public float Power { get; set; }
         public float Radius { get; set; }
 
-        public Pickaxe(Sprite sprite, Sprite item) : base(sprite, item)
+        public Pickaxe() : base()
         {
             CanRight = true;
         }
 
-        public override void Attack(Vec2 point)
+        public override void Attack(IMap map, Vec2 point)
         {
-            base.Attack(point);
-            Core.map.MineTile(Mouse.LeftDown, Core.map.World2Cell(point), Power, Radius);
+            base.Attack(map, point);
+            map.MineTile(Mouse.LeftDown, map.World2Cell(point), Power, Radius);
         }
     }
 }

@@ -2,8 +2,19 @@
 
 namespace XnaGame.Utils
 {
-    public static class Noise
+    public class Noise
     {
+        private readonly uint seed;
+        private readonly float scale;
+
+        public Noise(uint seed, float scale)
+        {
+            this.seed = seed;
+            this.scale = scale;
+        }
+
+        public float Perlin(float x, float y) => Perlin(seed, x * scale, y * scale);
+
         private static float Interpolate(float a0, float a1, float w)
         {
             return (a1 - a0) * w + a0;

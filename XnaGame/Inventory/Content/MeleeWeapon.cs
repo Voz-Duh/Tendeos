@@ -1,8 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using XnaGame.Content;
-using XnaGame.PEntities;
-using XnaGame.PEntities.Content;
+using XnaGame.Content.Utlis;
+using XnaGame.Physical;
+using XnaGame.Physical.Content;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
 using XnaGame.Utils.Input;
@@ -13,9 +15,12 @@ namespace XnaGame.Inventory.Content
     public class MeleeWeapon : IItem
     {
         public string Name { get; set; }
+        public string Folder { get; set; }
         public string Description { get; set; }
+
         public int MaxCount => 1;
-        public Sprite ItemSprite { get; init; }
+        [SpriteLoad("@_item")]
+        public Sprite ItemSprite { get; set; }
         public bool Flip => false;
         public bool Animated => true;
 
@@ -25,19 +30,14 @@ namespace XnaGame.Inventory.Content
         public float Offset { get; set; }
         public float AttackOffset { get; set; }
         public float Damage { get; set; }
-        public float AttackRange{ get; set; }
-        private Sprite sprite;
+        public float AttackRange { get; set; }
+        [SpriteLoad("@")]
+        public Sprite sprite;
         public bool CanRight { get; set; } = false;
 
         private static bool side;
 
-        public MeleeWeapon(Sprite sprite, Sprite item)
-        {
-            this.sprite = sprite;
-            ItemSprite = item;
-        }
-
-        public void Use(ITransform transform, ref byte armsState, ref float armLRotation, ref float armRRotation, ref int count, ref float timer, ArmData armData)
+        public void Use(IMap map, ITransform transform, ref byte armsState, ref float armLRotation, ref float armRRotation, ref int count, ref float timer, ArmData armData)
         {
             armsState = State;
             Vec2 basePosition = transform.Local2World(new Vec2(0, -4));
@@ -53,13 +53,13 @@ namespace XnaGame.Inventory.Content
             p = transform.Local2World(new Vec2(-2, -4)) - armPosition;
             armRRotation = MathHelper.ToDegrees(MathF.Atan2(p.Y, p.X)) + 90;
 
-            if (Mouse.LeftDown || (CanRight && Mouse.RightDown))
+            if (!Mouse.OnGUI && (Mouse.LeftDown || (CanRight && Mouse.RightDown)))
             {
                 timer += Time.Delta * SwingPerSecond;
                 while (timer >= 1)
                 {
                     Vec2 attackPosition = basePosition - lposition * AttackOffset;
-                    Attack(attackPosition);
+                    Attack(map, attackPosition);
                     Effects.slashMedium.Spawn(attackPosition, baseAngle + 180);
                     side = !side;
                     timer--;
@@ -76,19 +76,19 @@ namespace XnaGame.Inventory.Content
             );
         }
 
-        public void With(ITransform transform, byte armsState, float armLRotation, float armRRotation, ArmData armData)
+        public void With(SpriteBatch spriteBatch, IMap map, ITransform transform, byte armsState, float armLRotation, float armRRotation, ArmData armData)
         {
             armData.Get(out Vec2 position, "armPosition");
             armData.Get(out float angle, "angle");
 
-            SDraw.Rect(sprite, position, angle + 90, 1, 0, Origin.Zero);
+            spriteBatch.Rect(sprite, position, angle + 90, 1, 0, Origin.Zero);
         }
 
-        public virtual void Attack(Vec2 point)
+        public virtual void Attack(IMap map, Vec2 point)
         {
-            foreach (Enemy enemy in Core.GetEntities<Enemy>())
+            foreach (Enemy enemy in EntityManager.GetEntities<Enemy>())
             {
-                if (Vec2.Distance(enemy.transform.Position, point) <= AttackRange*Map.tileSize)
+                if (Vec2.Distance(enemy.transform.Position, point) <= AttackRange * map.TileSize)
                 {
                     enemy.Hit(Damage);
                 }

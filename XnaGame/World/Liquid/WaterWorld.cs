@@ -1,59 +1,73 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
+using XnaGame.Utils.SaveSystem;
 
 namespace XnaGame.World.Liquid
 {
     public class WaterWorld
     {
-        public const float tileSize = Map.tileSize;
-
         public float[,] cells;
         public readonly float[,] render;
-        public readonly int width;
-        public readonly int height;
+        private readonly Liquid[] liquids;
+        private readonly Camera camera;
+        public IMap Map { get; set; }
+        public int width;
+        public int height;
+
+        private int viewWidth;
+        private int viewHeight;
 
         private float timer = 0;
         private const float time = .01f;
 
-        public WaterWorld(int width, int height, WorldGenerator generator)
-        {
-            cells = new float[width, height];
-            render = new float[width, height];
+        private readonly Batch batch;
+        private readonly Sprite[] liquid;
 
-            for (int i = 0; i < width; i++)
-            {
-                for (int j = 0; j < height; j++)
-                {
-                    render[i, j] = cells[i, j] = generator.GetWater(i, j) ? 1 : 0;
-                }
-            }
-            this.width = width;
-            this.height = height;
+        public WaterWorld(GraphicsDevice graphicsDevice, ContentManager content, int width, int height, int chunkSize, Camera camera)
+        {
+            batch = new Batch(graphicsDevice);
+
+            cells = new float[width * chunkSize, height * chunkSize];
+            render = new float[width * chunkSize, height * chunkSize];
+
+            this.width = width * chunkSize;
+            this.height = height * chunkSize;
+            //this.liquids = liquids;
+            this.camera = camera;
         }
+
+        public void CameraViewSet()
+        {
+            (viewWidth, viewHeight) = Map.World2Cell(camera.WorldViewport);
+            viewWidth += 4; viewHeight += 4;
+        }
+
         public bool CanFlow(float other)
         {
-            if (other == -1) return false;
+            if (other < 0) return false;
             if (other >= 1) return false;
 
             return true;
         }
 
-        public bool CanPush(float other)
+        public bool CanMove(float other)
         {
-            if (other == -1) return false;
-            if (other >= 0.5) return false;
+            if (other < 0) return false;
+            if (other > 0) return false;
 
             return true;
         }
 
-        public float Move(float pop, float r, ref float other)
+        public float Move(float pop, ref float other)
         {
-            float sum = r + pop;
+            float sum = pop + other;
             if (sum > 1)
             {
-                other += 1 - r;
+                other = 1;
                 return sum - 1;
             }
             other += pop;
@@ -71,6 +85,26 @@ namespace XnaGame.World.Liquid
             other += from;
         }
 
+        [ToByte]
+        public void ToByte(ByteBuffer buffer)
+        {
+            buffer.Append(width);
+            buffer.Append(height);
+            for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++)
+                    buffer.Append(cells[x, y]);
+        }
+
+        [FromByte]
+        public void FromByte(ByteBuffer buffer)
+        {
+            width = buffer.ReadInt();
+            height = buffer.ReadInt();
+            for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++)
+                    cells[x, y] = buffer.ReadFloat();
+        }
+
         public void Update()
         {
             timer += Time.Delta;
@@ -83,78 +117,80 @@ namespace XnaGame.World.Liquid
 
         public void Tick()
         {
-            float[,] mask = new float[width, height];
-            
-            for (int j = 0; j < height; j++)
+            var (selfx, selfy) = Map.World2Cell(camera.Position - camera.WorldViewport / 2);
+            selfx -= 2; selfy -= 2;
+
+            int width = viewWidth + Map.ChunkSize * 6;
+            int height = viewHeight + Map.ChunkSize * 6;
+            int startx = selfx - Map.ChunkSize * 2;
+            int starty = selfy - Map.ChunkSize * 2;
+
+            int y, x;
+            byte count;
+            bool b_d, b_l, b_r;
+            float self, l, r, d, sum;
+            for (x = startx; x < startx + width; x++)
             {
-                for (int i = 0; i < width; i++)
+                for (y = starty + height - 1; y >= starty; y--)
                 {
-                    float self = cells[i, j];
-                    if (self == -1)
+                    if (x < 0 || x >= width || y < 0 || y >= height) continue;
+
+                    self = cells[x, y];
+                    if (self < 0)
                     {
-                        mask[i, j] = -1;
+                        cells[x, y] = -1;
                         continue;
                     }
                     if (self == 0) continue;
-                    bool
-                        b_l = false,
-                        b_r = false,
-                        b_d = false,
-                        b_u = false;
-                    float l = i == 0 ? -1 : cells[i - 1, j];
-                    float r = i == width - 1 ? -1 : cells[i + 1, j];
-                    float d = j == height - 1 ? -1 : cells[i, j + 1];
-                    float u = j == 0 ? -1 : cells[i, j - 1];
+                    l = x == 0 ? -1 : cells[x - 1, y];
+                    r = x == width - 1 ? -1 : cells[x + 1, y];
+                    d = y == height - 1 ? -1 : cells[x, y + 1];
 
                     b_d = CanFlow(d);
-
-                    if (!CanPush(d))
+                    b_l = b_r = false;
+                    if (!b_d || self == 1)
                     {
                         b_l = CanFlow(l);
-                        if (b_l && l > self) b_l = false;
+                        if (l > self) b_l = false;
                         b_r = CanFlow(r);
-                        if (b_r && r > self) b_r = false;
+                        if (r > self) b_r = false;
                     }
-
-                    if (!b_d && !b_l && !b_r)
-                    {
-                        b_u = CanPush(u);
-                    }
-
-                    int c = 1;
-                    if (b_l) c++;
-                    if (b_r) c++;
-                    if (b_d) c++;
-                    if (b_u) c++;
-                    float sum = self / c;
+                    count = 1;
+                    if (b_l) count++;
+                    if (b_r) count++;
+                    if (b_d) count++;
+                    sum = self / count;
 
                     self = sum;
-                    if (b_l) self += Move(sum, l, ref mask[i - 1, j]);
-                    if (b_r) self += Move(sum, r, ref mask[i + 1, j]);
-                    if (b_d) self += Move(sum, d, ref mask[i, j + 1]);
-                    if (b_u) self += Move(sum, u, ref mask[i, j - 1]);
+                    if (b_l) self += Move(sum, ref cells[x - 1, y]);
+                    if (b_r) self += Move(sum, ref cells[x + 1, y]);
+                    if (b_d) self += Move(sum, ref cells[x, y + 1]);
 
-                    mask[i, j] += self;
+                    cells[x, y] = self;
                 }
             }
-            
-            for (int j = 0; j < height; j++)
-                for (int i = 0; i < width; i++)
-                {
-                    if (cells[i, j] == -1) render[i, j] = -1;
-                    else render[i, j] = MathHelper.Lerp(render[i, j], cells[i, j], .04f);
-                }
 
-            cells = mask;
+            for (x = startx; x < startx + width; x++)
+                for (y = starty; y < starty + height; y++)
+                {
+                    if (x < 0 || x >= width || y < 0 || y >= height) continue;
+
+                    if (cells[x, y] < 0) render[x, y] = -1;
+                    else render[x, y] = MathHelper.Lerp(render[x, y], cells[x, y], .04f);
+                }
         }
 
-        private readonly Batch batch = new Batch(SDraw.spriteBatch.GraphicsDevice);
         public void Draw()
         {
-            batch.Begin(Microsoft.Xna.Framework.Graphics.PrimitiveType.TriangleList, (width * height) * 6, SDraw.Matrix);
-            for (int i = 0; i < width; i++)
-                for (int j = 0; j < height; j++)
+            var (selfx, selfy) = Map.World2Cell(camera.Position - camera.WorldViewport / 2);
+            selfx -= 2; selfy -= 2;
+
+            batch.Begin(PrimitiveType.TriangleList, width * height * 6, camera.GetViewMatrix());
+            for (int i = selfx; i < selfx + viewWidth; i++)
+                for (int j = selfy; j < selfy + viewHeight; j++)
                 {
+                    if (i < 0 || i >= width || j < 0 || j >= height) continue;
+
                     float s = render[i, j];
                     if (s <= 0.1) continue;
 
@@ -171,14 +207,14 @@ namespace XnaGame.World.Liquid
                     float ru = cr && cu ? render[i + 1, j - 1] : -1;
                     float rd = cr && cd ? render[i + 1, j + 1] : -1;
 
-                    if (d == -1) d = s;
-                    if (r == -1) r = s;
-                    if (l == -1) l = s;
-                    if (u == -1) u = s;
-                    if (lu == -1) lu = s;
-                    if (ru == -1) ru = s;
-                    if (ld == -1) ld = s;
-                    if (rd == -1) rd = s;
+                    if (d < 0) d = s;
+                    if (r < 0) r = s;
+                    if (l < 0) l = s;
+                    if (u < 0) u = s;
+                    if (lu < 0) lu = s;
+                    if (ru < 0) ru = s;
+                    if (ld < 0) ld = s;
+                    if (rd < 0) rd = s;
 
                     bool
                         bl = l > 0.1,
@@ -205,9 +241,9 @@ namespace XnaGame.World.Liquid
                                     ap = GetByType(at, false, false, false, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, false, false, false, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, false, false, false, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new Vec2(i, j) + ac + a * ap) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + bc + b * bp) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + cc + c * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ac + a * ap) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + bc + b * bp) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + cc + c * cp) * Map.TileSize);
                             }
                             has = true;
                             break;
@@ -221,9 +257,9 @@ namespace XnaGame.World.Liquid
                                     ap = GetByType(at, true, true, false, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, true, true, false, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, true, true, false, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new Vec2(i, j) + IC(ac) - a * ap) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + IC(bc) - b * bp) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + IC(cc) - c * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(ac) - a * ap) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(bc) - b * bp) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(cc) - c * cp) * Map.TileSize);
                             }
                             has = true;
                             break;
@@ -237,9 +273,9 @@ namespace XnaGame.World.Liquid
                                     ap = GetByType(at, false, true, true, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, false, true, true, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, false, true, true, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new Vec2(i, j) + ICX(IC(new Vec2(ac.Y, ac.X))) - IX(new Vec2(a.Y, a.X)) * ap) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + ICX(IC(new Vec2(bc.Y, bc.X))) - IX(new Vec2(b.Y, b.X)) * bp) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + ICX(IC(new Vec2(cc.Y, cc.X))) - IX(new Vec2(c.Y, c.X)) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(new Vec2(ac.Y, ac.X))) - IX(new Vec2(a.Y, a.X)) * ap) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(new Vec2(bc.Y, bc.X))) - IX(new Vec2(b.Y, b.X)) * bp) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(new Vec2(cc.Y, cc.X))) - IX(new Vec2(c.Y, c.X)) * cp) * Map.TileSize);
                             }
                             has = true;
                             break;
@@ -253,9 +289,9 @@ namespace XnaGame.World.Liquid
                                     ap = GetByType(at, true, false, true, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, true, false, true, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, true, false, true, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new Vec2(i, j) + ICX(new Vec2(ac.Y, ac.X)) + IX(new Vec2(a.Y, a.X)) * ap) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + ICX(new Vec2(bc.Y, bc.X)) + IX(new Vec2(b.Y, b.X)) * bp) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + ICX(new Vec2(cc.Y, cc.X)) + IX(new Vec2(c.Y, c.X)) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(new Vec2(ac.Y, ac.X)) + IX(new Vec2(a.Y, a.X)) * ap) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(new Vec2(bc.Y, bc.X)) + IX(new Vec2(b.Y, b.X)) * bp) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(new Vec2(cc.Y, cc.X)) + IX(new Vec2(c.Y, c.X)) * cp) * Map.TileSize);
                             }
                             has = true;
                             break;
@@ -270,9 +306,9 @@ namespace XnaGame.World.Liquid
                                     ap = GetByType(at, true, false, false, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, true, false, false, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, true, false, false, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new Vec2(i, j) + ICX(ac) + IX(a) * ap) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + ICX(bc) + IX(b) * bp) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + ICX(cc) + IX(c) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(ac) + IX(a) * ap) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(bc) + IX(b) * bp) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(cc) + IX(c) * cp) * Map.TileSize);
                             }
                             has = true;
                             break;
@@ -286,9 +322,9 @@ namespace XnaGame.World.Liquid
                                     ap = GetByType(at, false, true, false, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, false, true, false, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, false, true, false, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new Vec2(i, j) + ICX(IC(ac)) - IX(a) * ap) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + ICX(IC(bc)) - IX(b) * bp) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + ICX(IC(cc)) - IX(c) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(ac)) - IX(a) * ap) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(bc)) - IX(b) * bp) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + ICX(IC(cc)) - IX(c) * cp) * Map.TileSize);
                             }
                             has = true;
                             break;
@@ -302,9 +338,9 @@ namespace XnaGame.World.Liquid
                                     ap = GetByType(at, false, false, true, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, false, false, true, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, false, false, true, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new Vec2(i, j) + IC(new Vec2(ac.Y, ac.X)) - new Vec2(a.Y, a.X) * ap) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + IC(new Vec2(bc.Y, bc.X)) - new Vec2(b.Y, b.X) * bp) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + IC(new Vec2(cc.Y, cc.X)) - new Vec2(c.Y, c.X) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(new Vec2(ac.Y, ac.X)) - new Vec2(a.Y, a.X) * ap) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(new Vec2(bc.Y, bc.X)) - new Vec2(b.Y, b.X) * bp) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + IC(new Vec2(cc.Y, cc.X)) - new Vec2(c.Y, c.X) * cp) * Map.TileSize);
                             }
                             has = true;
                             break;
@@ -318,9 +354,9 @@ namespace XnaGame.World.Liquid
                                     ap = GetByType(at, true, true, true, s, l, r, d, u, lu, ld, ru, rd),
                                     bp = GetByType(bt, true, true, true, s, l, r, d, u, lu, ld, ru, rd),
                                     cp = GetByType(ct, true, true, true, s, l, r, d, u, lu, ld, ru, rd);
-                                batch.Vertex((new Vec2(i, j) + new Vec2(ac.Y, ac.X) + new Vec2(a.Y, a.X) * ap) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + new Vec2(bc.Y, bc.X) + new Vec2(b.Y, b.X) * bp) * tileSize);
-                                batch.Vertex((new Vec2(i, j) + new Vec2(cc.Y, cc.X) + new Vec2(c.Y, c.X) * cp) * tileSize);
+                                batch.Vertex((new Vec2(i, j) + new Vec2(ac.Y, ac.X) + new Vec2(a.Y, a.X) * ap) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + new Vec2(bc.Y, bc.X) + new Vec2(b.Y, b.X) * bp) * Map.TileSize);
+                                batch.Vertex((new Vec2(i, j) + new Vec2(cc.Y, cc.X) + new Vec2(c.Y, c.X) * cp) * Map.TileSize);
                             }
                             has = true;
                             break;
@@ -328,12 +364,12 @@ namespace XnaGame.World.Liquid
                     }
                     if (!has)
                     {
-                        batch.Vertex(new Vec2(i, j) * tileSize);
-                        batch.Vertex(new Vec2(i+1, j) * tileSize);
-                        batch.Vertex(new Vec2(i, j+1) * tileSize);
-                        batch.Vertex(new Vec2(i+1, j+1) * tileSize);
-                        batch.Vertex(new Vec2(i + 1, j) * tileSize);
-                        batch.Vertex(new Vec2(i, j + 1) * tileSize);
+                        batch.Vertex(new Vec2(i, j) * Map.TileSize);
+                        batch.Vertex(new Vec2(i + 1, j) * Map.TileSize);
+                        batch.Vertex(new Vec2(i, j + 1) * Map.TileSize);
+                        batch.Vertex(new Vec2(i + 1, j + 1) * Map.TileSize);
+                        batch.Vertex(new Vec2(i + 1, j) * Map.TileSize);
+                        batch.Vertex(new Vec2(i, j + 1) * Map.TileSize);
                     }
                 }
             batch.End();
@@ -450,12 +486,10 @@ namespace XnaGame.World.Liquid
             });
         }
 
-        private Vec2 IC(Vec2 c) => new Vec2(1) - c;
-        private Vec2 ICX(Vec2 c) => new Vec2(1-c.X, c.Y);
-        private Vec2 ICY(Vec2 c) => new Vec2(c.X, 1-c.Y);
+        private static Vec2 IC(Vec2 c) => new Vec2(1) - c;
+        private static Vec2 ICX(Vec2 c) => new Vec2(1 - c.X, c.Y);
 
-        private Vec2 IX(Vec2 c) => new Vec2(-c.X, c.Y);
-        private Vec2 IY(Vec2 c) => new Vec2(c.X, -c.Y);
+        private static Vec2 IX(Vec2 c) => new Vec2(-c.X, c.Y);
 
         /*
          * Types:

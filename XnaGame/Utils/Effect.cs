@@ -1,5 +1,7 @@
-﻿using XnaGame.PEntities;
+﻿using Microsoft.Xna.Framework.Graphics;
+using XnaGame.Physical;
 using XnaGame.Utils.Graphics;
+using XnaGame.World;
 
 namespace XnaGame.Utils
 {
@@ -41,34 +43,34 @@ namespace XnaGame.Utils
 
         public Effect Spawn(Vec2 position, float angle)
         {
-            int len = URandom.Int((int)emits.X, (int)emits.Y);
+            int len = URandom.SInt((int)emits.X, (int)emits.Y);
             float maxTime = 0;
             Particle[] particles = new Particle[len];
             for (int i = 0; i < len; i++)
             {
-                float time = URandom.Float(emitLivetime.X, emitLivetime.Y);
+                float time = URandom.SFloat(emitLivetime.X, emitLivetime.Y);
                 particles[i] = new Particle
                 {
                     livetime = time,
-                    rotation = URandom.Float(emitRotation.X, emitRotation.Y),
-                    size = URandom.Float(emitSize.X, emitSize.Y),
-                    speed = URandom.Float(emitSpeed.X, emitSpeed.Y),
+                    rotation = URandom.SFloat(emitRotation.X, emitRotation.Y),
+                    size = URandom.SFloat(emitSize.X, emitSize.Y),
+                    speed = URandom.SFloat(emitSpeed.X, emitSpeed.Y),
                     position = position
                 };
                 if (maxTime < time) maxTime = time;
             }
             Effect clone = new Effect(position, angle, emitLivetime, emitRotation, emitSize, emitSpeed, emits, emitAnimation, frameRate, particles, maxTime);
-            Core.AddEntity(clone.Draw, clone.Update);
+            EntityManager.Add(clone);
             return clone;
         }
 
-        public override void Draw()
+        public override void Draw(SpriteBatch spriteBatch)
         {
             for (int i = 0; i < particles.Length; i++)
             {
                 Particle p = particles[i];
                 if (timer > p.livetime) continue;
-                SDraw.Rect(emitAnimation[emitAnimation.Animation(frameRate, timer)], p.position + Vec2.RightOf(p.rotation + rotation) * timer * p.speed, p.rotation + rotation, p.size);
+                spriteBatch.Rect(emitAnimation[emitAnimation.Animation(frameRate, timer)], p.position + Vec2.RightOf(p.rotation + rotation) * timer * p.speed, p.rotation + rotation, p.size);
             }
         }
 
@@ -101,7 +103,7 @@ namespace XnaGame.Utils
             this.frameRate = frameRate;
             if (livetime)
             {
-                emitLivetime = new Vec2((animation.Length-1) * frameRate);
+                emitLivetime = new Vec2((animation.Length - 1) * frameRate);
             }
         }
         #endregion

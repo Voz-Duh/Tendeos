@@ -1,7 +1,4 @@
 ﻿using Microsoft.Xna.Framework.Content;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
 
@@ -21,21 +18,6 @@ namespace XnaGame.Content
             slashMedium.SetSpeed(50);
         }
 
-        public static Func<T> Get<T>(string value) where T : Effect
-        {
-            FieldInfo t = typeof(Effects).GetField(value);
-            return () =>
-            {
-                if (cash.TryGetValue(value, out Effect entity))
-                    return (T)entity;
-                T res = (T)t.GetValue(null);
-                cash.Add(value, res);
-                return res;
-            };
-        }
-
-        private static readonly Dictionary<string, Effect> cash = new Dictionary<string, Effect>();
+        public static Effect Get(string value) => (Effect)typeof(Effects).GetField(value).GetValue(null);
     }
-
-    public delegate Effect EffectRef();
 }

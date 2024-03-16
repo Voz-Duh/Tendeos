@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using XnaGame.World;
+using XnaGame.World.Content;
 
 namespace XnaGame.Utils
 {
@@ -10,7 +11,7 @@ namespace XnaGame.Utils
     /// <returns>True to break.</returns>
     public delegate bool RaycastDelegate(Collider collider, Vec2 point, Vec2 normal, float distance);
 
-    public delegate void RaycastMapDelegate(Vec2 point, Vec2 normal, float distance);
+    public delegate void RaycastMapDelegate(int x, int y, Vec2 point, Vec2 normal, float distance);
 
     public record struct RaycastHitInfo(Collider collider, Vec2 point, Vec2 normal, float distance) : IComparable<RaycastHitInfo>
     {
@@ -30,9 +31,10 @@ namespace XnaGame.Utils
         static readonly ColliderInfo[] colliders = new ColliderInfo[255];
         public const uint VELOCITY_ITERATIONS = 4;
         public const float VELOCITY_DIFFERENT = 1f / VELOCITY_ITERATIONS;
-        public static Vec2 gravity = new Vec2(0, 9.8f);
-        public static float meter, tileSize;
-        public static IMap map;
+        public static Vec2 Gravity { get; set; } = new Vec2(0, 9.8f);
+        public static float Meter { get; set; }
+        public static float TileSize { get; set; }
+        public static IMap Map { get; set; }
 
         public static Collider Create(float width, float height, float evenness, float elastic)
         {
@@ -82,11 +84,17 @@ namespace XnaGame.Utils
                 Vec2 rnormal = Vec2.Zero;
                 rdistance = float.MinValue;
 
-                var (mcx, mcy) = Physics.map.World2Cell(new Vec2(mx, my));
-                var (pcx, pcy) = Physics.map.World2Cell(new Vec2(px, py));
+                var (mcx, mcy) = Map.World2Cell(new Vec2(mx, my));
+                var (pcx, pcy) = Map.World2Cell(new Vec2(px, py));
+                int y;
+                TileData tile;
                 for (int x = mcx; x <= pcx; x++)
-                    for (int y = mcy; y <= pcy; y++)
-                        if (Physics.map.GetTile(true, x, y).Tile != null
+                    for (y = mcy; y <= pcy; y++)
+                    {
+                        tile = Map.GetTile(true, x, y);
+                        if (tile.Tile is ReferenceTile)
+                            tile = Map.GetTile(true, BitConverter.ToInt32(tile.Data), BitConverter.ToInt32(tile.Data, 4));
+                        if ((tile.Tile?.Collision ?? false)
                             && RaycastMap(x, y, origin, direction, maxDistance, out Vec2 point, out Vec2 normal, out float distance)
                             && distance > rdistance)
                         {
@@ -94,6 +102,7 @@ namespace XnaGame.Utils
                             rnormal = normal;
                             rpoint = point;
                         }
+                    }
                 if (rdistance != float.MinValue)
                 {
                     colliderRays[hitsCount] = new RaycastHitInfo(null, rpoint, rnormal, rdistance);
@@ -126,19 +135,28 @@ namespace XnaGame.Utils
                 py = Math.Max(origin.Y, rdistance);
             rdistance = float.MinValue;
 
-            var (mcx, mcy) = map.World2Cell(new Vec2(mx, my));
-            var (pcx, pcy) = map.World2Cell(new Vec2(px, py));
+            var (mcx, mcy) = Map.World2Cell(new Vec2(mx, my));
+            var (pcx, pcy) = Map.World2Cell(new Vec2(px, py));
+            int y, rx = 0, ry = 0;
+            TileData tile;
             for (int x = mcx; x <= pcx; x++)
-                for (int y = mcy; y <= pcy; y++)
-                    if (map.GetTile(true, x, y).Tile != null
-                        && RaycastMap(x, y, origin, direction, maxDistance, out Vec2 point, out Vec2 normal, out float distance)
+                for (y = mcy; y <= pcy; y++)
+                {
+                    tile = Map.GetTile(true, x, y);
+                    if (tile.Tile is ReferenceTile)
+                        tile = Map.GetTile(true, BitConverter.ToInt32(tile.Data), BitConverter.ToInt32(tile.Data, 4));
+                    if ((tile.Tile?.Collision ?? false)
+                    && RaycastMap(x, y, origin, direction, maxDistance, out Vec2 point, out Vec2 normal, out float distance)
                         && distance > rdistance)
                     {
                         rdistance = distance;
                         rnormal = normal;
                         rpoint = point;
+                        rx = x;
+                        ry = y;
                     }
-            if (rdistance != float.MinValue) action(rpoint, rnormal, rdistance);
+                }
+            if (rdistance != float.MinValue) action(rx, ry, rpoint, rnormal, rdistance);
         }
 
         public static void Raycast(RaycastDelegate action, Vec2 origin, Vec2 direction, bool map = false)
@@ -194,10 +212,10 @@ namespace XnaGame.Utils
 
         private static bool RaycastMap(int x, int y, Vec2 origin, Vec2 direction, float maxDistance, out Vec2 point, out Vec2 normal, out float distance)
         {
-            float ap = origin.X - (x * tileSize + tileSize);
-            float bp = origin.X - x * tileSize;
-            float cp = origin.Y - (y * tileSize + tileSize);
-            float dp = origin.Y - y * tileSize;
+            float ap = origin.X - (x * TileSize + TileSize);
+            float bp = origin.X - x * TileSize;
+            float cp = origin.Y - (y * TileSize + TileSize);
+            float dp = origin.Y - y * TileSize;
             float a = ap / direction.X;
             float b = bp / direction.X;
             float c = cp / direction.Y;
@@ -217,35 +235,43 @@ namespace XnaGame.Utils
 
         public static void Process(float delta)
         {
+            IColliderEvents events;
+            int x, y, mx, my, px, py;
+            Vec2 rnormal, rvel, vel;
+            float rpush, bx, by;
+            ColliderInfo info;
+            TileData tile;
             for (int i = 0; i < length; i++)
             {
-                var info = colliders[i];
+                info = colliders[i];
                 if (info.collider != null && !info.collider.sleep)
                 {
-                    IColliderEvents events = info.collider;
+                    events = info.collider;
                     info.last = info.current;
                     info.current = false;
-                    info.collider.velocity += gravity * delta * meter;
+                    info.collider.velocity += Gravity * delta * Meter;
                     for (int j = 0; j < VELOCITY_ITERATIONS; j++)
                     {
                         info.current = false;
-                        Vec2 rnormal = Vec2.Zero;
-                        float rpush = float.MinValue;
-                        Vec2 rvel = Vec2.Zero;
+                        rnormal = Vec2.Zero;
+                        rpush = float.MinValue;
+                        rvel = Vec2.Zero;
 
                         info.collider.position += info.collider.velocity * delta * VELOCITY_DIFFERENT;
 
-                        var (mx, my) = map.World2Cell(info.collider.position - info.collider.halfSize);
-                        var (px, py) = map.World2Cell(info.collider.position + info.collider.halfSize);
-                        for (int x = mx; x <= px; x++)
-                            for (int y = my; y <= py; y++)
+                        (mx, my) = Map.World2Cell(info.collider.position - info.collider.halfSize);
+                        (px, py) = Map.World2Cell(info.collider.position + info.collider.halfSize);
+                        for (x = mx; x <= px; x++)
+                            for (y = my; y <= py; y++)
                             {
-                                TileData tile = map.GetTile(true, x, y);
-                                if (tile.Tile != null)
+                                tile = Map.GetTile(true, x, y);
+                                if (tile.Tile is ReferenceTile)
+                                    tile = Map.GetTile(true, BitConverter.ToInt32(tile.Data), BitConverter.ToInt32(tile.Data, 4));
+                                if (tile.Tile?.Collision ?? false)
                                 {
-                                    float bx = x * tileSize, by = y * tileSize;
-                                    Vec2 vel = info.collider.velocity;
-                                    if (info.collider.Process(new Vector4(bx, by, bx + tileSize, by + tileSize), out Vec2 normal, out float push, ref vel) && push > rpush)
+                                    bx = x * TileSize; by = y * TileSize;
+                                    vel = info.collider.velocity;
+                                    if (info.collider.Process(new Vector4(bx, by, bx + TileSize, by + TileSize), out Vec2 normal, out float push, ref vel) && push > rpush)
                                     {
                                         rpush = push;
                                         rvel = vel;

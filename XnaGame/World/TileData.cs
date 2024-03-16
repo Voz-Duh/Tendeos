@@ -1,28 +1,39 @@
-﻿namespace XnaGame.World
+﻿using XnaGame.World.Content;
+
+namespace XnaGame.World
 {
     public struct TileData
     {
         public float Health { get; set; }
-        private readonly byte[] stateData;
+        public readonly byte[] Data { get; }
         public byte this[int i]
         {
-            get => stateData[i];
-            set => stateData[i] = value;
+            get => Data[i];
+            set => Data[i] = value;
         }
+        public bool IsReference { get; set; }
         public ITile Tile { get; init; }
 
         public TileData()
         {
             Health = 0;
-            stateData = null;
             Tile = null;
         }
 
         public TileData(ITile tile) : this()
         {
             if (tile == null) return;
-            Health = tile.Health;
-            stateData = tile.GetData();
+            if (tile is ReferenceTile)
+            {
+                IsReference = true;
+                Data = new byte[8];
+            }
+            else
+            {
+                IsReference = false;
+                Health = tile.Health;
+                Data = tile.DataCount == 0 ? null : new byte[tile.DataCount];
+            }
             Tile = tile;
         }
     }

@@ -1,6 +1,4 @@
 ﻿using Microsoft.Xna.Framework.Content;
-using System.Collections.Generic;
-using System.Reflection;
 using XnaGame.World.Structures;
 
 namespace XnaGame.Content
@@ -26,21 +24,6 @@ s: stone  stone;
 ");
         }
 
-        public static StructureRef Get<T>(string value) where T : Structure
-        {
-            FieldInfo t = typeof(Tiles).GetField(value);
-            return () =>
-            {
-                if (cash.TryGetValue(value, out Structure entity))
-                    return (T)entity;
-                T res = (T)t.GetValue(null);
-                cash.Add(value, res);
-                return res;
-            };
-        }
-
-        private static readonly Dictionary<string, Structure> cash = new Dictionary<string, Structure>();
+        public static Structure Get(string value) => (Structure)typeof(Structures).GetField(value).GetValue(null);
     }
-
-    public delegate Structure StructureRef();
 }

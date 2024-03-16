@@ -7,18 +7,17 @@ namespace XnaGame.Utils.Graphics
     {
         public const float frameRate = 0.6f;
 
-        public static int Animation(this Sprite[] sprites, float frameRate, ref float timer)
+        public static int Animation(this Sprite[] sprites, float frameRate, ref float timer, bool inversed = false)
         {
             if (sprites.Length == 1) return 0;
             timer += Time.Delta / frameRate;
+            if (inversed) return (sprites.Length - 1) - (int)(timer * (sprites.Length - 1)) % (sprites.Length - 1);
             return (int)(timer * (sprites.Length - 1)) % (sprites.Length - 1);
         }
 
         public static int Animation(this Sprite[] sprites, float frameRate, float timer)
         {
             if (sprites.Length == 1) return 0;
-            // timer = from 0 to animation.Length * frameRate
-            // frame = timer / frameRate
             return (int)(timer / frameRate) % (sprites.Length - 1);
         }
 

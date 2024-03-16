@@ -73,11 +73,23 @@
 /processorParam:TextureFormat=Color
 /build:effects/slash_medium.png
 
+#begin languages/en.lng
+/copy:languages/en.lng
+
+#begin languages/ru.lng
+/copy:languages/ru.lng
+
 #begin NotoSansKR-Regular.ttf
 /copy:NotoSansKR-Regular.ttf
 
+#begin NotoSansKR-Regular.ttf.lng
+/copy:NotoSansKR-Regular.ttf.lng
+
 #begin NotoSans-Regular.ttf
 /copy:NotoSans-Regular.ttf
+
+#begin NotoSans-Regular.ttf.lng
+/copy:NotoSans-Regular.ttf.lng
 
 #begin pickaxe.png
 /importer:TextureImporter
@@ -103,7 +115,7 @@
 /processorParam:TextureFormat=Color
 /build:pickaxe_item.png
 
-#begin player_m_arm_l.png
+#begin player/m_arm_l.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -113,9 +125,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:player_m_arm_l.png
+/build:player/m_arm_l.png
 
-#begin player_m_arm_r.png
+#begin player/m_arm_r.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -125,9 +137,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:player_m_arm_r.png
+/build:player/m_arm_r.png
 
-#begin player_m_body.png
+#begin player/m_body.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -137,9 +149,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:player_m_body.png
+/build:player/m_body.png
 
-#begin player_m_head.png
+#begin player/m_head.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -149,9 +161,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:player_m_head.png
+/build:player/m_head.png
 
-#begin player_m_legs.png
+#begin player/m_legs.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -161,9 +173,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:player_m_legs.png
+/build:player/m_legs.png
 
-#begin player_w_arm_l.png
+#begin player/w_arm_l.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -173,9 +185,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:player_w_arm_l.png
+/build:player/w_arm_l.png
 
-#begin player_w_arm_r.png
+#begin player/w_arm_r.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -185,9 +197,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:player_w_arm_r.png
+/build:player/w_arm_r.png
 
-#begin player_w_body.png
+#begin player/w_body_0.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -197,9 +209,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:player_w_body.png
+/build:player/w_body_0.png
 
-#begin player_w_head.png
+#begin player/w_body_1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -209,9 +221,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:player_w_head.png
+/build:player/w_body_1.png
 
-#begin player_w_legs.png
+#begin player/w_body_2.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -221,7 +233,43 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:player_w_legs.png
+/build:player/w_body_2.png
+
+#begin player/w_body_3.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:player/w_body_3.png
+
+#begin player/w_head.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:player/w_head.png
+
+#begin player/w_legs.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:player/w_legs.png
 
 #begin tiles/dirt.png
 /importer:TextureImporter
@@ -331,18 +379,6 @@
 /processorParam:TextureFormat=Color
 /build:tiles/test.png
 
-#begin tiles/test.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:tiles/test.png
-
 #begin tiles/test_item.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -355,7 +391,7 @@
 /processorParam:TextureFormat=Color
 /build:tiles/test_item.png
 
-#begin tiles/test_item.png
+#begin tiles/tree.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -365,7 +401,43 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:tiles/test_item.png
+/build:tiles/tree.png
+
+#begin tiles/tree_crown.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:tiles/tree_crown.png
+
+#begin tiles/tree_item.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:tiles/tree_item.png
+
+#begin tiles/tree_trunk.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:tiles/tree_trunk.png
 
 #begin ui/button.png
 /importer:TextureImporter
@@ -390,6 +462,33 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:ui/icons.png
+
+#begin ui/icons.sd
+/copy:ui/icons.sd
+
+#begin ui/player_inventory_window.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:ui/player_inventory_window.png
+
+#begin ui/slot_button.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:ui/slot_button.png
 
 #begin ui/window.png
 /importer:TextureImporter

@@ -31,24 +31,24 @@ namespace XnaGame.Utils.Graphics
             Rect = rect;
         }
 
-        public Sprite[] Split(int columns, int rows, int padding = 0, int ignore = 0)
+        public Sprite[] Split(int rows, int columns, int padding = 0, int ignore = 0)
         {
-            int subTextureWidth = (Rect.Width - (columns - 1) * padding) / columns;
-            int subTextureHeight = (Rect.Height - (rows - 1) * padding) / rows;
+            int subTextureWidth = (Rect.Width - (rows - 1) * padding) / rows;
+            int subTextureHeight = (Rect.Height - (columns - 1) * padding) / columns;
 
-            Sprite[] subTextures = new Sprite[rows * columns - ignore];
+            Sprite[] subTextures = new Sprite[columns * rows - ignore];
 
-            for (int row = 0; row < rows; row++)
+            for (int col = 0; col < columns; col++)
             {
-                for (int col = 0; col < columns; col++)
+                for (int row = 0; row < rows; row++)
                 {
-                    if (row * columns + col >= rows * columns - ignore) break;
+                    if (col * rows + row >= columns * rows - ignore) break;
 
-                    int x = col * (subTextureWidth + padding),
-                        y = row * (subTextureHeight + padding);
+                    int x = row * (subTextureWidth + padding),
+                        y = col * (subTextureHeight + padding);
                     Rectangle subTextureRect = new Rectangle(Rect.X + x, Rect.Y + y, subTextureWidth, subTextureHeight);
 
-                    subTextures[row * columns + col] = new Sprite(Texture, subTextureRect);
+                    subTextures[col * rows + row] = new Sprite(Texture, subTextureRect);
                 }
             }
 

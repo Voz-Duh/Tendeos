@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using System;
 
 namespace XnaGame.Utils
 {

@@ -1,7 +1,6 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
-using XnaGame.PEntities.Content;
 
 namespace XnaGame.Utils.Graphics
 {
@@ -48,7 +47,7 @@ namespace XnaGame.Utils.Graphics
             basicEffect.VertexColorEnabled = true;
             BlendState = BlendState.AlphaBlend;
 
-            vertices = new VertexPositionColorNormalTexture[size];
+            if (vertices == null || vertices.Length != size) vertices = new VertexPositionColorNormalTexture[size];
         }
 
         public void Vertex(Vector3 vector) => Vertex3(vector.X, vector.Y, vector.Z);

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 namespace XnaGame.Utils.Input
 {
@@ -14,6 +15,7 @@ namespace XnaGame.Utils.Input
         {
             previousKeyState = currentKeyState;
             currentKeyState = Microsoft.Xna.Framework.Input.Mouse.GetState();
+            onUpdate();
             return currentKeyState;
         }
 
@@ -45,6 +47,17 @@ namespace XnaGame.Utils.Input
         public static Point Point => currentKeyState.Position;
         public static Vec2 Position => Camera?.Screen2World(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
         public static Vec2 GUIPosition => Camera?.Screen2GUI(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
+
+        public static Point PointDelta => Point - previousKeyState.Position;
+        public static Vec2 PositionDelta => Position - Camera?.Screen2World(previousKeyState.Position.ToVector2()) ?? previousKeyState.Position.ToVector2();
+        public static Vec2 GUIPositionDelta => GUIPosition - Camera?.Screen2GUI(previousKeyState.Position.ToVector2()) ?? previousKeyState.Position.ToVector2();
+
+        private static Action onUpdate = () => { };
+        public static event Action OnUpdate
+        {
+            add => onUpdate += value;
+            remove => onUpdate -= value;
+        }
 
         public static int Scroll => currentKeyState.ScrollWheelValue;
         public static int XScroll => currentKeyState.HorizontalScrollWheelValue;

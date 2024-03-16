@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using XnaGame.Utils;
+﻿using XnaGame.Utils;
 
 namespace Prototype.Graphics
 {

@@ -1,7 +1,4 @@
 ﻿using Microsoft.Xna.Framework.Content;
-using System.Collections.Generic;
-using System.Reflection;
-using XnaGame.Utils.Graphics;
 using XnaGame.World;
 using XnaGame.World.Content;
 
@@ -9,46 +6,40 @@ namespace XnaGame.Content
 {
     public static class Tiles
     {
-        public static ITile ignore, test, stone;
+        public static ITile ignore, reference, test, stone, dirt, grass, tree;
 
         public static void Init(ContentManager content)
         {
             ignore = new TileTag();
-            test = new AutoTile(Sprite.Load(content, "tiles/test"), Sprite.Load(content, "tiles/test_item"))
+            reference = new ReferenceTile();
+            test = new AutoTile()
             {
                 Hardness = 1,
                 Health = 2
             };
-            stone = new AutoTile(Sprite.Load(content, "tiles/stone"), Sprite.Load(content, "tiles/stone_item"))
+            stone = new AutoTile()
             {
-                ShadowIntensity = 0.1f,
                 Hardness = 2,
                 Health = 4
             };
-        }
-
-        public static TileRef Get<T>(string value) where T : ITile
-        {
-            if (value == "air") return () => null;
-            FieldInfo t = typeof(Tiles).GetField(value);
-            return () =>
+            dirt = new AutoTile()
             {
-                if (cash.TryGetValue(value, out ITile entity))
-                    return (T)entity;
-                T res = (T)t.GetValue(null);
-                cash.Add(value, res);
-                return res;
+                Hardness = 1,
+                Health = 2
+            };
+            grass = new AutoTile()
+            {
+                Hardness = 1,
+                Health = 2,
+                DropTag = "dirt"
+            };
+            tree = new Tree("dirt")
+            {
+                Hardness = 1,
+                Health = 2
             };
         }
 
-        public static ItemRef GetItem(string value)
-        {
-            var @ref = Get<ITile>(value);
-            return () => @ref();
-        }
-
-        private static readonly Dictionary<string, ITile> cash = new Dictionary<string, ITile>();
+        public static ITile Get(string value) => value == "air" ? default : (ITile)typeof(Tiles).GetField(value).GetValue(null);
     }
-
-    public delegate ITile TileRef();
 }
