@@ -478,6 +478,18 @@
 /processorParam:TextureFormat=Color
 /build:ui/player_inventory_window.png
 
+#begin ui/slider.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:ui/slider.png
+
 #begin ui/slot_button.png
 /importer:TextureImporter
 /processor:TextureProcessor

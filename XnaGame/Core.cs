@@ -12,22 +12,22 @@ using XnaGame.Utils.SaveSystem;
 
 namespace XnaGame
 {
-    public enum EGameState { InGame, Menu }
+    public enum GameScene { Menu, InGame }
 
     public partial class Core : Game
     {
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
-        public Scene[] states;
-        private EGameState state;
-        public EGameState State
+        public Scene[] scenes;
+        private GameScene scene;
+        public GameScene Scene
         {
-            get => state;
+            get => scene;
             set
             {
-                states[(int)state].Clear();
-                state = value;
-                states[(int)state].Setup();
+                scenes[(int)scene].Clear();
+                scene = value;
+                scenes[(int)scene].Setup();
             }
         }
 
@@ -36,7 +36,10 @@ namespace XnaGame
         public Core()
         {
             Instance = this;
-            graphics = new GraphicsDeviceManager(this);
+            graphics = new GraphicsDeviceManager(this)
+            {
+                PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8
+            };
             Content.RootDirectory = "Assets";
             IsMouseVisible = true;
             Window.AllowUserResizing = true;
@@ -79,30 +82,37 @@ namespace XnaGame
             }, 130, .05f);
             buttonStyle = new Button.Style(new Sprite(Content.Load<Texture2D>("ui/button")));
             windowStyle = new Window.Style(new Sprite(Content.Load<Texture2D>("ui/window")));
+            playerInventoryStyle = new PlayerInventoryContainer.Style(
+                new Image(Vec2.Zero, new Vec2(11, 0), Sprite.Load(Content, "ui/player_inventory_window")),
+                6, 5, 8,
+                new Button.Style(Sprite.Load(Content, "ui/slot_button")),
+                new Vec2(4)/*,
+                (new Vec2(69, 3), )*/);
             Content.LoadSpriteData("ui/icons", Icons);
 
-            states = new[]
+            scenes = new Scene[]
             {
-                new GameplayScene(this)
+                new MainMenuScene(this),
+                new GameplayScene(this),
             };
-            states[(int)State].Setup();
+            scenes[(int)Scene].Setup();
         }
 
         protected void OnResize(object sender, EventArgs e)
         {
             camera.SetViewport(GraphicsDevice.Viewport);
-            states[(int)State].OnResize();
+            scenes[(int)Scene].OnResize();
         }
 
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, null, null, null, camera.GetViewMatrix());
-            states[(int)State].Draw(spriteBatch);
+            scenes[(int)Scene].Draw(spriteBatch);
             spriteBatch.End();
-            states[(int)State].AfterDraw(spriteBatch);
+            scenes[(int)Scene].AfterDraw(spriteBatch);
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, null, null, null, camera.GetGUIMatrix());
-            states[(int)State].GUI.Draw(spriteBatch);
+            scenes[(int)Scene].GUI.Draw(spriteBatch);
             extraGuiDraw(spriteBatch);
             spriteBatch.End();
             base.Draw(gameTime);
@@ -114,9 +124,9 @@ namespace XnaGame
             Mouse.Update();
             Time.GameTime = gameTime;
 
-            states[(int)State].GUI.Reset();
-            states[(int)State].GUI.Update();
-            states[(int)State].Update();
+            scenes[(int)Scene].GUI.Reset();
+            scenes[(int)Scene].GUI.Update();
+            scenes[(int)Scene].Update();
         }
     }
 }

@@ -15,42 +15,69 @@ namespace XnaGame.Utils.Input
         {
             previousKeyState = currentKeyState;
             currentKeyState = Microsoft.Xna.Framework.Input.Mouse.GetState();
+            LeftUp = currentKeyState.LeftButton == ButtonState.Released;
+            LeftReleased = currentKeyState.LeftButton == ButtonState.Released && previousKeyState.LeftButton != ButtonState.Released;
+            LeftDown = currentKeyState.LeftButton == ButtonState.Pressed;
+            LeftPressed = currentKeyState.LeftButton == ButtonState.Pressed && previousKeyState.LeftButton != ButtonState.Pressed;
+            RightUp = currentKeyState.RightButton == ButtonState.Released;
+            RightReleased = currentKeyState.RightButton == ButtonState.Released && previousKeyState.RightButton != ButtonState.Released;
+            RightDown = currentKeyState.RightButton == ButtonState.Pressed;
+            RightPressed = currentKeyState.RightButton == ButtonState.Pressed && previousKeyState.RightButton != ButtonState.Pressed;
+            MiddleUp = currentKeyState.MiddleButton == ButtonState.Released;
+            MiddleReleased = currentKeyState.MiddleButton == ButtonState.Released && previousKeyState.MiddleButton != ButtonState.Released;
+            MiddleDown = currentKeyState.MiddleButton == ButtonState.Pressed;
+            MiddlePressed = currentKeyState.MiddleButton == ButtonState.Pressed && previousKeyState.MiddleButton != ButtonState.Pressed;
+            X1Up = currentKeyState.XButton1 == ButtonState.Released;
+            X1Released = currentKeyState.XButton1 == ButtonState.Released && previousKeyState.XButton1 != ButtonState.Released;
+            X1Down = currentKeyState.XButton1 == ButtonState.Pressed;
+            X1Pressed = currentKeyState.XButton1 == ButtonState.Pressed && previousKeyState.XButton1 != ButtonState.Pressed;
+            X2Up = currentKeyState.XButton2 == ButtonState.Released;
+            X2Released = currentKeyState.XButton2 == ButtonState.Released && previousKeyState.XButton2 != ButtonState.Released;
+            X2Down = currentKeyState.XButton2 == ButtonState.Pressed;
+            X2Pressed = currentKeyState.XButton2 == ButtonState.Pressed && previousKeyState.XButton2 != ButtonState.Pressed;
+            Point = currentKeyState.Position;
+            Position = Camera?.Screen2World(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
+            GUIPosition = Camera?.Screen2GUI(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
+            PointDelta = Point - previousKeyState.Position;
+            PositionDelta = Position - Camera?.Screen2World(previousKeyState.Position.ToVector2()) ?? previousKeyState.Position.ToVector2();
+            GUIPositionDelta = GUIPosition - Camera?.Screen2GUI(previousKeyState.Position.ToVector2()) ?? previousKeyState.Position.ToVector2();
             onUpdate();
             return currentKeyState;
         }
 
-        public static bool LeftUp => currentKeyState.LeftButton == ButtonState.Released;
-        public static bool LeftReleased => currentKeyState.LeftButton == ButtonState.Released && previousKeyState.LeftButton != ButtonState.Released;
-        public static bool LeftDown => currentKeyState.LeftButton == ButtonState.Pressed;
-        public static bool LeftPressed => currentKeyState.LeftButton == ButtonState.Pressed && previousKeyState.LeftButton != ButtonState.Pressed;
+        public static bool LeftUp { get; private set; }
+        public static bool LeftReleased { get; private set; }
+        public static bool LeftDown { get; private set; }
+        public static bool LeftPressed { get; private set; }
 
-        public static bool RightUp => currentKeyState.RightButton == ButtonState.Released;
-        public static bool RightReleased => currentKeyState.RightButton == ButtonState.Released && previousKeyState.RightButton != ButtonState.Released;
-        public static bool RightDown => currentKeyState.RightButton == ButtonState.Pressed;
-        public static bool RightPressed => currentKeyState.RightButton == ButtonState.Pressed && previousKeyState.RightButton != ButtonState.Pressed;
+        public static bool RightUp { get; private set; }
+        public static bool RightReleased { get; private set; }
+        public static bool RightDown { get; private set; }
+        public static bool RightPressed { get; private set; }
 
-        public static bool MiddleUp => currentKeyState.MiddleButton == ButtonState.Released;
-        public static bool MiddleReleased => currentKeyState.MiddleButton == ButtonState.Released && previousKeyState.MiddleButton != ButtonState.Released;
-        public static bool MiddleDown => currentKeyState.MiddleButton == ButtonState.Pressed;
-        public static bool MiddlePressed => currentKeyState.MiddleButton == ButtonState.Pressed && previousKeyState.MiddleButton != ButtonState.Pressed;
+        public static bool MiddleUp { get; private set; }
+        public static bool MiddleReleased { get; private set; }
+        public static bool MiddleDown { get; private set; }
+        public static bool MiddlePressed { get; private set; }
 
-        public static bool X1Up => currentKeyState.XButton1 == ButtonState.Released;
-        public static bool X1Released => currentKeyState.XButton1 == ButtonState.Released && previousKeyState.XButton1 != ButtonState.Released;
-        public static bool X1Down => currentKeyState.XButton1 == ButtonState.Pressed;
-        public static bool X1Pressed => currentKeyState.XButton1 == ButtonState.Pressed && previousKeyState.XButton1 != ButtonState.Pressed;
+        public static bool X1Up { get; private set; }
+        public static bool X1Released { get; private set; }
+        public static bool X1Down { get; private set; }
+        public static bool X1Pressed { get; private set; }
 
-        public static bool X2Up => currentKeyState.XButton2 == ButtonState.Released;
-        public static bool X2Released => currentKeyState.XButton2 == ButtonState.Released && previousKeyState.XButton2 != ButtonState.Released;
-        public static bool X2Down => currentKeyState.XButton2 == ButtonState.Pressed;
-        public static bool X2Pressed => currentKeyState.XButton2 == ButtonState.Pressed && previousKeyState.XButton2 != ButtonState.Pressed;
+        public static bool X2Up { get; private set; }
+        public static bool X2Released { get; private set; }
+        public static bool X2Down { get; private set; }
+        public static bool X2Pressed { get; private set; }
 
-        public static Point Point => currentKeyState.Position;
-        public static Vec2 Position => Camera?.Screen2World(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
-        public static Vec2 GUIPosition => Camera?.Screen2GUI(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
+        public static Point Point { get; private set; }
+        public static Vec2 Position { get; private set; }
+        public static Vec2 GUIPosition { get; private set; }
 
-        public static Point PointDelta => Point - previousKeyState.Position;
-        public static Vec2 PositionDelta => Position - Camera?.Screen2World(previousKeyState.Position.ToVector2()) ?? previousKeyState.Position.ToVector2();
-        public static Vec2 GUIPositionDelta => GUIPosition - Camera?.Screen2GUI(previousKeyState.Position.ToVector2()) ?? previousKeyState.Position.ToVector2();
+        public static Point PointDelta { get; private set; }
+        public static Vec2 PositionDelta { get; private set; }
+        public static Vec2 GUIPositionDelta { get; private set; }
+
 
         private static Action onUpdate = () => { };
         public static event Action OnUpdate

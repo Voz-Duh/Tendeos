@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Threading.Tasks;
 using XnaGame.Content;
-using XnaGame.Inventory;
 using XnaGame.Physical.Content;
 using XnaGame.UI.GUIElements;
 using XnaGame.Utils;
@@ -77,11 +76,8 @@ namespace XnaGame.Scenes
 
                 a = shadowMatrix.Create(Color.White, 0, 0, 1, 8);
 
-                playerInventory = new PlayerInventoryContainer(GUI,
-                    new Image(Vec2.Zero, new Vec2(11, 0), Sprite.Load(Game.Content, "ui/player_inventory_window")),
-                    new Button.Style(Sprite.Load(Game.Content, "ui/slot_button")), 8,
-                    new Vec2(4), 6, 5/*,
-                    (new Vec2(69, 3), )*/);
+
+                playerInventory = new PlayerInventoryContainer(GUI, Core.playerInventoryStyle);
 
                 player = new Player(playerInventory, Game.camera, map, Game.Content,
                     new Utils.SaveSystem.Content.PlayerInfo()
@@ -92,8 +88,8 @@ namespace XnaGame.Scenes
 
                 Item.GetItemDistance = map.TileSize * 4;
             });
-            (saveInstance.playTime, saveInstance.map, saveInstance.waterWorld, saveInstance.player) =
-            (0, map, waterWorld, player);
+            (saveInstance.map, saveInstance.waterWorld, saveInstance.player) =
+            (map, waterWorld, player);
 
             if (!await Save.LoadAsync("Test"))
             {
@@ -111,18 +107,11 @@ namespace XnaGame.Scenes
             GUI.Add(
                 new SwitchButtons(Vec2.Zero, new FRectangle(0, 0, 11, 11), Core.buttonStyle,
                 (
-                    () =>
-                    {
-                        playerInventory.Close(player.transform.Position);
-                    },
+                    () => playerInventory.Close(player.transform.Position),
                     Core.Sprite2Icon(Core.Icons["on_inventory_icon"]),
-                    () =>
-                    {
-                        playerInventory.Open(Vec2.Zero, Vec2.Zero);
-                    },
+                    () => playerInventory.Open(Vec2.Zero, Vec2.Zero),
                     Core.Sprite2Icon(Core.Icons["off_inventory_icon"])
-                ))
-                );
+                )));
             Core.ExtraGuiDraw += DrawSelected;
         }
 

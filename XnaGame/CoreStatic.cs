@@ -19,6 +19,7 @@ namespace XnaGame
 
         public static Button.Style buttonStyle;
         public static Window.Style windowStyle;
+        public static PlayerInventoryContainer.Style playerInventoryStyle;
 
         public static DynamicSpriteFontScaled font;
 

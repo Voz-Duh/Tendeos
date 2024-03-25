@@ -30,7 +30,6 @@ namespace XnaGame.UI.GUIElements
 
                 (i == selected ? buttons[i].on : buttons[i].off)?.Invoke(spriteBatch, rectangle);
             }
-
             base.Draw(spriteBatch, rectangle);
         }
 

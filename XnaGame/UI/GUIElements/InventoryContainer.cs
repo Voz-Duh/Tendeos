@@ -1,33 +1,29 @@
 ﻿using System.Collections.Generic;
 using XnaGame.Physical.Content;
-using XnaGame.UI;
-using XnaGame.UI.GUIElements;
 using XnaGame.Utils;
 using XnaGame.Utils.Graphics;
 
-namespace XnaGame.Inventory
+namespace XnaGame.UI.GUIElements
 {
-    public class InventoryContainer : Inventory
+    public class InventoryContainer : Inventory.Inventory
     {
         public const float slotSize = 10;
 
-        protected int Width { get; set; }
-        protected int Height { get; set; }
+        protected readonly Style style;
         protected readonly GUIElement parent;
         protected GUIElement window;
 
-        public InventoryContainer(GUIElement GUI, int width = 10, int height = 10) : base(width * height)
+        public InventoryContainer(GUIElement GUI, Style style) : base(style.Width * style.Height)
         {
-            Width = width;
-            Height = height;
             parent = GUI;
+            this.style = style;
         }
 
         public override void Open(Vec2 anchor, Vec2 offset)
         {
             base.Open(anchor, offset);
             parent.Add(
-                window = new Window(anchor, new FRectangle(offset.X, offset.Y, Width * (slotSize + 1) + 3, Height * (slotSize + 1) + 3), Core.windowStyle)
+                window = new Window(anchor, new FRectangle(offset.X, offset.Y, style.Width * (slotSize + 1) + 3, style.Height * (slotSize + 1) + 3), Core.windowStyle)
                     .Add(Buttons())
                 );
         }
@@ -35,10 +31,10 @@ namespace XnaGame.Inventory
         private IEnumerator<GUIElement> Buttons()
         {
             int y;
-            for (int x = 0; x < Width; x++)
-                for (y = 0; y < Height; y++)
+            for (int x = 0; x < style.Width; x++)
+                for (y = 0; y < style.Height; y++)
                 {
-                    int i = x + y * Width;
+                    int i = x + y * style.Width;
                     yield return new Button(new Vec2(0, 0), new FRectangle(
                         x * (slotSize + 1) + 2,
                         y * (slotSize + 1) + 2,
@@ -68,16 +64,24 @@ namespace XnaGame.Inventory
 
         public override void ToByte(ByteBuffer buffer)
         {
-            buffer.Append(Width);
-            buffer.Append(Height);
             base.ToByte(buffer);
         }
 
         public override void FromByte(ByteBuffer buffer)
         {
-            Width = buffer.ReadInt();
-            Height = buffer.ReadInt();
             base.ToByte(buffer);
+        }
+
+        public class Style
+        {
+            public int Width { get; init; }
+            public int Height { get; init; }
+
+            public Style(int width, int height)
+            {
+                Width = width;
+                Height = height;
+            }
         }
     }
 }
