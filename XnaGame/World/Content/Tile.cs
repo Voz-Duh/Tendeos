@@ -30,7 +30,7 @@ namespace XnaGame.World.Content
         public byte Hardness { get; set; } = 0;
 
         public bool ShadowAvailable { get; set; } = true;
-        public float ShadowIntensity { get; set; } = float.MaxValue;
+        public float ShadowIntensity { get; set; } = 0.5f;
 
         public string DropTag { get; set; }
         [ContentLoad("DropTag", true)]

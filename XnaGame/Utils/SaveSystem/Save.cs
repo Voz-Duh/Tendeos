@@ -18,7 +18,7 @@ namespace XnaGame.Utils.SaveSystem
             stream.Close();
         }
 
-        public static async Task<bool> LoadAsync(string name, object saveInstance)
+        public static async Task<bool> LoadAsync(string name)
         {
             Save.name = name;
             string path = Path.Combine(Settings.AppData, $"{name}.save");
@@ -41,7 +41,7 @@ namespace XnaGame.Utils.SaveSystem
             return true;
         }
 
-        public static async Task<bool> Load(string name, object saveInstance)
+        public static bool Load(string name)
         {
             Save.name = name;
             string path = Path.Combine(Settings.AppData, $"{name}.save");
@@ -54,10 +54,9 @@ namespace XnaGame.Utils.SaveSystem
             return true;
         }
 
-        public static void Create(string name, object saveInstance)
+        public static void Create(string name)
         {
             Save.name = name;
-            instance = saveInstance;
         }
 
         public static void SetInstance(object saveInstance) => instance = saveInstance;

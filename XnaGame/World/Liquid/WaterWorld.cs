@@ -27,7 +27,7 @@ namespace XnaGame.World.Liquid
         private readonly Batch batch;
         private readonly Sprite[] liquid;
 
-        public WaterWorld(GraphicsDevice graphicsDevice, ContentManager content, int width, int height, int chunkSize, Camera camera)
+        public WaterWorld(GraphicsDevice graphicsDevice, ContentManager content, int width, int height, Camera camera, int chunkSize)
         {
             batch = new Batch(graphicsDevice);
 

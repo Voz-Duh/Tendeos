@@ -180,7 +180,7 @@ namespace XnaGame.World
             else if (y >= ChunkSize * Height) return default;
 
             var chunk = Cell2Chunk(x, y);
-            return chunks[chunk.x, chunk.y][top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize];
+            return chunks?[chunk.x, chunk.y]?[top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize] ?? default;
         }
 
         public TileData GetTile(bool top, (int x, int y) position) => GetTile(top, position.x, position.y);

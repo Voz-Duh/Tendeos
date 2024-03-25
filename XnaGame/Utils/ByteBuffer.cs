@@ -9,7 +9,7 @@ namespace XnaGame.Utils
     public class ByteBuffer
     {
         private byte[] data;
-        private readonly Stream stream;
+        private Stream stream;
 
         public int Position { get; set; }
 
@@ -32,7 +32,7 @@ namespace XnaGame.Utils
             Position = 0;
         }
 
-        public void Append(byte data)
+        public ByteBuffer Append(byte data)
         {
             if (stream == null)
             {
@@ -40,21 +40,26 @@ namespace XnaGame.Utils
                 this.data[^1] = data;
             }
             else stream.WriteByte(data);
+            return this;
         }
-        public void Append(short data) => Append(BitConverter.GetBytes(data));
-        public void Append(int data) => Append(BitConverter.GetBytes(data));
-        public void Append(long data) => Append(BitConverter.GetBytes(data));
-        public void Append(bool data) => Append(BitConverter.GetBytes(data));
-        public void Append(Half data) => Append(BitConverter.GetBytes(data));
-        public void Append(float data) => Append(BitConverter.GetBytes(data));
-        public void Append(double data) => Append(BitConverter.GetBytes(data));
-        public void Append(string data)
+        public ByteBuffer Append(short data) => Append(BitConverter.GetBytes(data));
+        public ByteBuffer Append(int data) => Append(BitConverter.GetBytes(data));
+        public ByteBuffer Append(long data) => Append(BitConverter.GetBytes(data));
+        public ByteBuffer Append(ushort data) => Append(BitConverter.GetBytes(data));
+        public ByteBuffer Append(uint data) => Append(BitConverter.GetBytes(data));
+        public ByteBuffer Append(ulong data) => Append(BitConverter.GetBytes(data));
+        public ByteBuffer Append(bool data) => Append(BitConverter.GetBytes(data));
+        public ByteBuffer Append(Half data) => Append(BitConverter.GetBytes(data));
+        public ByteBuffer Append(float data) => Append(BitConverter.GetBytes(data));
+        public ByteBuffer Append(double data) => Append(BitConverter.GetBytes(data));
+        public ByteBuffer Append(string data)
         {
             Append(Encoding.Unicode.GetBytes(data));
             Append((byte)0x00);
             Append((byte)0x00);
+            return this;
         }
-        public void Append(byte[] data)
+        public ByteBuffer Append(byte[] data)
         {
             if (stream == null)
             {
@@ -63,6 +68,7 @@ namespace XnaGame.Utils
                     this.data[^(data.Length - i)] = data[i];
             }
             else stream.Write(data);
+            return this;
         }
         public void Append<T>(T data) => Append(data, typeof(T));
         public void Append(object data, Type type)
@@ -143,6 +149,24 @@ namespace XnaGame.Utils
             if (stream == null) return BitConverter.ToInt64(data, (Position += 8) - 8);
             stream.Read(data, 0, 8);
             return BitConverter.ToInt64(data);
+        }
+        public ushort ReadUShort()
+        {
+            if (stream == null) return BitConverter.ToUInt16(data, (Position += 2) - 2);
+            stream.Read(data, 0, 2);
+            return BitConverter.ToUInt16(data);
+        }
+        public uint ReadUInt()
+        {
+            if (stream == null) return BitConverter.ToUInt32(data, (Position += 4) - 4);
+            stream.Read(data, 0, 4);
+            return BitConverter.ToUInt32(data);
+        }
+        public ulong ReadULong()
+        {
+            if (stream == null) return BitConverter.ToUInt64(data, (Position += 8) - 8);
+            stream.Read(data, 0, 8);
+            return BitConverter.ToUInt64(data);
         }
         public bool ReadBool() => ReadByte() > 0;
         public Half ReadHalf()
@@ -235,6 +259,9 @@ namespace XnaGame.Utils
                 }
             }
         }
+
+        public void SetStream(byte[] stream) => data = stream;
+        public void SetStream(Stream stream) => this.stream = stream;
 
         public static implicit operator byte[](ByteBuffer buffer) => buffer.data;
     }

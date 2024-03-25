@@ -1,8 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using XnaGame.World;
 using XnaGame.World.Content;
+using XnaGame.World.Shadows;
 
 namespace XnaGame.Utils
 {

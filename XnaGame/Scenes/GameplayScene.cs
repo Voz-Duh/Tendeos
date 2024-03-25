@@ -34,16 +34,19 @@ namespace XnaGame.Scenes
         private ShadowMatrix shadowMatrix;
         private PlayerInventoryContainer playerInventory;
         private SaveInstance saveInstance = new SaveInstance();
-        
+        private ThreadLoop physicsLoop;
+
         private int mapWidth = 50, mapHeight = 20, chunkSize = 8;
 
         public GameplayScene(Core game) : base(game)
         {
+            physicsLoop = new ThreadLoop(Physics.Process);
         }
         uint a;
 
         public override async void Init()
         {
+            physicsLoop.Start();
             Save.SetInstance(saveInstance);
 
             generator = new WorldGenerator(new[]
@@ -54,7 +57,7 @@ namespace XnaGame.Scenes
 
             await Task.Run(() =>
             {
-                waterWorld = new WaterWorld(Game.GraphicsDevice, Game.Content, mapWidth, mapHeight, chunkSize, Game.camera);
+                waterWorld = new WaterWorld(Game.GraphicsDevice, Game.Content, mapWidth, mapHeight, Game.camera, chunkSize);
                 waterWorld.Map = Physics.Map = map = new Map(mapWidth, mapHeight, waterWorld, Game.camera, chunkSize);
                 map.CameraViewSet();
                 map.Ignore = Tiles.ignore;
@@ -63,7 +66,7 @@ namespace XnaGame.Scenes
 
                 shadowMatrix = new ShadowMatrix(Game.GraphicsDevice, map, waterWorld, Game.camera)
                 {
-                    Smooth = true,
+                    Smooth = ShadowMatrix.SmoothPower.Diamondly,
                     DirectionLight = Color.White.ToVector3(),
                     DirectionLightFrom = 6,
                     DirectionLightTo = 44,
@@ -92,14 +95,15 @@ namespace XnaGame.Scenes
             (saveInstance.playTime, saveInstance.map, saveInstance.waterWorld, saveInstance.player) =
             (0, map, waterWorld, player);
 
-            if (!await Save.LoadAsync("Test", saveInstance))
+            if (!await Save.LoadAsync("Test"))
             {
                 await generator.Generate(map);
 
-                Save.Create("Test", saveInstance);
+                Save.Create("Test");
                 Save.Unload();
             }
             else generator.Loaded();
+            shadowMatrix.Start();
         }
 
         public override void InitGUI()
@@ -167,17 +171,19 @@ namespace XnaGame.Scenes
             waterWorld.Update();
 
             saveInstance.playTime += Time.Delta;
+
             float t = saveInstance.playTime * MathHelper.Pi * 0.001f + MathHelper.Pi / 2f;
             float s = MathF.Sin(t);
             shadowMatrix.DirectionLightAngle = t * 2;
             shadowMatrix.DirectionLightIntensity = (s - .75f) / .25f;
+            
             if (Keyboard.IsPressed(Keys.Escape))
             {
                 Save.Unload();
             }
             if (Keyboard.IsPressed(Keys.M))
             {
-                Save.Load("Test", saveInstance);
+                Save.Load("Test");
             }
             if (Keyboard.IsPressed(Keys.E))
             {
@@ -210,7 +216,6 @@ namespace XnaGame.Scenes
 
             EntityManager.Update();
 
-            Physics.Process(Time.Delta);
             shadowMatrix.SetPosition(a, player.transform.Position);
         }
 
