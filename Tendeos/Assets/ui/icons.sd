@@ -1,0 +1,4 @@
+on_inventory_icon: 0, 0, 7, 7;
+off_inventory_icon: 8, 0, 7, 7;
+on_craft_menu_icon: 0, 8, 7, 7;
+off_craft_menu_icon: 8, 8, 7, 7;
