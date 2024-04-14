@@ -1,5 +1,5 @@
 ﻿#if RELEASE
-using XnaGame.Utils;
+using Tendeos.Utils;
 #endif
 
 using var game = new Tendeos.Core();
