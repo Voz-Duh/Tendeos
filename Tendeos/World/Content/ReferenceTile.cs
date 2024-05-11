@@ -38,14 +38,15 @@ namespace Tendeos.World.Content
 
         public bool Collision => throw new NotImplementedException();
 
-        public int DataCount => throw new NotImplementedException();
-
         public string Folder { get => null; set { } }
 
-        public void Changed(bool top, IMap map, int x, int y, TileData data)
+        object ITile.RealInterface { get; set; }
+        TileInterface ITile.Interface { get; set; }
+
+        public void Changed(bool top, IMap map, int x, int y, ref TileData data)
         {
-            TileData main = map.GetTile(top, BitConverter.ToInt32(data.Data), BitConverter.ToInt32(data.Data, 4));
-            main.Tile?.Changed(top, map, x, y, main);
+            TileData main = map.GetTile(top, (int)data.GetU32(0), (int)data.GetU32(32));
+            main.Tile?.Changed(top, map, x, y, ref main);
         }
 
         public void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition, TileData data)
@@ -53,18 +54,10 @@ namespace Tendeos.World.Content
             throw new NotImplementedException();
         }
 
-        public void Start(bool top, IMap map, int x, int y, TileData data)
+        public void Start(bool top, IMap map, int x, int y, ref TileData data)
         {
-            byte[] bytes = BitConverter.GetBytes(Next.x);
-            data[0] = bytes[0];
-            data[1] = bytes[1];
-            data[2] = bytes[2];
-            data[3] = bytes[3];
-            bytes = BitConverter.GetBytes(Next.y);
-            data[4] = bytes[0];
-            data[5] = bytes[1];
-            data[6] = bytes[2];
-            data[7] = bytes[3];
+            data.SetU32(0, (uint)Next.x);
+            data.SetU32(32, (uint)Next.y);
         }
 
         public void Destroy(bool top, IMap map, int x, int y, TileData data)
@@ -72,7 +65,7 @@ namespace Tendeos.World.Content
             throw new NotImplementedException();
         }
 
-        public void Update(IMap map, int x, int y, TileData data)
+        public void Update(IMap map, int x, int y, ref TileData data)
         {
             throw new NotImplementedException();
         }
@@ -87,7 +80,7 @@ namespace Tendeos.World.Content
             throw new NotImplementedException();
         }
 
-        public void Loaded(bool top, IMap map, int x, int y, TileData data)
+        public void Loaded(bool top, IMap map, int x, int y, ref TileData data)
         {
             throw new NotImplementedException();
         }

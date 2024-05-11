@@ -3,7 +3,7 @@ using System;
 
 namespace Tendeos.Utils.Graphics
 {
-    public static class SpriteHelpers
+    public static class SpriteHelper
     {
         public const float frameRate = 0.6f;
 

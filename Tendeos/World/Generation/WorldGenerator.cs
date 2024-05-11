@@ -1,6 +1,11 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Tendeos.Utils;
+using Tendeos.World.Content;
+using Tendeos.World.Structures;
 
 namespace Tendeos.World.Generation
 {
@@ -13,34 +18,25 @@ namespace Tendeos.World.Generation
         private readonly Biome[] biomes;
         private readonly Noise smallCaveNoise;
         private readonly Noise bigCaveNoise;
+        private readonly Noise giganticCaveNoise;
+        private readonly int groundHeight;
 
-        public WorldGenerator(Noise smallCaveNoise, Noise bigCaveNoise, Biome[] biomes, uint seed)
+        public WorldGenerator(Noise smallCaveNoise, Noise bigCaveNoise, Noise giganticCaveNoise, int groundHeight, Biome[] biomes, uint seed)
         {
             Done = false;
             this.smallCaveNoise = smallCaveNoise;
             this.bigCaveNoise = bigCaveNoise;
+            this.giganticCaveNoise = giganticCaveNoise;
+            this.groundHeight = groundHeight;
             this.biomes = biomes;
             this.seed = seed;
-            Message = Localization.Get("generate_load");
+            Message = Localization.Translate("generate_load");
         }
 
         public async Task Generate(IMap map)
         {
             URandom random = new URandom(seed);
-#if DEBUG
-            Message = Localization.Get("generate_clear");
-            await Task.Run(() =>
-            {
-                int y;
-                for (int x = 0; x < map.FullWidth; x++)
-                    for (y = 0; y < map.FullHeight; y++)
-                    {
-                        map.SetTile(true, null, x, y);
-                        map.SetTile(false, null, x, y);
-                    }
-            });
-#endif
-            Message = Localization.Get("generate_biome");
+            Message = Localization.Translate("generate_biome");
             await Task.Run(() =>
             {
                 int y;
@@ -54,8 +50,8 @@ namespace Tendeos.World.Generation
                     for (y = 0; y < map.Height; y++)
                         map.GetChunk(x, y).Biome = biome;
                 }
-            });
-            Message = Localization.Get("generate_base");
+            }) ;
+            Message = Localization.Translate("generate_base");
             await Task.Run(() =>
             {
                 int y;
@@ -64,10 +60,10 @@ namespace Tendeos.World.Generation
                 for (int x = 0; x < map.FullWidth; x++)
                 {
                     ground = (Noise.Perlin(seed, x / 10f, 0) + Noise.Perlin(seed, x / 15f, 0)) / 2f;
-                    biome = map.GetTileChunk(x, 0).Biome;
-                    for (y = (int)(biome.GroundHeight - ground * biome.HillsHeight); y < map.FullHeight; y++)
+                    biome = (Biome)map.GetTileChunk(x, 0).Biome;
+                    for (y = (int)(groundHeight - biome.GroundHeight - ground * biome.HillsHeight); y < map.FullHeight; y++)
                     {
-                        if (y > biome.GroundHeight)
+                        if (y > groundHeight)
                         {
                             map.SetTile(false, biome.UndegroundTile, x, y);
                             map.SetTile(true, biome.UndegroundTile, x, y);
@@ -80,7 +76,7 @@ namespace Tendeos.World.Generation
                     }
                 }
             });
-            Message = Localization.Get("generate_smooth");
+            Message = Localization.Translate("generate_smooth");
             await Task.Run(() =>
             {
                 int[] heigth = new int[10];
@@ -126,12 +122,69 @@ namespace Tendeos.World.Generation
                     NEXT:;
                 }
             });
-            const float caveSquare = 25;
-            Message = Localization.Get("generate_small_caves");
+            Message = Localization.Translate("generate_special_caves");
+            await Task.Run(() =>
+            {
+                IChunk chunk;
+                Cave cave;
+                float power;
+                float lp;
+                int y, width, height, fromx, fromy, tox, toy, lx, ly, fx, fy, tx, ty, rx, ry;
+                for (int x = 0; x < map.Width; x++)
+                    for (y = 0; y < map.Height; y++)
+                    {
+                        chunk = map.GetChunk(x, y);
+                        if (chunk.Biome is Biome biome)
+                        {
+                            if (biome.Caves == null) continue;
+                            cave = biome.Caves[random.Int(biome.Caves.Length)];
+                            if (y < (cave.Height.Start.IsFromEnd ? 0 : cave.Height.Start.Value) ||
+                                y > (cave.Height.End.IsFromEnd ? map.Height - 1 : cave.Height.End.Value))
+                                continue;
+                            if (random.Float() < cave.SpawnChance)
+                            {
+                                width = cave.ChunksWidth.Random();
+                                height = cave.ChunksHeight.Random();
+                                fromx = Math.Max(0, x - width / 2);
+                                fromy = Math.Max(0, y - height / 2);
+                                tox = Math.Min(map.Width - 1, fromx + width);
+                                toy = Math.Min(map.Height - 1, fromy + height);
+                                fx = x * map.ChunkSize + map.ChunkSize / 2;
+                                fy = y * map.ChunkSize + map.ChunkSize / 2;
+                                height *= map.ChunkSize / 2;
+                                width *= map.ChunkSize / 2;
+                                for (lx = fromx; lx <= tox; lx++)
+                                    for (ly = fromy; ly <= toy; ly++)
+                                    {
+                                        chunk = map.GetChunk(lx, ly);
+                                        power = 0;
+                                        for (tx = 0; tx < map.ChunkSize; tx++)
+                                            for (ty = 0; ty < map.ChunkSize; ty++)
+                                            {
+                                                rx = lx * map.ChunkSize + tx;
+                                                ry = ly * map.ChunkSize + ty;
+                                                power += lp = new Vec2((fx - rx) / (float)width, (fy - ry) / (float)height).Length() - cave.CornersNoise.Get(seed, rx, ry) * cave.CornersPower;
+                                                if (lp < 1)
+                                                {
+                                                    map.SetTile(false, cave.Tile, rx, ry);
+                                                    map.SetTile(true, cave.Tile, rx, ry);
+                                                }
+                                            }
+                                        if (power / (map.ChunkSize * map.ChunkSize) >= 0.5)
+                                        {
+                                            chunk.Biome = cave;
+                                        }
+                                    }
+                            }
+                        }
+                    }
+            });
+            const float caveSquare = 121;
+            Message = Localization.Translate("generate_small_caves");
             await Task.Run(() =>
             {
                 TileData data;
-                float p = 0;
+                float p;
                 int y, z, w, i, j, l;
                 for (int x = 0; x < map.FullWidth; x++)
                     for (y = 0; y < map.FullHeight; y++)
@@ -140,10 +193,10 @@ namespace Tendeos.World.Generation
                         if (data.Tile != null)
                         {
                             p = 0;
-                            j = y - 2;
-                            i = y + 2;
-                            l = x + 2;
-                            for (z = x - 2; z <= l; z++)
+                            j = y - 5;
+                            i = y + 5;
+                            l = x + 5;
+                            for (z = x - 5; z <= l; z++)
                                 for (w = j; w <= i; w++)
                                     p += map.GetTileChunk(Math.Clamp(z, 0, map.FullWidth - 1), Math.Clamp(w, 0, map.FullHeight - 1)).Biome.SmallCavesPower;
 
@@ -152,11 +205,11 @@ namespace Tendeos.World.Generation
                         }
                     }
             });
-            Message = Localization.Get("generate_big_caves");
+            Message = Localization.Translate("generate_big_caves");
             await Task.Run(() =>
             {
                 TileData data;
-                float p = 0;
+                float p;
                 int y, z, w, i, j, l;
                 for (int x = 0; x < map.FullWidth; x++)
                     for (y = 0; y < map.FullHeight; y++)
@@ -165,10 +218,10 @@ namespace Tendeos.World.Generation
                         if (data.Tile != null)
                         {
                             p = 0;
-                            j = y - 2;
-                            i = y + 2;
-                            l = x + 2;
-                            for (z = x - 2; z <= l; z++)
+                            j = y - 5;
+                            i = y + 5;
+                            l = x + 5;
+                            for (z = x - 5; z <= l; z++)
                                 for (w = j; w <= i; w++)
                                     p += map.GetTileChunk(Math.Clamp(z, 0, map.FullWidth - 1), Math.Clamp(w, 0, map.FullHeight - 1)).Biome.BigCavesPower;
 
@@ -177,37 +230,88 @@ namespace Tendeos.World.Generation
                         }
                     }
             });
-            Message = Localization.Get("generate_ground");
+            Message = Localization.Translate("generate_gigantic_caves");
             await Task.Run(() =>
             {
+                TileData data;
+                float p;
+                int y, z, w, i, j, l;
+                for (int x = 0; x < map.FullWidth; x++)
+                    for (y = 0; y < map.FullHeight; y++)
+                    {
+                        data = map.GetTile(true, x, y);
+                        if (data.Tile != null)
+                        {
+                            p = 0;
+                            j = y - 5;
+                            i = y + 5;
+                            l = x + 5;
+                            for (z = x - 5; z <= l; z++)
+                                for (w = j; w <= i; w++)
+                                    p += map.GetTileChunk(Math.Clamp(z, 0, map.FullWidth - 1), Math.Clamp(w, 0, map.FullHeight - 1)).Biome.GiganticCavesPower;
+
+                            if (giganticCaveNoise.Get(seed, x, y) <= p / caveSquare)
+                                map.SetTile(true, null, x, y);
+                        }
+                    }
+            });
+            Message = Localization.Translate("generate_structures");
+            await Task.Run(() =>
+            {
+                Rectangle[] quadtree = { new Rectangle(0, 0, map.FullWidth, map.FullHeight) };
+                Structure structure;
+                BaseBiome biome;
+                Rectangle spawn;
+                int x, y;
+
+                for (int i = 0; i < 50; i++)
+                {
+                    spawn = quadtree[URandom.SInt(Math.Min(5, quadtree.Length - 1))];
+                    x = spawn.X + URandom.SInt(spawn.Width);
+                    y = spawn.Y + URandom.SInt(spawn.Height);
+                    biome = map.GetTileChunk(x, y).Biome;
+                    if (biome.Structures != null)
+                    {
+                        structure = biome.Structures[URandom.SInt(biome.Structures.Length - 1)];
+                        x -= structure.Width;
+                        y -= structure.Height;
+                        structure.Spawn(map, x, y);
+                        RemoveRectangle(new Rectangle(x, y, structure.Width + structure.Width / 2, structure.Height + structure.Height / 2), ref quadtree);
+                        Array.Sort(quadtree, (a, b) =>  Math.Max(a.Height, a.Width) > Math.Max(b.Height, b.Width) ? -1 : 1);
+                    }
+                }
+            });
+            Message = Localization.Translate("generate_ground");
+            await Task.Run(() =>
+            {
+                BaseBiome biome;
                 TileData data, l, r, d, u;
                 int y;
                 for (int x = 0; x < map.FullWidth; x++)
                     for (y = 0; y < map.FullHeight; y++)
                     {
                         data = map.GetTile(true, x, y);
+                        biome = map.GetTileChunk(x, y).Biome;
                         if (data.Tile != null)
-                            foreach (Biome biome in biomes)
-                                if (biome.Grounds != null)
-                                    foreach (var (f, t) in biome.Grounds)
-                                        if (data.Tile == f)
-                                        {
-                                            if (URandom.SInt(5) == 0) map.SetTile(true, t, x, y);
-                                            l = map.GetTile(true, x, y - 1);
-                                            r = map.GetTile(true, x, y + 1);
-                                            d = map.GetTile(true, x - 1, y);
-                                            u = map.GetTile(true, x + 1, y);
-                                            if (l.Tile == null || r.Tile == null || d.Tile == null || u.Tile == null)
-                                                map.SetTile(true, t, x, y);
-                                            break;
-                                        }
+                            if (biome.Grounds != null)
+                                foreach (var (f, t) in biome.Grounds)
+                                    if (data.Tile == f)
+                                    {
+                                        if (URandom.SInt(5) == 0) map.SetTile(true, t, x, y);
+                                        l = map.GetTile(true, x, y - 1);
+                                        r = map.GetTile(true, x, y + 1);
+                                        d = map.GetTile(true, x - 1, y);
+                                        u = map.GetTile(true, x + 1, y);
+                                        if (l.Tile == null || r.Tile == null || d.Tile == null || u.Tile == null)
+                                            map.SetTile(true, t, x, y);
+                                        break;
+                                    }
                     }
             });
-            Message = Localization.Get("generate_trees");
+            Message = Localization.Translate("generate_trees");
             await Task.Run(() =>
             {
                 TileData data;
-                Biome biome;
                 int y;
                 for (int x = 0; x < map.FullWidth; x++)
                     for (y = 0; y < map.FullHeight; y++)
@@ -215,14 +319,86 @@ namespace Tendeos.World.Generation
                         data = map.GetTile(true, x, y);
                         if (data.Tile != null)
                         {
-                            biome = map.GetChunk(x / map.ChunkSize, y / map.ChunkSize).Biome;
+                            if (map.GetChunk(x / map.ChunkSize, y / map.ChunkSize).Biome is Biome biome)
                             if (random.Float() < biome.TreeChance)
                                 map.SetTile(true, biome.Tree, x, y - 1);
                             break;
                         }
                     }
             });
+            Message = Localization.Translate("generate_small_smooth_ground");
+            await Task.Run(() => Smooth(map, true));
+            Message = Localization.Translate("generate_small_smooth_walls");
+            await Task.Run(() => Smooth(map, false));
             Done = true;
+        }
+
+        private static void RemoveRectangle(Rectangle rect, ref Rectangle[] quads)
+        {
+            List<Rectangle> nquadtree = new List<Rectangle>();
+            Queue<Rectangle> quadtree = new Queue<Rectangle>(quads);
+            Rectangle quad;
+            while (quadtree.Count > 0) {
+                quad = quadtree.Dequeue();
+
+		        if (rect.X+rect.Width >= quad.X &&
+		            rect.Y+rect.Height >= quad.Y &&
+		            rect.X <= quad.X+quad.Width &&
+		            rect.Y <= quad.Y+quad.Height) {
+			        if (Math.Min(quad.Width, quad.Height) > 2) {
+                        int w = quad.Width / 2;
+                        int h = quad.Height / 2;
+				        quadtree.Enqueue(new Rectangle(quad.X, quad.Y, w, h));
+				        quadtree.Enqueue(new Rectangle(quad.X, quad.Y+h, w, h));
+				        quadtree.Enqueue(new Rectangle(quad.X+w, quad.Y, w, h));
+				        quadtree.Enqueue(new Rectangle(quad.X+w, quad.Y+h, w, h));
+			        }
+		        } else {
+                    nquadtree.Add(quad);
+		        }
+	        }
+            quads = nquadtree.ToArray();
+        }
+
+        public void Smooth(IMap map, bool top)
+        {
+            TileData data, left, right, up, down, leftup, leftdown, rightup, rightdown;
+            int y;
+            for (int x = 0; x < map.FullWidth; x++)
+                for (y = 0; y < map.FullHeight; y++)
+                {
+                    data = map.GetTile(top, x, y);
+                    if (data.Tile is AutoTile)
+                    {
+                        left = map.GetTile(top, x - 1, y);
+                        right = map.GetTile(top, x + 1, y);
+                        up = map.GetTile(top, x, y - 1);
+                        down = map.GetTile(top, x, y + 1);
+                        leftup = map.GetTile(top, x - 1, y - 1);
+                        leftdown = map.GetTile(top, x - 1, y + 1);
+                        rightup = map.GetTile(top, x + 1, y - 1);
+                        rightdown = map.GetTile(top, x + 1, y + 1);
+
+                        if ((leftup.Tile != null ? rightup.Tile == null : rightup.Tile != null) &&
+                            (leftdown.Tile != null ? rightdown.Tile == null : rightdown.Tile != null) ||
+                            (leftup.Tile != null ? leftup.Tile == null : leftup.Tile != null) &&
+                            (rightup.Tile != null ? rightdown.Tile == null : rightdown.Tile != null))
+                        {
+                            map.SetTileData<AutoTile>(top, x, y, data => { data.HasTriangleCollision = true; return data; });
+                        }
+                        else
+                        {
+                            if (up.Tile == null && down.Tile != null && (left.Tile != null && right.Tile != null || left.Tile != null ? right.Tile == null : right.Tile != null))
+                            {
+                                map.SetTileData<AutoTile>(top, x, y, data => data.SetU6(0, AutoTile.Down));
+                            }
+                            else if (down.Tile == null && up.Tile != null && (left.Tile != null && right.Tile != null || left.Tile != null ? right.Tile == null : right.Tile != null))
+                            {
+                                map.SetTileData<AutoTile>(top, x, y, data => data.SetU6(0, AutoTile.Up));
+                            }
+                        }
+                    }
+                }
         }
 
         public void Loaded()

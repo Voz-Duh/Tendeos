@@ -55,5 +55,15 @@ namespace Tendeos.Physical.Content
             if (!collided) position += velocity * Time.Delta;
             velocity += Physics.Gravity * Time.Delta * Physics.Meter;
         }
+
+        public override byte[] NetworkSend()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override void NetworkAccept(byte[] data)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

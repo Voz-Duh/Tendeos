@@ -48,7 +48,7 @@ namespace Tendeos.Inventory.Content
             armLRotation = MathHelper.ToDegrees(MathF.Atan2(position.Y, position.X)) + 90;
             position.Normalize();
 
-            sprites.AnimationEnd(out int frame, SpriteHelpers.frameRate * FramerateScale, ref timer);
+            sprites.AnimationEnd(out int frame, SpriteHelper.frameRate * FramerateScale, ref timer);
 
             if (Mouse.OnGUI || Mouse.LeftUp)
             {

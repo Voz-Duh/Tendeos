@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using Tendeos.Utils.Graphics;
 using Tendeos.World;
 using Tendeos.World.Content;
 
@@ -26,20 +27,28 @@ namespace Tendeos.Utils
         public const uint VELOCITY_ITERATIONS = 4;
         public const float VELOCITY_DIFFERENT = 1f / VELOCITY_ITERATIONS;
         
-        private static readonly SafeList<ColliderInfo> colliders = new SafeList<ColliderInfo>();
+        public static readonly SafeList<ColliderInfo> colliders = new SafeList<ColliderInfo>();
         private static readonly RaycastHitInfo[] colliderRays = new RaycastHitInfo[256];
         private static uint hitsCount;
 
         public static Vec2 Gravity { get; set; } = new Vec2(0, 9.8f);
         public static float Meter { get; set; }
-        public static float TileSize { get; set; }
+        public static float TileSize
+        {
+            get => tileSize;
+            set
+            {
+                tileSize = value;
+                tileD2Size = value/2;
+            }
+        }
+        private static float tileSize;
+        private static float tileD2Size; 
         public static IMap Map { get; set; }
 
         public static Collider Create(float width, float height, float evenness, float elastic)
         {
-            var collider = new Collider() { Size = new(width, height), evenness = evenness, elastic = elastic };
-
-            collider.index = colliders.Alloc();
+            var collider = new Collider() { Size = new(width, height), evenness = evenness, elastic = elastic, index = colliders.Alloc() };
             colliders[collider.index] = new ColliderInfo() { collider = collider };
             return collider;
         }
@@ -50,6 +59,7 @@ namespace Tendeos.Utils
             colliders.Free(collider.index);
         }
 
+        #region RAYCASTS
         public static void Raycast(RaycastDelegate action, Vec2 origin, Vec2 direction, float maxDistance, bool map = false)
         {
             float rdistance = origin.X + direction.X * maxDistance;
@@ -87,9 +97,9 @@ namespace Tendeos.Utils
                     {
                         tile = Map.GetTile(true, x, y);
                         if (tile.Tile is ReferenceTile)
-                            tile = Map.GetTile(true, BitConverter.ToInt32(tile.Data), BitConverter.ToInt32(tile.Data, 4));
+                            tile = Map.GetTile(true, (int)tile.GetU32(0), (int)tile.GetU32(32));
                         if ((tile.Tile?.Collision ?? false)
-                            && RaycastMap(x, y, origin, direction, maxDistance, out Vec2 point, out Vec2 normal, out float distance)
+                            && RaycastMap(x, y, origin, direction, maxDistance, tile, out Vec2 point, out Vec2 normal, out float distance)
                             && distance > rdistance)
                         {
                             rdistance = distance;
@@ -138,9 +148,9 @@ namespace Tendeos.Utils
                 {
                     tile = Map.GetTile(true, x, y);
                     if (tile.Tile is ReferenceTile)
-                        tile = Map.GetTile(true, BitConverter.ToInt32(tile.Data), BitConverter.ToInt32(tile.Data, 4));
+                        tile = Map.GetTile(true, (int)tile.GetU32(0), (int)tile.GetU32(32));
                     if ((tile.Tile?.Collision ?? false)
-                    && RaycastMap(x, y, origin, direction, maxDistance, out Vec2 point, out Vec2 normal, out float distance)
+                    && RaycastMap(x, y, origin, direction, maxDistance, tile, out Vec2 point, out Vec2 normal, out float distance)
                         && distance > rdistance)
                     {
                         rdistance = distance;
@@ -200,24 +210,96 @@ namespace Tendeos.Utils
             return tMax <= 0 && tMin <= maxDistance && tMin >= tMax;
         }
 
-        private static bool RaycastMap(int x, int y, Vec2 origin, Vec2 direction, float maxDistance, out Vec2 point, out Vec2 normal, out float distance)
+        private static bool RaycastMap(int x, int y, Vec2 origin, Vec2 direction, float maxDistance, TileData data, out Vec2 point, out Vec2 normal, out float distance)
         {
-            float a = (origin.X - (x * TileSize + TileSize)) / direction.X;
-            float b = (origin.X - x * TileSize) / direction.X;
-            float c = (origin.Y - (y * TileSize + TileSize)) / direction.Y;
-            float d = (origin.Y - y * TileSize) / direction.Y;
+            if (data.HasTriangleCollision) return RaycastTriangleTile(x, y, origin, direction, maxDistance, data, out point, out normal, out distance);
+            else return RaycastAABBBTile(x, y, origin, direction, maxDistance, data, out point, out normal, out distance);
+        }
+
+        private static bool RaycastAABBBTile(int x, int y, Vec2 origin, Vec2 direction, float maxDistance, TileData data, out Vec2 point, out Vec2 normal, out float distance)
+        {
+            float a = (origin.X - (x * TileSize + data.CollisionXTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 })) / direction.X;
+            float b = (origin.X - x * TileSize + data.CollisionXFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 }) / direction.X;
+            float c = (origin.Y - (y * TileSize + data.CollisionYTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 })) / direction.Y;
+            float d = (origin.Y - y * TileSize + data.CollisionYFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 }) / direction.Y;
 
             float tMin = Math.Min(Math.Max(a, b), Math.Max(c, d));
             float tMax = Math.Max(Math.Min(a, b), Math.Min(c, d));
 
             point = origin - direction * tMin;
             distance = tMin;
+            Batch.Color = Color.Green;
+            Batch.Vertex(origin);
+            Batch.Vertex(origin + direction * maxDistance);
             if (a == tMin) normal = Vec2.UnitX;
             else if (b == tMin) normal = -Vec2.UnitX;
             else if (c == tMin) normal = Vec2.UnitY;
             else normal = -Vec2.UnitY;
             return tMax <= 0 && tMin <= maxDistance && tMin >= tMax;
         }
+        
+        public static Batch Batch;
+        private static bool RaycastTriangleTile(int x, int y, Vec2 origin, Vec2 direction, float maxDistance, TileData data, out Vec2 point, out Vec2 normal, out float distance)
+        {
+            Vec2 a = new Vec2(
+                x * TileSize + data.CollisionXFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
+                y * TileSize + data.CollisionYFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 });
+            Vec2 b = new Vec2(
+                x * TileSize + data.CollisionXTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
+                y * TileSize + data.CollisionYTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 });
+            Vec2 c = new Vec2(
+                x * TileSize + data.CollisionXAdd switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
+                y * TileSize + data.CollisionYAdd switch { 1 => tileD2Size, 2 => tileSize, _ => 0 });
+                
+            Batch.Color = Color.White;
+            Batch.Vertex(a);
+            Batch.Vertex(b);
+            Batch.Vertex(b);
+            Batch.Vertex(c);
+            Batch.Vertex(c);
+            Batch.Vertex(a);
+
+            point = Vec2.Zero;
+            normal = Vec2.Zero;
+
+            float ar = RaycastEdge(a, b, origin, direction, ref normal);
+            float br = RaycastEdge(b, c, origin, direction, ref normal);
+            float cr = RaycastEdge(c, a, origin, direction, ref normal);
+
+            distance = MathF.Min(ar, MathF.Min(br, cr));
+
+            Batch.Color = Color.Green;
+            Batch.Vertex(origin);
+            Batch.Vertex(origin + direction * maxDistance);
+
+            Batch.Color = Color.Magenta;
+            Batch.Vertex(origin);
+            Batch.Vertex(origin + direction * distance);
+
+            if (distance > maxDistance) return false;
+            point = origin + direction * distance;
+
+            Batch.Color = Color.Red;
+            Batch.Vertex(point);
+            Batch.Vertex(point + normal);
+
+            return true;
+        }
+
+        
+        private static float RaycastEdge(Vec2 a, Vec2 b, Vec2 origin, Vec2 direction, ref Vec2 normal)
+        {
+            Vec2 edgeNormal = new Vec2(-(b.Y - a.Y), b.X - a.X);
+            edgeNormal.Normalize();
+
+            float dot = Vec2.Dot(edgeNormal, direction);
+            if (dot < 0) return float.MaxValue;
+            float cross = Vec2.Cross(Vec2.Normalize(b - a), b - origin);
+            if (cross < 0) return float.MaxValue;
+            normal = -edgeNormal;
+            return cross / dot;
+        }
+        #endregion
 
         public static void Process(float delta)
         {
@@ -252,12 +334,12 @@ namespace Tendeos.Utils
                             {
                                 tile = Map.GetTile(true, x, y);
                                 if (tile.Tile is ReferenceTile)
-                                    tile = Map.GetTile(true, BitConverter.ToInt32(tile.Data), BitConverter.ToInt32(tile.Data, 4));
+                                    tile = Map.GetTile(true, (int)tile.GetU32(0), (int)tile.GetU32(32));
                                 if (tile.Tile?.Collision ?? false)
                                 {
                                     bx = x * TileSize; by = y * TileSize;
                                     vel = info.collider.velocity;
-                                    if (info.collider.Process(new Vector4(bx, by, bx + TileSize, by + TileSize), out Vec2 normal, out float push, ref vel) && push > rpush)
+                                    if (info.collider.Process(bx, by, tile, tileD2Size, tileSize, out Vec2 normal, out float push, ref vel) && push > rpush)
                                     {
                                         rpush = push;
                                         rvel = vel;
@@ -337,7 +419,33 @@ namespace Tendeos.Utils
                 position.Y + halfSize.Y >= my;
         }
 
-        public bool Process(Vector4 other, out Vec2 normal, out float pushRange, ref Vec2 velocity)
+        public bool Process(float x, float y, TileData data, float tileD2Size, float tileSize, out Vec2 normal, out float pushRange, ref Vec2 velocity)
+        {
+            if (data.HasTriangleCollision) return ProcessTriangle(
+                new Vec2(
+                    x + data.CollisionXFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
+                    y + data.CollisionYFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 }),
+                new Vec2(
+                    x + data.CollisionXTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
+                    y + data.CollisionYTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 }),
+                new Vec2(
+                    x + data.CollisionXAdd switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
+                    y + data.CollisionYAdd switch { 1 => tileD2Size, 2 => tileSize, _ => 0 }),
+                position - halfSize, position + halfSize,
+                out normal, out pushRange, ref velocity
+            );
+            return ProcessAABB(
+                new Vector4(
+                    x + data.CollisionXFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
+                    y + data.CollisionYFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
+                    x + data.CollisionXTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
+                    y + data.CollisionYTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 }
+                ),
+                out normal, out pushRange, ref velocity
+            );
+        }
+
+        public bool ProcessAABB(Vector4 other, out Vec2 normal, out float pushRange, ref Vec2 velocity)
         {
             float
                 mox = other.Z - (position.X - halfSize.X),
@@ -369,6 +477,78 @@ namespace Tendeos.Utils
                 return true;
             }
             return false;
+        }
+
+        public bool ProcessTriangle(Vec2 a, Vec2 b, Vec2 c, Vec2 min, Vec2 max, out Vec2 normal, out float pushRange, ref Vec2 velocity)
+        {
+            normal = Vec2.Zero;
+            pushRange = float.MaxValue;
+            
+            CheckEdge(a, b, min, max, ref normal, ref pushRange);
+            CheckEdge(b, c, min, max, ref normal, ref pushRange);
+            CheckEdge(c, a, min, max, ref normal, ref pushRange);
+            CheckCorner(a, b, c, min, max, ref normal, ref pushRange);
+            CheckCorner(b, c, a, min, max, ref normal, ref pushRange);
+            CheckCorner(c, a, b, min, max, ref normal, ref pushRange);
+
+            if (pushRange > 0)
+            {
+                velocity = velocity * Vec2.Abs(new Vec2(normal.Y, normal.X)) * evenness - velocity * Vec2.Abs(normal) * elastic;
+                return true;
+            }
+            return false;
+        }
+
+        private void CheckEdge(Vec2 edgeA, Vec2 edgeB, Vec2 min, Vec2 max, ref Vec2 normal, ref float pushRange)
+        {
+            Vec2 edgeNormal = new Vec2(edgeB.Y - edgeA.Y, -(edgeB.X - edgeA.X));
+
+            float edgeDot =
+                MathF.Max(
+                    Vec2.Dot(edgeNormal, edgeB - min),
+                    MathF.Max(
+                        Vec2.Dot(edgeNormal, edgeB - new Vec2(max.X, min.Y)),
+                        MathF.Max(
+                            Vec2.Dot(edgeNormal, edgeB - new Vec2(min.X, max.Y)),
+                            Vec2.Dot(edgeNormal, edgeB - max)
+                        )
+                    )
+                );
+
+            edgeDot = edgeDot / edgeNormal.Length();
+            edgeNormal.Normalize();
+
+            if (edgeDot < pushRange)
+            {
+                pushRange = edgeDot;
+                normal = edgeNormal;
+            }
+        }
+
+        private void CheckCorner(Vec2 corner, Vec2 otherA, Vec2 otherB, Vec2 min, Vec2 max, ref Vec2 normal, ref float pushRange)
+        {
+            Vec2 cornerNormal = new Vec2(-(otherB.Y - otherA.Y), otherB.X - otherA.X);
+
+            float edgeDot =
+                MathF.Max(
+                    Vec2.Dot(cornerNormal, corner - min),
+                    MathF.Max(
+                        Vec2.Dot(cornerNormal, corner - new Vec2(max.X, min.Y)),
+                        MathF.Max(
+                            Vec2.Dot(cornerNormal, corner - new Vec2(min.X, max.Y)),
+                            Vec2.Dot(cornerNormal, corner - max)
+                        )
+                    )
+                );
+
+            edgeDot = edgeDot / cornerNormal.Length();
+            cornerNormal.Normalize();
+
+            if (edgeDot < pushRange)
+            {
+                pushRange = edgeDot;
+                normal = cornerNormal;
+            }
         }
     }
 }

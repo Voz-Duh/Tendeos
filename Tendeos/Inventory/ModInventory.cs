@@ -8,7 +8,7 @@ namespace Tendeos.Inventory
 
         public ModInventory(Inventory inventory) => this.inventory = inventory;
 
-        public void open(Vec2 anchor, Vec2 offset) => this.inventory.Open(anchor, offset);
+        public void open(Vec2 offset) => inventory.Open(offset);
         
         public void close(Vec2 position) => inventory.Close(position);
 

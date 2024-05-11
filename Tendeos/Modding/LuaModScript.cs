@@ -54,7 +54,7 @@ namespace Tendeos.Modding
             engine.SetObjectToPath("__drawColorText__", (Color color, string text, Vec2 pos, float scale, byte originx, byte originy) => batch.Text(Core.Font, color, text, pos, scale, (Origin)originx, (Origin)originy));
             #endregion
             #region system
-            engine.SetObjectToPath("messageBox", (string message) => Debug.MessageBox(0, message, "LuaMessageBox", 0));
+            engine.SetObjectToPath("messageBox", (string message) => MessageBox.Show("LuaMessageBox", message, MessageBox.Type.Info));
             engine.DoString(defaultCode);
             #endregion
         }

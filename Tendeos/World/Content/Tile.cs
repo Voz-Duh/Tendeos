@@ -37,10 +37,10 @@ namespace Tendeos.World.Content
         [ContentLoad("DropTag", true)]
         public IItem Drop { get; set; }
         public Range DropCount { get; set; } = 1..1;
+        object ITile.RealInterface { get; set; }
+        TileInterface ITile.Interface { get; set; }
 
-        public int DataCount { get; protected set; }
-
-        public virtual void Changed(bool top, IMap map, int x, int y, TileData data)
+        public virtual void Changed(bool top, IMap map, int x, int y, ref TileData data)
         {
         }
 
@@ -48,19 +48,15 @@ namespace Tendeos.World.Content
         {
         }
 
-        public virtual void Start(bool top, IMap map, int x, int y, TileData data)
+        public virtual void Start(bool top, IMap map, int x, int y, ref TileData data)
         {
         }
 
-        public virtual void Loaded(bool top, IMap map, int x, int y, TileData data)
+        public virtual void Loaded(bool top, IMap map, int x, int y, ref TileData data)
         {
         }
 
         public virtual void Destroy(bool top, IMap map, int x, int y, TileData data)
-        {
-        }
-
-        public virtual void Update(IMap map, int x, int y, TileData data)
         {
         }
 

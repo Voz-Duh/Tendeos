@@ -7,12 +7,18 @@ namespace Tendeos.Utils.Input
     public static class Keyboard
     {
         static KeyboardState currentKeyState;
+
+        public static bool CapsLock { get; private set; }
+        public static bool NumLock { get; private set; }
+
         static KeyboardState previousKeyState;
 
         public static KeyboardState Update()
         {
             previousKeyState = currentKeyState;
             currentKeyState = Microsoft.Xna.Framework.Input.Keyboard.GetState();
+            CapsLock = currentKeyState.CapsLock;
+            NumLock = currentKeyState.NumLock;
             return currentKeyState;
         }
 
@@ -22,7 +28,13 @@ namespace Tendeos.Utils.Input
         public static bool IsPressed(Keys key) => currentKeyState.IsKeyDown((XNAKeys)key) && !previousKeyState.IsKeyDown((XNAKeys)key);
     }
 
-    public enum Keys
+    public static class KeysHelper
+    {
+        public static Keys Valid(this XNAKeys key) =>
+            (Keys)(byte)key;
+    }
+
+    public enum Keys : byte
     {
         None = 0,
         Back = 8,

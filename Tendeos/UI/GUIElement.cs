@@ -2,6 +2,7 @@
 using Prototype.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.Input;
@@ -12,14 +13,17 @@ namespace Tendeos.UI
 
     public class GUIElement
     {
-        private static IGUICamera Camera { get; set; }
+        private static IGUICamera camera;
+        public static GUIElement Selected;
+        private static GUIElement lastSelected;
+        private static bool selectedCurrenty;
 
         private Action<SpriteBatch, FRectangle> drawAction = (a, b) => { };
         private Action<FRectangle> updateAction = (a) => { };
         private Action resetAction = () => { };
 
         public FRectangle rectangle;
-        public bool MouseOn { get; private set; }
+        public bool MouseOn { get; protected set; }
 
         public GUIElement Parent { get; private set; }
         public Vec2 Anchor { get; init; }
@@ -32,7 +36,7 @@ namespace Tendeos.UI
 
         public GUIElement(IGUICamera camera)
         {
-            Camera = camera;
+            GUIElement.camera = camera;
             rectangle = new FRectangle(0, 0, 0, 0);
         }
 
@@ -80,7 +84,7 @@ namespace Tendeos.UI
 
         public Vec2 GetAnchoredPosition(Vec2 point, FRectangle rectangle) => rectangle.Location + (rectangle.Size - this.rectangle.Size) * Anchor + point;
 
-        public void Draw(SpriteBatch spriteBatch) => BaseDraw(spriteBatch, new FRectangle(Vec2.Zero, Camera.WorldViewport));
+        public void Draw(SpriteBatch spriteBatch) => BaseDraw(spriteBatch, new FRectangle(Vec2.Zero, camera.WorldViewport));
         public void BaseDraw(SpriteBatch spriteBatch, FRectangle rectangle)
         {
             FRectangle rect = this.rectangle.Size == Vec2.Zero ? rectangle : new FRectangle(GetAnchoredPosition(this.rectangle.Location, rectangle), this.rectangle.Size);
@@ -93,7 +97,7 @@ namespace Tendeos.UI
         {
         }
 
-        public void Update() => BaseUpdate(new FRectangle(Vec2.Zero, Camera.WorldViewport));
+        public void Update() => BaseUpdate(new FRectangle(Vec2.Zero, camera.WorldViewport));
         public void BaseUpdate(FRectangle rectangle)
         {
             FRectangle rect = this.rectangle.Size == Vec2.Zero ? rectangle : new FRectangle(GetAnchoredPosition(this.rectangle.Location, rectangle), this.rectangle.Size);
@@ -105,7 +109,7 @@ namespace Tendeos.UI
                 for (int i = list.Length - 1; i >= 0; i--)
                     if (list[i].Target is GUIElement target)
                     {
-                        list[i].DynamicInvoke(rect);
+                        list[i].Method.Invoke(list[i].Target, new object[] { rect });
                         if (target.MouseOn) break;
                     }
             }
@@ -128,6 +132,10 @@ namespace Tendeos.UI
                 Mouse.OnGUI = true;
         }
 
+        public virtual void Unselect() { }
+
+        public virtual void Select() { }
+
         public void Clear()
         {
             updateAction = a => { };
@@ -135,9 +143,33 @@ namespace Tendeos.UI
             resetAction = () => { };
         }
 
+        public static void Select(GUIElement element)
+        {
+            if (Selected != element) element?.Select();
+            Selected = element;
+            selectedCurrenty = true;
+        }
+
+        public static void Deselect()
+        {
+            if (Mouse.LeftPressed)
+            {
+                if (selectedCurrenty)
+                {
+                    if (lastSelected != Selected) lastSelected?.Unselect();
+                    selectedCurrenty = false;
+                }
+                else
+                {
+                    Selected?.Unselect();
+                    Selected = null;
+                }
+                lastSelected = Selected;
+            }
+        }
 
         #region Draw
-        public void DrawRectWindow(SpriteBatch spriteBatch, Sprite[] texture, FRectangle rectangle)
+        public static void DrawRectWindow(SpriteBatch spriteBatch, Sprite[] texture, FRectangle rectangle)
         {
             float t00w = texture[0].Rect.Width;
             float t22w = texture[8].Rect.Width;

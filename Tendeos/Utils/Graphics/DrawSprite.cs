@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Text;
 
 namespace Tendeos.Utils.Graphics
 {
@@ -34,7 +35,7 @@ namespace Tendeos.Utils.Graphics
                 texture.Rect,
                 color,
                 MathHelper.ToRadians(rotation),
-                new Vec2(texture.Rect.Width * GetOrigin(xOrigin), texture.Rect.Height * GetOrigin(yOrigin)),
+                new Vec2(texture.Rect.Width * xOrigin.ToFloat(), texture.Rect.Height * yOrigin.ToFloat()),
                 scale,
                 SpriteEffects,
                 depth
@@ -50,39 +51,107 @@ namespace Tendeos.Utils.Graphics
                 texture.Rect,
                 color,
                 MathHelper.ToRadians(rotation),
-                new Vec2(texture.Rect.Width * GetOrigin(xOrigin), texture.Rect.Height * GetOrigin(yOrigin)),
+                new Vec2(texture.Rect.Width * xOrigin.ToFloat(), texture.Rect.Height * yOrigin.ToFloat()),
                 scale ?? Vec2.One,
                 SpriteEffects,
                 depth
             );
 
-        public static void Text(this SpriteBatch spriteBatch, DynamicSpriteFontScaled font, string text, Vec2 position, float scale = 1, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
+        public static void Text(this SpriteBatch spriteBatch, Font font, string text, Vec2 position, float scale = 1, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
             Text(spriteBatch, font, Color.White, text, position, scale, xOrigin, yOrigin);
 
-        public static void Text(this SpriteBatch spriteBatch, DynamicSpriteFontScaled font, string text, Vec2 position, Vec2? scale, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
+        public static void Text(this SpriteBatch spriteBatch, Font font, string text, Vec2 position, Vec2? scale, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center) =>
             Text(spriteBatch, font, Color.White, text, position, scale, xOrigin, yOrigin);
 
-        public static void Text(this SpriteBatch spriteBatch, DynamicSpriteFontScaled font, Color color, string text, Vec2 position, float scale = 1, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center)
+        public static void Text(this SpriteBatch spriteBatch, Font font, Color color, string text, Vec2 position, float scale = 1, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center)
         {
-            Vec2 size = font.Dynamic.MeasureString(text) * scale;
+            Vec2 size = font.MeasureString(text, scale);
             font.Dynamic.DrawText(spriteBatch,
                 text,
-                position,
-                color, 0, size * new Vec2(GetOrigin(xOrigin), GetOrigin(yOrigin)),
+                position - size * new Vec2(xOrigin.ToFloat(), yOrigin.ToFloat()),
+                color, 0, Vector2.Zero,
                 new Vec2(scale) * font.Scale
             );
         }
 
-        public static void Text(this SpriteBatch spriteBatch, DynamicSpriteFontScaled font, Color color, string text, Vec2 position, Vec2? scale, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center)
+        public static void Text(this SpriteBatch spriteBatch, Font font, Color color, string text, Vec2 position, Vec2? scale, Origin xOrigin = Origin.Center, Origin yOrigin = Origin.Center)
         {
             Vec2 rscale = scale ?? Vec2.One;
-            Vec2 size = font.Dynamic.MeasureString(text) * (Vector2)rscale;
+            Vec2 size = font.MeasureString(text, rscale);
             font.Dynamic.DrawText(spriteBatch,
                 text,
-                position,
-                color, 0, size * new Vec2(GetOrigin(xOrigin), GetOrigin(yOrigin)),
+                position - size * new Vec2(xOrigin.ToFloat(), yOrigin.ToFloat()),
+                color, 0, Vec2.Zero,
                 rscale * font.Scale
             );
+        }
+
+        public static float Text(this SpriteBatch spriteBatch, Font font, string text, FRectangle rectangle, float scale = 1) =>
+            Text(spriteBatch, font, Color.White, text, rectangle, scale);
+
+        public static float Text(this SpriteBatch spriteBatch, Font font, string text, FRectangle rectangle, Vec2? scale) =>
+            Text(spriteBatch, font, Color.White, text, rectangle, scale);
+
+        public static float Text(this SpriteBatch spriteBatch, Font font, Color color, string text, FRectangle rectangle, float scale = 1)
+        {
+            FRectangle[] rects = font.GetTextRects(text, Vec2.Zero, scale);
+            StringBuilder resultMessage = new StringBuilder();
+            int lines = 1;
+            int last = 0;
+            int i;
+            float width = 0;
+            for (i = 0; i < text.Length; i++)
+            {
+                width += rects[i].Width;
+                if (text[i] == '\n')
+                {
+                    resultMessage.Append(text[last..i]);
+                    last = i;
+                    lines++;
+                    width = 0;
+                }
+                else if (width >= rectangle.Width)
+                {
+                    resultMessage.Append('\n').Append(text[last..i]);
+                    last = i;
+                    lines++;
+                    width = 0;
+                }
+            }
+            resultMessage.Append('\n').Append(text[last..]);
+            spriteBatch.Text(font, color, resultMessage.ToString().Trim(), rectangle.Location, scale, Origin.Zero, Origin.Zero);
+            return lines * font.LineHeight;
+        }
+
+        public static float Text(this SpriteBatch spriteBatch, Font font, Color color, string text, FRectangle rectangle, Vec2? scale)
+        {
+            FRectangle[] rects = font.GetTextRects(text, Vec2.Zero, scale);
+            StringBuilder resultMessage = new StringBuilder();
+            int lines = 1;
+            int last = 0;
+            int i;
+            float width = 0;
+            for (i = 0; i < text.Length; i++)
+            {
+                width += rects[i].Width;
+                if (text[i] == '\n')
+                {
+                    resultMessage.Append(text[last..i]);
+                    last = i;
+                    lines++;
+                    width = 0;
+                }
+                else if (width >= rectangle.Width)
+                {
+                    resultMessage.Append('\n').Append(text[last..i]);
+                    last = i;
+                    lines++;
+                    width = 0;
+                }
+            }
+            resultMessage.Append('\n').Append(text[last..]);
+            spriteBatch.Text(font, color, resultMessage.ToString().Trim(), rectangle.Location, scale, Origin.Zero, Origin.Zero);
+            return lines * font.LineHeight;
         }
 
         public static void RectXLine(this SpriteBatch spriteBatch, Sprite texture, Vec2 a, Vec2 b, float depth = 0, float scale = 1, Origin yOrigin = Origin.Center)
@@ -129,7 +198,7 @@ namespace Tendeos.Utils.Graphics
             Rect(spriteBatch, texture, b, rotation, 1, depth, Origin.Center, xOrigin);
         }
 
-        private static float GetOrigin(Origin origin) =>
+        public static float ToFloat(this Origin origin) =>
             origin == Origin.One ? 1 : origin == Origin.Center ? 0.5f : 0;
     }
     public enum Origin { One, Center, Zero }

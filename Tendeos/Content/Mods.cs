@@ -30,6 +30,11 @@ namespace Tendeos.Content
         public static void Init(SpriteBatch spriteBatch, ContentManager content)
         {
             string modsPath = Path.Combine(Settings.AppData, "mods");
+            if (!Directory.Exists(modsPath))
+            {
+                Directory.CreateDirectory(modsPath);
+                return;
+            }
             foreach (string next in Directory.GetDirectories(modsPath))
             {
                 Mod mod = new Mod(next, spriteBatch, content);
@@ -56,10 +61,10 @@ namespace Tendeos.Content
                                 modScript.Init();
                             }
                         }
-                        else throw new DuplicateNameException($"Mod {next[(modsPath.Length + 1)..]}: the \".MIS\" file have not \"mod\" type.");
+                        else throw new DuplicateNameException($"Mod {next[(modsPath.Length + 1)..]}: duplicate.");
                     }
-                    else throw new InvalidDataException($"Mod {next[(modsPath.Length + 1)..]}: the \".MIS\" file have not \"mod\" type.");
-                else throw new FileNotFoundException($"Mod {next[(modsPath.Length+1)..]} do not have \".MIS\" file.");
+                    else throw new InvalidDataException($"Mod {next[(modsPath.Length + 1)..]}: the main \".MIS\" file have not \"mod\" type.");
+                else throw new FileNotFoundException($"Mod {next[(modsPath.Length + 1)..]} do not have \".MIS\" file.");
             }
         }
 

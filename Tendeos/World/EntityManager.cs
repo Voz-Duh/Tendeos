@@ -11,49 +11,68 @@ namespace Tendeos.World
 {
     public static class EntityManager
     {
-        private static (Action<SpriteBatch> draw, Action update) entities = (b => { }, () => { });
+        public static SafeList<Entity> Entities { get; } = new SafeList<Entity>((e, i) => e[i] = null);
 
         public static T GetEntity<T>() where T : Entity
         {
-            foreach (var entity in entities.update.GetInvocationList())
-                if (entity.Target is T t)
+            for (uint i = 0; i < Entities.Max; i++)
+            {
+                if (Entities[i] is T t)
+                {
                     return t;
+                }
+            }
             return null;
         }
 
         public static T[] GetEntities<T>() where T : Entity
         {
             List<T> list = new List<T>();
-            foreach (var entity in entities.update.GetInvocationList())
-                if (entity.Target is T t)
+            for (uint i = 0; i < Entities.Max; i++)
+            {
+                if (Entities[i] is T t)
+                {
                     list.Add(t);
+                }
+            }
             return list.ToArray();
         }
 
         public static void Add(Entity entity)
         {
-            entities.update += entity.Update;
-            entities.draw += entity.Draw;
+            entity.ID = Entities.Add(entity);
         }
         public static void Remove(Entity entity)
         {
-            entities.update -= entity.Update;
-            entities.draw -= entity.Draw;
+            Entities.Destroy(entity.ID);
         }
 
-        public static void Draw(SpriteBatch spriteBatch) => entities.draw(spriteBatch);
+        public static void Draw(SpriteBatch spriteBatch)
+        {
+            for (uint i = 0; i < Entities.Max; i++)
+            {
+                Entities[i]?.Draw(spriteBatch);
+            }
+        }
 
-        public static void Update() => entities.update();
+        public static void Update()
+        {
+            for (uint i = 0; i < Entities.Max; i++)
+            {
+                Entities[i]?.Update();
+            }
+        }
 
-        public static void Clear() => entities = (b => { }, () => { });
+        public static void Clear() => Entities.Clear();
 
         public static void ToByte(ByteBuffer buffer)
         {
             List<IItem> itemTypes = new List<IItem>();
             List<Item> items = new List<Item>();
-            foreach (Delegate del in entities.update.GetInvocationList())
+
+            for (uint i = 0; i < Entities.Max; i++)
             {
-                if (del.Target is Item item)
+                if (Entities[i] is Item item)
                 {
                     if (!itemTypes.Contains(item.item.Item1)) itemTypes.Add(item.item.Item1);
                     items.Add(item);

@@ -1,4 +1,6 @@
-﻿using Tendeos.Utils;
+﻿using System;
+using Microsoft.Xna.Framework;
+using Tendeos.Utils;
 using Tendeos.Utils.SaveSystem;
 
 namespace Tendeos.World
@@ -25,10 +27,15 @@ namespace Tendeos.World
         void MineTile(bool top, (int x, int y) position, float power, float radius);
         void SetTile(bool top, ITile tile, int x, int y);
         void SetTile(bool top, ITile tile, (int x, int y) position);
+        void SetTileData<T>(bool top, int x, int y, Func<TileData, TileData> action) where T : ITile;
+        void SetTileData<T>(bool top, (int x, int y) position, Func<TileData, TileData> action) where T : ITile;
         IChunk GetChunk(int x, int y);
+        Rectangle? GetTileQuadtree(int x, int y);
         IChunk GetTileChunk(int x, int y);
-        TileData GetTile(bool top, int x, int y);
-        TileData GetTile(bool top, (int x, int y) position);
+        ref TileData GetTile(bool top, int x, int y);
+        ref TileData GetTile(bool top, (int x, int y) position);
+        ref TileData GetUnrefTile(bool top, int x, int y);
+        ref TileData GetUnrefTile(bool top, (int x, int y) position);
         (int x, int y) Cell2Chunk(int x, int y);
         (int x, int y) Cell2Chunk((int x, int y) position);
         (int x, int y) World2Cell(float x, float y);

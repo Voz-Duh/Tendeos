@@ -9,7 +9,7 @@ using Tendeos.Utils.Graphics;
 
 namespace Tendeos.Utils
 {
-    public static class ContentHelpers
+    public static class ContentHelper
     {
         public static byte[] LoadFileBytes(this ContentManager content, string filePath)
         {

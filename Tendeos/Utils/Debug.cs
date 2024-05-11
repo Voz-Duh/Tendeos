@@ -7,8 +7,6 @@ namespace Tendeos.Utils
 {
     public static class Debug
     {
-        [DllImport("user32.dll")]
-        public static extern int MessageBox(nint hwnd, string text, string caption, uint type);
         private static int done;
         public static bool Done => done == 0;
 
@@ -42,7 +40,7 @@ namespace Tendeos.Utils
             done++;
             Task.Run(() =>
             {
-                MessageBox(0, $"Handled {exception.GetType().Name} \"{exception.Message}\"\n{exception.StackTrace}", from, 0);
+                MessageBox.Show(from, $"Handled {exception.GetType().Name} \"{exception.Message}\"\n{exception.StackTrace}", MessageBox.Type.Error);
                 done--;
             });
         }

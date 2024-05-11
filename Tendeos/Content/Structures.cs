@@ -10,16 +10,16 @@ namespace Tendeos.Content
         public static void Init(ContentManager content)
         {
             test = new Structure(@"
-i: ignore ignore;
-a: stone  air;
-s: stone  stone;
+i: [ignore, ignore];
+s: [stone, stone];
+w: [stone, air];
 
-[
-[i,s,s,s,i],
-[s,a,a,a,s],
-[s,a,a,a,s],
-[s,a,a,a,s],
-[i,s,s,s,i]
+struct: [
+    [i, s, s, s, i],
+    [s, w, w, w, s],
+    [s, w, w, w, s],
+    [s, w, w, w, s],
+    [i, s, s, s, i]
 ];
 ");
         }

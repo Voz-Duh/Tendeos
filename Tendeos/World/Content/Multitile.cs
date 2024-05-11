@@ -36,25 +36,26 @@ namespace Tendeos.World.Content
         public IItem Drop { get; set; }
         public Range DropCount { get; set; }
 
-        public (int x, int y) DrawOffset { get; set; }
+        public Vec2 DrawOffset { get; set; }
         public (int x, int y)[] References { get; set; }
         public bool FloorOnly { get; set; } = true;
 
         [SpriteLoad("@")]
         public Sprite sprite;
 
-        public int DataCount { get; protected set; }
+        object ITile.RealInterface { get; set; }
+        TileInterface ITile.Interface { get; set; }
 
-        public virtual void Changed(bool top, IMap map, int x, int y, TileData data)
+        public virtual void Changed(bool top, IMap map, int x, int y, ref TileData data)
         {
         }
 
         public virtual void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition, TileData data)
         {
-            spriteBatch.Rect(sprite, drawPosition + new Vec2(DrawOffset.x, DrawOffset.y) * map.TileSize);
+            spriteBatch.Rect(sprite, drawPosition + DrawOffset * map.TileSize);
         }
 
-        public virtual void Start(bool top, IMap map, int x, int y, TileData data)
+        public virtual void Start(bool top, IMap map, int x, int y, ref TileData data)
         {
             ReferenceTile.Next = (x, y);
             for (int i = 0; i < References.Length; i++)
@@ -64,7 +65,7 @@ namespace Tendeos.World.Content
             }
         }
 
-        public virtual void Loaded(bool top, IMap map, int x, int y, TileData data)
+        public virtual void Loaded(bool top, IMap map, int x, int y, ref TileData data)
         {
             ReferenceTile.Next = (x, y);
             for (int i = 0; i < References.Length; i++)
@@ -81,10 +82,6 @@ namespace Tendeos.World.Content
                 var (lx, ly) = References[i];
                 map.SetTile(true, null, x + lx, y + ly);
             }
-        }
-
-        public virtual void Update(IMap map, int x, int y, TileData data)
-        {
         }
 
         public void Use(IMap map, ITransform transform, ref byte armsState, ref float armLRotation, ref float armRRotation, ref int count, ref float timer, ArmData armData)
@@ -111,7 +108,6 @@ namespace Tendeos.World.Content
                 }
             }
         }
-
 
         public void With(SpriteBatch spriteBatch, IMap map, ITransform transform, byte armsState, float armLRotation, float armRRotation, ArmData armData)
         {

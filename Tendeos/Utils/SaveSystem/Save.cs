@@ -11,8 +11,9 @@ namespace Tendeos.Utils.SaveSystem
 
         public static void Unload()
         {
-            if (!Directory.Exists(Settings.AppData)) Directory.CreateDirectory(Settings.AppData);
-            string path = Path.Combine(Settings.AppData, $"{name}.save");
+            string pathToFolder = Path.Combine(Settings.AppData, "saves");
+            if (!Directory.Exists(pathToFolder)) Directory.CreateDirectory(pathToFolder);
+            string path = Path.Combine(pathToFolder, $"{name}.save");
             using FileStream stream = File.Open(path, FileMode.Create);
             using LZ4Stream zStream = new LZ4Stream(stream, LZ4StreamMode.Compress);
             ByteBuffer buffer = new ByteBuffer(zStream);
@@ -24,7 +25,7 @@ namespace Tendeos.Utils.SaveSystem
         public static async Task<bool> LoadAsync(string name)
         {
             Save.name = name;
-            string path = Path.Combine(Settings.AppData, $"{name}.save");
+            string path = Path.Combine(Settings.AppData, "saves", $"{name}.save");
 
             if (!File.Exists(path)) return false;
             await Task.Run(() =>
@@ -49,7 +50,7 @@ namespace Tendeos.Utils.SaveSystem
         public static bool Load(string name)
         {
             Save.name = name;
-            string path = Path.Combine(Settings.AppData, $"{name}.save");
+            string path = Path.Combine(Settings.AppData, "saves", $"{name}.save");
 
             if (!File.Exists(path)) return false;
             using FileStream stream = File.Open(path, FileMode.Open);

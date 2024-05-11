@@ -5,7 +5,7 @@ using Tendeos.World;
 
 namespace Tendeos.Utils
 {
-    public class Effect : Entity
+    public class Effect
     {
         public Vec2 position;
         public float rotation;
@@ -60,11 +60,11 @@ namespace Tendeos.Utils
                 if (maxTime < time) maxTime = time;
             }
             Effect clone = new Effect(position, angle, emitLivetime, emitRotation, emitSize, emitSpeed, emits, emitAnimation, frameRate, particles, maxTime);
-            EntityManager.Add(clone);
+            EffectManager.Add(clone);
             return clone;
         }
 
-        public override void Draw(SpriteBatch spriteBatch)
+        public void Draw(SpriteBatch spriteBatch)
         {
             for (int i = 0; i < particles.Length; i++)
             {
@@ -74,9 +74,9 @@ namespace Tendeos.Utils
             }
         }
 
-        public override void Update()
+        public void Update()
         {
-            if (timer > maxTime) Remove();
+            if (timer > maxTime) EffectManager.Remove(this);
             timer += Time.Delta;
         }
 

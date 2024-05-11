@@ -9,17 +9,17 @@ namespace Tendeos.UI.GUIElements
     public class Button : GUIElement
     {
         protected readonly Style style;
-        protected readonly Action<SpriteBatch, FRectangle> icon;
-        protected readonly Action action;
+        protected Icon icon;
+        protected Action action;
 
         public Button(Vec2 anchor, FRectangle rectangle, Action action, Style style, Sprite icon) : base(anchor, rectangle)
         {
             this.style = style;
-            this.icon = (spriteBatch, rectangle) => spriteBatch.Rect(icon, rectangle.Center);
+            this.icon = Icon.From((spriteBatch, rectangle) => spriteBatch.Rect(icon, rectangle.Center));
             this.action = action;
         }
 
-        public Button(Vec2 anchor, FRectangle rectangle, Action action, Style style, Action<SpriteBatch, FRectangle> icon) : base(anchor, rectangle)
+        public Button(Vec2 anchor, FRectangle rectangle, Action action, Style style, Icon icon) : base(anchor, rectangle)
         {
             this.style = style;
             this.icon = icon;
@@ -32,7 +32,7 @@ namespace Tendeos.UI.GUIElements
             {
                 DrawRectWindow(spriteBatch, MouseOn ? Mouse.LeftDown ? style.Down : style.On : style.Idle, rectangle);
             }
-            icon?.Invoke(spriteBatch, rectangle);
+            icon?.Invoke(spriteBatch, rectangle, this);
         }
 
         public override void Update(FRectangle rectangle)
@@ -45,9 +45,9 @@ namespace Tendeos.UI.GUIElements
 
         public class Style
         {
-            public Sprite[] Idle { get; init; }
-            public Sprite[] On { get; init; }
-            public Sprite[] Down { get; init; }
+            public Sprite[] Idle { get; }
+            public Sprite[] On { get; }
+            public Sprite[] Down { get; }
 
             public Style() => Idle = On = Down = null;
 

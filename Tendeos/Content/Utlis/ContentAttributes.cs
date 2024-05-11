@@ -88,6 +88,11 @@ namespace Tendeos.Content.Utlis
                     property.SetValue(obj, name);
                     continue;
                 }
+                if (property.Name == "Name" && property.CanWrite)
+                {
+                    property.SetValue(obj, name);
+                    continue;
+                }
                 if (property.Name == "Description" && property.CanWrite)
                 {
                     property.SetValue(obj, $"{name}_description");

@@ -287,6 +287,10 @@ namespace Tendeos.Utils
             result = value1.X * value2.X + value1.Y * value2.Y;
         }
 
+        public float Cross(Vec2 a) => X * a.Y - Y * a.X;
+
+        public static float Cross(Vec2 a, Vec2 b) => a.X * b.Y - a.Y * b.X;
+
         public override bool Equals(object obj)
         {
             if (obj is Vec2)

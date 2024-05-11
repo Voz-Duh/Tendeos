@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using Tendeos.Physical.Content;
 using Tendeos.Utils;
@@ -43,18 +44,29 @@ namespace Tendeos.World.EntitySpawn
                     enemy = chunk.Biome.Enemies[URandom.SInt(chunk.Biome.Enemies.Length)];
                     if (enemy.spawnChance <= URandom.SFloat(100))
                     {
+                        (int width, int height) = map.World2Cell(enemy.size);
+                        int offset = map.ChunkSize / 2 + map.ChunkSize * 5;
+                        int fromx = Math.Clamp(x - offset, 0, map.FullWidth),
+                            tox = Math.Clamp(x + offset, 0, map.FullWidth),
+                            fromy = Math.Clamp(y - offset, 0, map.FullWidth),
+                            toy = Math.Clamp(y + offset, 0, map.FullWidth);
                         List<FRectangle> canSpawnIn = new List<FRectangle>();
-                        for (i = cx - 5; i <= cx + 5; i++)
-                            for (j = cy - 5; j <= cy + 5; j++)
+                        for (i = fromx; i <= tox; i++)
+                        {
+                            if (i + width >= map.FullWidth)
+                                continue;
+                            for (j = fromy; j <= toy; j++)
                             {
-                                if (i < 0 || i >= map.Width || j < 0 || j >= map.Height) continue;
-                                foreach (Rectangle rect in map.GetChunk(i, j).AirQuadtree)
-                                {
-                                    if (enemy.size.X <= rect.Width * map.TileSize &&
-                                        enemy.size.Y <= rect.Height * map.TileSize)
-                                        canSpawnIn.Add(new FRectangle((rect.Location.ToVector2() + new Vector2(cx, cy) * map.ChunkSize) * map.TileSize, rect.Size.ToVector2() * map.TileSize));
-                                }
+                                if (j + height >= map.FullHeight)
+                                    continue;
+                                for (x = 0; x <= width; x++)
+                                    for (y = 0; y <= height; y++)
+                                        if (map.GetTile(true, i + x, j + y).Tile != null)
+                                            goto BAD;
+                                canSpawnIn.Add(new FRectangle(i * map.TileSize, j * map.TileSize, width * map.TileSize, height * map.TileSize));
+                                BAD:;
                             }
+                        }
                         if (canSpawnIn.Count != 0)
                         {
                             FRectangle spawnRect = canSpawnIn[URandom.SInt(canSpawnIn.Count)];

@@ -17,9 +17,13 @@ namespace Tendeos.UI.GUIElements
             this.style = style;
         }
 
-        public override void Open(Vec2 anchor, Vec2 offset)
+        public override Inventory.Inventory Copy() =>
+            new PlayerInventoryContainer(parent, style);
+
+        public override void Open(Vec2 offset)
         {
-            base.Open(anchor, offset);
+            base.Open(offset);
+            style.Window.rectangle.Location = offset;
             parent.Add(style.Window.Add(OpenButtons()));
         }
 
@@ -35,12 +39,12 @@ namespace Tendeos.UI.GUIElements
                         style.ButtonsOffset.Y + y * (style.SlotSize + 1),
                         style.SlotSize, style.SlotSize),
                         () => Get(i), style.ButtonStyle,
-                        (spriteBatch, rectangle) =>
+                        Icon.From((spriteBatch, rectangle) =>
                         {
                             if (Items[i].item == null) return;
                             spriteBatch.Rect(Items[i].item.ItemSprite, rectangle.Center);
                             spriteBatch.Text(Core.Font, $"{Items[i].count}", new Vec2(rectangle.Right, rectangle.Top), 1, Origin.One, Origin.One);
-                        });
+                        }));
                 }
             for (x = 0; x < style.Addative.Length; x++)
             {
@@ -48,12 +52,12 @@ namespace Tendeos.UI.GUIElements
                     j = x;
                 yield return new Button(new Vec2(0, 0), new FRectangle(style.Addative[j].Item1.X, style.Addative[j].Item1.Y, style.SlotSize, style.SlotSize),
                     () => Get(i, style.Addative[j].Item2), style.ButtonStyle,
-                    (spriteBatch, rectangle) =>
+                    Icon.From((spriteBatch, rectangle) =>
                     {
                         if (Items[i].item == null) return;
                         spriteBatch.Rect(Items[i].item.ItemSprite, rectangle.Center);
                         spriteBatch.Text(Core.Font, $"{Items[i].count}", new Vec2(rectangle.Right, rectangle.Top), 1, Origin.One, Origin.One);
-                    });
+                    }));
             }
         }
 
@@ -71,13 +75,13 @@ namespace Tendeos.UI.GUIElements
 
         public class Style
         {
-            public GUIElement Window { get; init; }
-            public int Width { get; init; }
-            public int Height { get; init; }
-            public float SlotSize { get; init; }
-            public Button.Style ButtonStyle { get; init; }
-            public Vec2 ButtonsOffset { get; init; }
-            public (Vec2, Type)[] Addative { get; init; }
+            public GUIElement Window { get; }
+            public int Width { get; }
+            public int Height { get; }
+            public float SlotSize { get; }
+            public Button.Style ButtonStyle { get; }
+            public Vec2 ButtonsOffset { get; }
+            public (Vec2, Type)[] Addative { get; }
             
             public Style(GUIElement window, int width, int height, float slotSize, Button.Style buttonStyle, Vec2 buttonsOffset, params (Vec2, Type)[] addative)
             {

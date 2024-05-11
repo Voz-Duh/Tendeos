@@ -13,7 +13,7 @@ namespace Tendeos.Physical.Content
     public class Player : SpawnEntity, ITransform
     {
         public const int armStates = 5, armStateLines = 2;
-        public const float width = 9, height = 19, baseSpeed = 30, jumpPower = 60;
+        public const float width = 9, height = 19, baseSpeed = 30, jumpPower = 75;
 
         public readonly BodyTransform transform;
         public readonly Inventory.Inventory inventory;
@@ -72,7 +72,7 @@ namespace Tendeos.Physical.Content
             {
                 if (moving)
                 {
-                    int anim = legsMoveSprites.Animation(SpriteHelpers.frameRate, ref legsAnimationTimer, flip != transform.flipX);
+                    int anim = legsMoveSprites.Animation(SpriteHelper.frameRate, ref legsAnimationTimer, flip != transform.flipX);
 
                     if (flip != transform.flipX)
                     {
@@ -141,11 +141,11 @@ namespace Tendeos.Physical.Content
             onFloor = false;
             RaycastMapDelegate rayCast = (_, _, _, _, _) => onFloor = true;
             Physics.RaycastMap(rayCast,
-                transform.Position + new Vec2(width / 2 - 0.1f, 0),
-                new Vec2(0, height / 2f + 0.2f));
+                transform.Position + new Vec2(transform.body.halfSize.X - 0.1f, 0),
+                new Vec2(0, transform.body.halfSize.Y + 2f));
             Physics.RaycastMap(rayCast,
-                transform.Position + new Vec2(-width / 2 + 0.1f, 0),
-                new Vec2(0, height / 2f + 0.2f));
+                transform.Position + new Vec2(-transform.body.halfSize.X + 0.1f, 0),
+                new Vec2(0, transform.body.halfSize.Y + 2f));
 
             float yVel = transform.body.velocity.Y;
 
@@ -223,5 +223,15 @@ namespace Tendeos.Physical.Content
             .Read(info)
             .Read(out inArm)
             .Read(inventory);
+
+        public override byte[] NetworkSend()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override void NetworkAccept(byte[] data)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

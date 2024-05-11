@@ -1,6 +1,9 @@
-﻿using System;
+﻿using LZ4;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
+using Tendeos.World.Shadows;
 
 namespace Tendeos.Utils.SaveSystem
 {
@@ -16,10 +19,14 @@ namespace Tendeos.Utils.SaveSystem
 
         public static void Set(Type type, string key, object to) => data[(type, key)] = to;
 
+        public static async Task SaveAsync() => await Task.Run(Save);
+        public static async Task LoadAsync() => await Task.Run(Load);
+
         public static void Save()
         {
             using Stream stream = File.Open(Path.Combine(AppData, ".settings"), FileMode.Create);
-            ByteBuffer buffer = new ByteBuffer(stream);
+            using LZ4Stream zStream = new LZ4Stream(stream, LZ4StreamMode.Compress);
+            ByteBuffer buffer = new ByteBuffer(zStream);
             buffer.Append(data.Count);
             foreach (var item in data)
             {
@@ -41,6 +48,7 @@ namespace Tendeos.Utils.SaveSystem
                         break;
                 }
             }
+            zStream.Close();
             stream.Close();
         }
 
@@ -57,7 +65,8 @@ namespace Tendeos.Utils.SaveSystem
             }
 
             using Stream stream = File.Open(path, FileMode.Open);
-            ByteBuffer buffer = new ByteBuffer(stream);
+            using LZ4Stream zStream = new LZ4Stream(stream, LZ4StreamMode.Decompress);
+            ByteBuffer buffer = new ByteBuffer(zStream);
             string name;
             object obj = null;
             int length = buffer.ReadInt();
@@ -83,12 +92,14 @@ namespace Tendeos.Utils.SaveSystem
 
                 data.Add((type, name), obj);
             }
+            zStream.Close();
             stream.Close();
         }
 
         private static void Default()
         {
             Set(Type.String, "language", "en");
+            Set(Type.Int, "shadow_smoothing", (int)ShadowMatrix.SmoothPower.Blocky);
         }
 
         public enum Type : byte

@@ -1,4 +1,6 @@
-﻿namespace Tendeos.Utils
+﻿using Tendeos.World.Shadows;
+
+namespace Tendeos.Utils
 {
     public struct FRectangle
     {
@@ -6,8 +8,16 @@
 
         public static FRectangle Zero => zeroRect;
 
-        public Vec2 Location { get; set; }
-        public Vec2 Size { get; set; }
+        public Vec2 Location
+        {
+            get => new Vec2(X, Y);
+            set => (X, Y) = value;
+        }
+        public Vec2 Size
+        {
+            get => new Vec2(Width, Height);
+            set => (Width, Height) = value;
+        }
 
         public float Left => Location.X;
         public float Right => Location.X + Size.X;
@@ -15,11 +25,11 @@
         public float Top => Location.Y + Size.Y;
         public float Bottom => Location.Y;
 
-        public float X => Location.X;
-        public float Y => Location.Y;
+        public float X;
+        public float Y;
 
-        public float Width => Size.X;
-        public float Height => Size.Y;
+        public float Width;
+        public float Height;
 
         public Vec2 Center => Location + Size / 2;
 
@@ -45,14 +55,16 @@
 
         public FRectangle(Vec2 location, Vec2 size)
         {
-            Location = location;
-            Size = size;
+            (X, Y) = location;
+            (Width, Height) = size;
         }
 
         public FRectangle(float x, float y, float width, float height)
         {
-            Location = new Vec2(x, y);
-            Size = new Vec2(width, height);
+            X = x;
+            Y = y;
+            Width = width;
+            Height = height;
         }
 
         public bool Contains(Vec2 point) =>
@@ -67,7 +79,7 @@
             x <= Right &&
             y <= Top;
 
-        public void Translate(Vec2 location) => Location = location;
+        public void Translate(Vec2 location) => (X, Y) = location;
 
         public static FRectangle operator +(FRectangle left, FRectangle right) => new FRectangle(left.Location + right.Location, left.Size);
     }

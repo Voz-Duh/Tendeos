@@ -1,81 +1,42 @@
-﻿using Va;
+﻿using System;
+using Tendeos.Modding;
 using Tendeos.Content;
 
 namespace Tendeos.World.Structures
 {
     public class Structure
     {
-        private enum Value { Standart }
-        private static (ITile, ITile)[][] tiles;
-        private static readonly CompileStyle main = null;
+        private (ITile w, ITile t)[][] data;
 
-        static Structure()
-        {
-            main = new CompileStyle(
-                (
-                    new TokenStyle[]
-                    {
-                        new TokenStyle(TokenType.Keyword),
-                        new TokenStyle(":", TokenType.Special),
-                        new TokenStyle(TokenType.Keyword),
-                        new TokenStyle(TokenType.Keyword)
-                    },
-                    (CompileStyleDelegate)
-                    ((sln, toks) =>
-                    {
-                        if (!sln.TryAdd(toks[0].Text, new DataStruct(Value.Standart, toks[2].data)))
-                            throw new VaException(toks[1].line, $"Already have same variable.");
-                        else
-                            sln.TryAdd($"{toks[0].Text}0", new DataStruct(Value.Standart, toks[3].data));
-                    })
-                ),
-                (
-                    new TokenStyle[]
-                    {
-                        new TokenStyle(TokenType.BoxBracket)
-                    },
-                    (CompileStyleDelegate)
-                    ((sln, toks) =>
-                    {
-                        Token[][] rows = toks[0].tokens[0].Split(new TokenStyle(",", TokenType.Special));
-                        tiles = new (ITile, ITile)[rows.Length][];
-                        for (int i = 0; i < rows.Length; i++)
-                        {
-                            Token[][] cols = rows[i][0].tokens[0].Split(new TokenStyle(",", TokenType.Special));
-                            tiles[i] = new (ITile, ITile)[cols.Length];
-                            for (int j = 0; j < cols.Length; j++)
-                            {
-                                if (sln.TryGet(cols[j][0].Text, out DataStruct data))
-                                {
-                                    tiles[i][j] = (
-                                        Tiles.Get(data.Str),
-                                        Tiles.Get(sln[$"{cols[j][0].Text}0"].Str)
-                                    );
-                                }
-                                else
-                                {
-                                    tiles[i][j] = (
-                                        Tiles.Get(cols[j][0].Text),
-                                        Tiles.Get(cols[j][1].Text)
-                                    );
-                                }
-                            }
-                        }
-                    })
-                )
-            );
-        }
-
-        private readonly (ITile w, ITile t)[][] data;
+        private int width, height;
+        public int Width => width;
+        public int Height => height;
 
         public Structure(string code)
         {
-            Token[][] tokens = Compiler.GetTokens(code);
-            Compiler.ParseStyle(new Solution(), main, tokens);
-            data = tiles;
+            MISObject obj = MIS.GenerateVirtual(code, "tendeos.structure");
+            obj.Require("struct", (MISArray array) =>
+            {
+                height = array.Length;
+                int i, j;
+                for (i = 0; i < array.Length; i++)
+                    width = Math.Max(Width, array.Get<MISArray>(i).Length);
+                data = new (ITile, ITile)[array.Length][];
+                for (i = 0; i < array.Length; i++)
+                {
+                    MISArray row = array.Get<MISArray>(i);
+                    data[i] = new (ITile, ITile)[row.Length];
+                    for (j = 0; j < row.Length; j++)
+                    {
+                        MISArray obj = row.Get<MISArray>(j);
+                        data[i][j].w = Tiles.Get(obj.Get<MISKey>(0).value);
+                        data[i][j].t = Tiles.Get(obj.Get<MISKey>(1).value);
+                    }
+                }
+            });
         }
 
-        public void Spawn(Map map, int x, int y)
+        public void Spawn(IMap map, int x, int y)
         {
             for (int i = 0; i < data.Length; i++)
                 for (int j = 0; j < data[i].Length; j++)

@@ -1,11 +1,16 @@
-﻿using Tendeos.Utils;
+﻿using System;
+using Tendeos.Utils;
 
 namespace Tendeos.World.Generation
 {
-    public class Cave
+    public class Cave : BaseBiome
     {
-        public float Power { get; set; }
-        public bool Inversed { get; set; }
-        public Noise[] Noises { get; set; }
+        private static readonly Noise defaultCornersNoise = Noise.CPerlin(0.3f, 10);
+
+        public ITile Tile;
+        public float SpawnChance;
+        public float CornersPower;
+        public Noise CornersNoise = defaultCornersNoise;
+        public Range ChunksWidth, ChunksHeight, Height;
     }
 }

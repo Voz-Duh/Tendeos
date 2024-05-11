@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Va;
 using Tendeos.Utils.SaveSystem;
+using System.Text.RegularExpressions;
 
 namespace Tendeos.Utils
 {
@@ -30,6 +31,24 @@ namespace Tendeos.Utils
             ), Compiler.GetTokens(content.LoadFileText($"languages/{Settings.GetString("language")}.lng")));
         }
 
-        public static string Get(string key, params object[] args) => data.TryGetValue(key, out string value) ? string.Format(value, args) : key;
+        private static readonly Regex regex = new Regex("\\<(.*)\\>");
+
+        public static string Translate(this string key, params object[] args) => data.TryGetValue(key, out string value) ? string.Format(value, args) : key;
+        public static string WithTranslates(this string text, params object[] args)
+        {
+            string result = text;
+            MatchCollection matches = regex.Matches(text);
+            for (int i = matches.Count - 1; i >= 0; i--)
+            {
+                Match match = matches[i];
+                Group group0 = match.Groups[0];
+                Group group1 = match.Groups[1];
+                if (data.TryGetValue(result.Substring(group1.Index, group1.Length), out string value))
+                {
+                    result = result.Remove(group0.Index, group0.Length).Insert(group0.Index, value);
+                }
+            }
+            return string.Format(result, args);
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Jint.Native.TypedArray;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 
@@ -41,6 +42,8 @@ namespace Tendeos.Utils.Input
             PointDelta = Point - previousKeyState.Position;
             PositionDelta = Position - Camera?.Screen2World(previousKeyState.Position.ToVector2()) ?? previousKeyState.Position.ToVector2();
             GUIPositionDelta = GUIPosition - Camera?.Screen2GUI(previousKeyState.Position.ToVector2()) ?? previousKeyState.Position.ToVector2();
+            Scroll = Math.Clamp(currentKeyState.ScrollWheelValue - previousKeyState.ScrollWheelValue, -1, 1);
+            XScroll = Math.Clamp(currentKeyState.HorizontalScrollWheelValue - previousKeyState.HorizontalScrollWheelValue, -1, 1);
             onUpdate();
             return currentKeyState;
         }
@@ -86,8 +89,8 @@ namespace Tendeos.Utils.Input
             remove => onUpdate -= value;
         }
 
-        public static int Scroll => currentKeyState.ScrollWheelValue;
-        public static int XScroll => currentKeyState.HorizontalScrollWheelValue;
+        public static int Scroll { get; private set; }
+        public static int XScroll { get; private set; }
 
         public static bool OnGUI { get; set; }
     }

@@ -17,7 +17,7 @@ namespace Tendeos.Inventory
             Items = new (IItem, int)[size];
         }
 
-        public virtual void Open(Vec2 anchor, Vec2 offset)
+        public virtual void Open(Vec2 offset)
         {
             Opened = true;
         }
@@ -25,6 +25,8 @@ namespace Tendeos.Inventory
         {
             Opened = false;
         }
+
+        public abstract Inventory Copy();
 
         public void Get(int index)
         {

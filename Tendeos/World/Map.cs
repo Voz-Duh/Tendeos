@@ -2,16 +2,17 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using Tendeos.Content;
 using Tendeos.Physical.Content;
 using Tendeos.Utils;
-using Tendeos.World.Generation;
 using Tendeos.World.Liquid;
 
 namespace Tendeos.World
 {
     public class Map : IMap
     {
+        private static TileData NullTileReference = default;
         private readonly WaterWorld waterWorld;
         public int Width { get; private set; }
         public int Height { get; private set; }
@@ -53,19 +54,6 @@ namespace Tendeos.World
         {
             widthRender = (int)Math.Ceiling(camera.WorldViewport.X / (ChunkSize * TileSize)) + 1;
             heightRender = (int)Math.Ceiling(camera.WorldViewport.Y / (ChunkSize * TileSize)) + 1;
-        }
-
-        public void Update()
-        {
-            int xRender = (int)Math.Floor((camera.Position.X - camera.WorldViewport.X / 2) / (ChunkSize * TileSize)) - 3;
-            int yRender = (int)Math.Floor((camera.Position.Y - camera.WorldViewport.Y / 2) / (ChunkSize * TileSize)) - 3;
-
-            int j;
-            for (int i = Math.Clamp(xRender, 0, Width - 1); i < Math.Clamp(xRender + widthRender + 3, 0, Width); i++)
-                for (j = Math.Clamp(yRender, 0, Height - 1); j < Math.Clamp(yRender + heightRender + 3, 0, Height); j++)
-                {
-                    chunks[i, j].Update(this, i, j);
-                }
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -120,7 +108,7 @@ namespace Tendeos.World
             Chunk c = chunks[chunk.x, chunk.y];
             int lx = x - chunk.x * ChunkSize,
                 ly = y - chunk.y * ChunkSize;
-            if (c[top, lx, ly].Tile == null) return;
+            if (c.GetTile(top, lx, ly).Tile == null) return;
             float h = c.Mine(top, chunk.x, chunk.y, lx, ly, power, this);
 
             if (h > 0) return;
@@ -131,17 +119,17 @@ namespace Tendeos.World
                 c.ComputeAirQuadtree(this, chunk.x, chunk.y);
             }
 
-            TileData data = GetTile(top, x + 1, y);
-            data.Tile?.Changed(top, this, x + 1, y, data);
+            ref TileData data = ref GetTile(top, x + 1, y);
+            data.Tile?.Changed(top, this, x + 1, y, ref data);
 
-            data = GetTile(top, x - 1, y);
-            data.Tile?.Changed(top, this, x - 1, y, data);
+            data = ref GetTile(top, x - 1, y);
+            data.Tile?.Changed(top, this, x - 1, y, ref data);
 
-            data = GetTile(top, x, y + 1);
-            data.Tile?.Changed(top, this, x, y + 1, data);
+            data = ref GetTile(top, x, y + 1);
+            data.Tile?.Changed(top, this, x, y + 1, ref data);
 
-            data = GetTile(top, x, y - 1);
-            data.Tile?.Changed(top, this, x, y - 1, data);
+            data = ref GetTile(top, x, y - 1);
+            data.Tile?.Changed(top, this, x, y - 1, ref data);
         }
         public void MineTile(bool top, (int x, int y) position, float power) => MineTile(top, position.x, position.y, power);
 
@@ -160,7 +148,7 @@ namespace Tendeos.World
                     Chunk c = chunks[chunk.x, chunk.y];
                     int lx = X - chunk.x * ChunkSize,
                         ly = Y - chunk.y * ChunkSize;
-                    if (c[top, lx, ly].Tile == null) continue;
+                    if (c.GetTile(top, lx, ly).Tile == null) continue;
                     float h = c.Mine(top, chunk.x, chunk.y, lx, ly, power, this);
 
                     if (h > 0) continue;
@@ -171,48 +159,68 @@ namespace Tendeos.World
                         c.ComputeAirQuadtree(this, chunk.x, chunk.y);
                     }
 
-                    TileData data = GetTile(top, X + 1, Y);
-                    data.Tile?.Changed(top, this, X + 1, Y, data);
+                    ref TileData data = ref GetTile(top, X + 1, Y);
+                    data.Tile?.Changed(top, this, X + 1, Y, ref data);
 
-                    data = GetTile(top, X - 1, Y);
-                    data.Tile?.Changed(top, this, X - 1, Y, data);
+                    data = ref GetTile(top, X - 1, Y);
+                    data.Tile?.Changed(top, this, X - 1, Y, ref data);
 
-                    data = GetTile(top, X, Y + 1);
-                    data.Tile?.Changed(top, this, X, Y + 1, data);
+                    data = ref GetTile(top, X, Y + 1);
+                    data.Tile?.Changed(top, this, X, Y + 1, ref data);
 
-                    data = GetTile(top, X, Y - 1);
-                    data.Tile?.Changed(top, this, X, Y - 1, data);
+                    data = ref GetTile(top, X, Y - 1);
+                    data.Tile?.Changed(top, this, X, Y - 1, ref data);
                 }
         }
         public void MineTile(bool top, (int x, int y) position, float power, float radius) => MineTile(top, position.x, position.y, power, radius);
 
-        public TileData GetTile(bool top, int x, int y)
+        public ref TileData GetUnrefTile(bool top, int x, int y)
         {
-            if (x < 0) return default;
-            else if (x >= ChunkSize * Width) return default;
-            else if (y < 0) return default;
-            else if (y >= ChunkSize * Height) return default;
+            if (x < 0) return ref NullTileReference;
+            else if (x >= FullWidth) return ref NullTileReference;
+            else if (y < 0) return ref NullTileReference;
+            else if (y >= FullHeight) return ref NullTileReference;
 
             var chunk = Cell2Chunk(x, y);
-            return chunks?[chunk.x, chunk.y]?[top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize] ?? default;
+            if (chunks == null || chunks[chunk.x, chunk.y] == null) return ref NullTileReference;
+            ref TileData data = ref chunks[chunk.x, chunk.y].GetTile(top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize);
+            if (data.IsReference)
+            {
+                return ref GetTile(top, (int)data.GetU32(0), (int)data.GetU32(32));
+            }
+            return ref data;
         }
 
-        public TileData GetTile(bool top, (int x, int y) position) => GetTile(top, position.x, position.y);
+        public ref TileData GetUnrefTile(bool top, (int x, int y) position) => ref GetUnrefTile(top, position.x, position.y);
+
+        public ref TileData GetTile(bool top, int x, int y)
+        {
+            if (x < 0) return ref NullTileReference;
+            else if (x >= FullWidth) return ref NullTileReference;
+            else if (y < 0) return ref NullTileReference;
+            else if (y >= FullHeight) return ref NullTileReference;
+
+            var chunk = Cell2Chunk(x, y);
+            if (chunks == null || chunks[chunk.x, chunk.y] == null) return ref NullTileReference;
+            return ref chunks[chunk.x, chunk.y].GetTile(top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize);
+        }
+
+        public ref TileData GetTile(bool top, (int x, int y) position) => ref GetTile(top, position.x, position.y);
 
         public void SetTile(bool top, ITile tile, int x, int y)
         {
             if (tile == Ignore) return;
 
             if (x < 0) return;
-            else if (x >= ChunkSize * Width) return;
+            else if (x >= FullWidth) return;
             else if (y < 0) return;
-            else if (y >= ChunkSize * Height) return;
+            else if (y >= FullHeight) return;
 
             var chunk = Cell2Chunk(x, y);
 
             Chunk c = chunks[chunk.x, chunk.y];
-            TileData data = c[top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize] = new TileData(tile);
-            tile?.Start(top, this, x, y, data);
+            ref TileData data = ref c.SetGetTile(top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize, new TileData(tile));
+            tile?.Start(top, this, x, y, ref data);
 
             if (top)
             {
@@ -220,17 +228,17 @@ namespace Tendeos.World
                 c.ComputeAirQuadtree(this, chunk.x, chunk.y);
             }
 
-            data = GetTile(top, x + 1, y);
-            data.Tile?.Changed(top, this, x + 1, y, data);
+            data = ref GetTile(top, x + 1, y);
+            data.Tile?.Changed(top, this, x + 1, y, ref data);
 
-            data = GetTile(top, x - 1, y);
-            data.Tile?.Changed(top, this, x - 1, y, data);
+            data = ref GetTile(top, x - 1, y);
+            data.Tile?.Changed(top, this, x - 1, y, ref data);
 
-            data = GetTile(top, x, y + 1);
-            data.Tile?.Changed(top, this, x, y + 1, data);
+            data = ref GetTile(top, x, y + 1);
+            data.Tile?.Changed(top, this, x, y + 1, ref data);
 
-            data = GetTile(top, x, y - 1);
-            data.Tile?.Changed(top, this, x, y - 1, data);
+            data = ref GetTile(top, x, y - 1);
+            data.Tile?.Changed(top, this, x, y - 1, ref data);
         }
 
         public void SetTile(bool top, ITile tile, (int x, int y) position) => SetTile(top, tile, position.x, position.y);
@@ -240,18 +248,18 @@ namespace Tendeos.World
             if (tile == Ignore) return false;
 
             if (x < 0) return false;
-            else if (x >= ChunkSize * Width) return false;
+            else if (x >= FullWidth) return false;
             else if (y < 0) return false;
-            else if (y >= ChunkSize * Height) return false;
+            else if (y >= FullHeight) return false;
 
             var chunk = Cell2Chunk(x, y);
 
             Chunk c = chunks[chunk.x, chunk.y];
             int lx = x - chunk.x * ChunkSize,
                 ly = y - chunk.y * ChunkSize;
-            if (c[top, lx, ly].Tile != null) return false;
-            TileData data = c[top, lx, ly] = new TileData(tile);
-            tile?.Start(top, this, x, y, data);
+            if (c.GetTile(top, lx, ly).Tile != null) return false;
+            ref TileData data = ref c.SetGetTile(top, lx, ly, new TileData(tile));
+            tile?.Start(top, this, x, y, ref data);
 
             if (top)
             {
@@ -259,17 +267,17 @@ namespace Tendeos.World
                 c.ComputeAirQuadtree(this, chunk.x, chunk.y);
             }
 
-            data = GetTile(top, x + 1, y);
-            data.Tile?.Changed(top, this, x + 1, y, data);
+            data = ref GetTile(top, x + 1, y);
+            data.Tile?.Changed(top, this, x + 1, y, ref data);
 
-            data = GetTile(top, x - 1, y);
-            data.Tile?.Changed(top, this, x - 1, y, data);
+            data = ref GetTile(top, x - 1, y);
+            data.Tile?.Changed(top, this, x - 1, y, ref data);
 
-            data = GetTile(top, x, y + 1);
-            data.Tile?.Changed(top, this, x, y + 1, data);
+            data = ref GetTile(top, x, y + 1);
+            data.Tile?.Changed(top, this, x, y + 1, ref data);
 
-            data = GetTile(top, x, y - 1);
-            data.Tile?.Changed(top, this, x, y - 1, data);
+            data = ref GetTile(top, x, y - 1);
+            data.Tile?.Changed(top, this, x, y - 1, ref data);
             return true;
         }
         public bool TrySetTile(bool top, ITile tile, (int x, int y) position) => TrySetTile(top, tile, position.x, position.y);
@@ -277,14 +285,14 @@ namespace Tendeos.World
         public bool CanSetTile(bool top, int x, int y)
         {
             if (x < 0) return false;
-            else if (x >= ChunkSize * Width) return false;
+            else if (x >= FullWidth) return false;
             else if (y < 0) return false;
-            else if (y >= ChunkSize * Height) return false;
+            else if (y >= FullHeight) return false;
 
             var chunk = Cell2Chunk(x, y);
 
             Chunk c = chunks[chunk.x, chunk.y];
-            return c[top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize].Tile == null;
+            return c.GetTile(top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize).Tile == null;
         }
         public bool CanSetTile(bool top, (int x, int y) position) => CanSetTile(top, position.x, position.y);
 
@@ -293,15 +301,15 @@ namespace Tendeos.World
             if (tile == Ignore) return false;
 
             if (x < 0) return false;
-            else if (x >= ChunkSize * Width) return false;
+            else if (x >= FullWidth) return false;
             else if (y < 0) return false;
-            else if (y >= ChunkSize * Height) return false;
+            else if (y >= FullHeight) return false;
 
-            TileData
-                r = GetTile(top, x + 1, y),
-                l = GetTile(top, x - 1, y),
-                d = GetTile(top, x, y + 1),
-                u = GetTile(top, x, y - 1);
+            ref TileData
+                r = ref GetTile(top, x + 1, y),
+                l = ref GetTile(top, x - 1, y),
+                d = ref GetTile(top, x, y + 1),
+                u = ref GetTile(top, x, y - 1);
             if (r.Tile != null ||
                 l.Tile != null ||
                 d.Tile != null ||
@@ -315,8 +323,8 @@ namespace Tendeos.World
                 var chunk = Cell2Chunk(x, y);
 
                 Chunk c = chunks[chunk.x, chunk.y];
-                TileData data = c[top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize] = new TileData(tile);
-                tile?.Start(top, this, x, y, data);
+                ref TileData data = ref c.SetGetTile(top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize, new TileData(tile));
+                tile?.Start(top, this, x, y, ref data);
 
                 if (top)
                 {
@@ -324,10 +332,10 @@ namespace Tendeos.World
                     c.ComputeAirQuadtree(this, chunk.x, chunk.y);
                 }
 
-                r.Tile?.Changed(top, this, x + 1, y, r);
-                l.Tile?.Changed(top, this, x - 1, y, l);
-                d.Tile?.Changed(top, this, x, y + 1, d);
-                u.Tile?.Changed(top, this, x, y - 1, u);
+                r.Tile?.Changed(top, this, x + 1, y, ref r);
+                l.Tile?.Changed(top, this, x - 1, y, ref l);
+                d.Tile?.Changed(top, this, x, y + 1, ref d);
+                u.Tile?.Changed(top, this, x, y - 1, ref u);
                 return true;
             }
             return false;
@@ -335,20 +343,44 @@ namespace Tendeos.World
 
         public bool PlaceTile(bool top, ITile tile, (int x, int y) position) => PlaceTile(top, tile, position.x, position.y);
 
+        public void SetTileData<T>(bool top, int x, int y, Func<TileData, TileData> action) where T : ITile 
+        {
+            ref TileData data = ref GetTile(top, x, y);
+            if (data.Tile is not T) return;
+            TileData tempData = action(data);
+            data.Tile?.Changed(top, this, x, y, ref tempData);
+            data.data = tempData.data;
+
+            data = ref GetTile(top, x + 1, y);
+            data.Tile?.Changed(top, this, x + 1, y, ref data);
+
+            data = ref GetTile(top, x - 1, y);
+            data.Tile?.Changed(top, this, x - 1, y, ref data);
+
+            data = ref GetTile(top, x, y + 1);
+            data.Tile?.Changed(top, this, x, y + 1, ref data);
+
+            data = ref GetTile(top, x, y - 1);
+            data.Tile?.Changed(top, this, x, y - 1, ref data);
+        }
+        
+        public void SetTileData<T>(bool top, (int x, int y) position, Func<TileData, TileData> action) where T : ITile =>
+            SetTileData<T>(top, position.x, position.y, action);
+
         public bool TryPlaceTile(bool top, ITile tile, int x, int y)
         {
             if (tile == Ignore) return false;
 
             if (x < 0) return false;
-            else if (x >= ChunkSize * Width) return false;
+            else if (x >= FullWidth) return false;
             else if (y < 0) return false;
-            else if (y >= ChunkSize * Height) return false;
+            else if (y >= FullHeight) return false;
 
-            TileData
-                r = GetTile(top, x + 1, y),
-                l = GetTile(top, x - 1, y),
-                d = GetTile(top, x, y + 1),
-                u = GetTile(top, x, y - 1);
+            ref TileData
+                r = ref GetTile(top, x + 1, y),
+                l = ref GetTile(top, x - 1, y),
+                d = ref GetTile(top, x, y + 1),
+                u = ref GetTile(top, x, y - 1);
             if (r.Tile != null ||
                 l.Tile != null ||
                 d.Tile != null ||
@@ -364,9 +396,9 @@ namespace Tendeos.World
                 Chunk c = chunks[chunk.x, chunk.y];
                 int lx = x - chunk.x * ChunkSize,
                     ly = y - chunk.y * ChunkSize;
-                if (c[top, lx, ly].Tile != null) return false;
-                TileData data = c[top, lx, ly] = new TileData(tile);
-                tile?.Start(top, this, x, y, data);
+                if (c.GetTile(top, lx, ly).Tile != null) return false;
+                ref TileData data = ref c.SetGetTile(top, lx, ly, new TileData(tile));
+                tile?.Start(top, this, x, y, ref data);
 
                 if (top)
                 {
@@ -374,10 +406,10 @@ namespace Tendeos.World
                     c.ComputeAirQuadtree(this, chunk.x, chunk.y);
                 }
 
-                r.Tile?.Changed(top, this, x + 1, y, r);
-                l.Tile?.Changed(top, this, x - 1, y, l);
-                d.Tile?.Changed(top, this, x, y + 1, d);
-                u.Tile?.Changed(top, this, x, y - 1, u);
+                r.Tile?.Changed(top, this, x + 1, y, ref r);
+                l.Tile?.Changed(top, this, x - 1, y, ref l);
+                d.Tile?.Changed(top, this, x, y + 1, ref d);
+                u.Tile?.Changed(top, this, x, y - 1, ref u);
                 return true;
             }
             return false;
@@ -386,6 +418,17 @@ namespace Tendeos.World
         public bool TryPlaceTile(bool top, ITile tile, (int x, int y) position) => TryPlaceTile(top, tile, position.x, position.y);
 
         public IChunk GetChunk(int x, int y) => chunks[x, y];
+
+        public Rectangle? GetTileQuadtree(int x, int y)
+        {
+            if (x < 0) return null;
+            else if (x >= FullWidth) return null;
+            else if (y < 0) return null;
+            else if (y >= FullHeight) return null;
+
+            var chunk = Cell2Chunk(x, y);
+            return chunks[chunk.x, chunk.y].GetTileQuadtree(this, chunk.x, chunk.y, x, y);
+        }
 
         public IChunk GetTileChunk(int x, int y)
         {
@@ -396,7 +439,7 @@ namespace Tendeos.World
         public void ToByte(ByteBuffer buffer)
         {
             List<ITile> tiles = new List<ITile>();
-            TileData data;
+            ref TileData data = ref NullTileReference;
             ITile tile;
             int cx, cy, x, y;
             for (cx = 0; cx < Width; cx++)
@@ -404,11 +447,11 @@ namespace Tendeos.World
                     for (x = 0; x < ChunkSize; x++)
                         for (y = 0; y < ChunkSize; y++)
                         {
-                            data = chunks[cx, cy][true, x, y];
-                            if (data.IsReference) data = default;
+                            data = ref chunks[cx, cy].GetTile(true, x, y);
+                            if (data.IsReference) data = ref NullTileReference;
                             if (!tiles.Contains(data.Tile)) tiles.Add(data.Tile);
-                            data = chunks[cx, cy][false, x, y];
-                            if (data.IsReference) data = default;
+                            data = ref chunks[cx, cy].GetTile(false, x, y);
+                            if (data.IsReference) data = ref NullTileReference;
                             if (!tiles.Contains(data.Tile)) tiles.Add(data.Tile);
                         }
             buffer.Append(Width);
@@ -428,7 +471,7 @@ namespace Tendeos.World
                     for (x = 0; x < ChunkSize; x++)
                         for (y = 0; y < ChunkSize; y++)
                         {
-                            data = chunks[cx, cy][true, x, y];
+                            data = chunks[cx, cy].GetTile(true, x, y);
                             buffer.Append(data.IsReference);
                             if (!data.IsReference)
                             {
@@ -436,10 +479,10 @@ namespace Tendeos.World
                                 if (data.Tile != null)
                                 {
                                     buffer.Append(data.Health);
-                                    for (int i = 0; i < data.Tile.DataCount; i++) buffer.Append(data[0]);
+                                    buffer.Append(((BigInteger)data.data).ToByteArray());
                                 }
                             }
-                            data = chunks[cx, cy][false, x, y];
+                            data = chunks[cx, cy].GetTile(false, x, y);
                             buffer.Append(data.IsReference);
                             if (!data.IsReference)
                             {
@@ -447,7 +490,7 @@ namespace Tendeos.World
                                 if (data.Tile != null)
                                 {
                                     buffer.Append(data.Health);
-                                    for (int i = 0; i < data.Tile.DataCount; i++) buffer.Append(data[0]);
+                                    buffer.Append(((BigInteger)data.data).ToByteArray());
                                 }
                             }
                         }
@@ -479,29 +522,29 @@ namespace Tendeos.World
                         {
                             reference = buffer.ReadBool();
                             if (reference)
-                                chunks[cx, cy][true, x, y] = new TileData(null);
+                                chunks[cx, cy].SetTile(true, x, y, new TileData(null));
                             else
                             {
                                 tile = tiles[buffer.ReadInt()];
-                                chunks[cx, cy][true, x, y] = data = new TileData(tile)
+                                chunks[cx, cy].SetTile(true, x, y, data = new TileData(tile)
                                 {
                                     IsReference = false,
                                     Health = tile == null ? 0 : buffer.ReadFloat(),
-                                };
-                                if (data.Tile != null) for (int i = 0; i < data.Tile.DataCount; i++) data[i] = buffer.ReadByte();
+                                });
+                                data.data = (UInt128)new BigInteger(buffer.Read(16));
                             }
                             reference = buffer.ReadBool();
                             if (reference)
-                                chunks[cx, cy][false, x, y] = new TileData(null);
+                                chunks[cx, cy].SetTile(false, x, y, new TileData(null));
                             else
                             {
                                 tile = tiles[buffer.ReadInt()];
-                                chunks[cx, cy][false, x, y] = data = new TileData(tile)
+                                chunks[cx, cy].SetTile(false, x, y, data = new TileData(tile)
                                 {
                                     IsReference = false,
                                     Health = tile == null ? 0 : buffer.ReadFloat(),
-                                };
-                                if (data.Tile != null) for (int i = 0; i < data.Tile.DataCount; i++) data[i] = buffer.ReadByte();
+                                });
+                                data.data = (UInt128)new BigInteger(buffer.Read(16));
                             }
                         }
                 }
@@ -512,14 +555,16 @@ namespace Tendeos.World
 
         public class Chunk : IChunk
         {
-            public Biome Biome { get; set; }
+            public BaseBiome Biome { get; set; }
             public List<Rectangle> AirQuadtree { get; }
             private readonly TileData[,] tiles, walls;
 
-            public TileData this[bool type, int x, int y]
+            public void SetTile(bool type, int x, int y, TileData tileData) => (type? tiles : walls)[x, y] = tileData;
+            public ref TileData GetTile(bool type, int x, int y) => ref (type? tiles : walls)[x, y];
+            public ref TileData SetGetTile(bool type, int x, int y, TileData tileData)
             {
-                get => (type ? tiles : walls)[x, y];
-                set => (type ? tiles : walls)[x, y] = value;
+                (type? tiles : walls)[x, y] = tileData;
+                return ref (type? tiles : walls)[x, y];
             }
 
             public Chunk(int chunkSize)
@@ -535,10 +580,10 @@ namespace Tendeos.World
                 for (int i = 0; i < map.ChunkSize; i++)
                     for (j = 0; j < map.ChunkSize; j++)
                     {
-                        TileData tile = walls[i, j];
-                        tile.Tile?.Start(false, map, x * map.ChunkSize + i, y * map.ChunkSize + j, tile);
+                        ref TileData tile = ref walls[i, j];
+                        tile.Tile?.Start(false, map, x * map.ChunkSize + i, y * map.ChunkSize + j, ref tile);
                         tile = tiles[i, j];
-                        tile.Tile?.Start(true, map, x * map.ChunkSize + i, y * map.ChunkSize + j, tile);
+                        tile.Tile?.Start(true, map, x * map.ChunkSize + i, y * map.ChunkSize + j, ref tile);
                     }
             }
 
@@ -548,22 +593,10 @@ namespace Tendeos.World
                 for (int i = 0; i < map.ChunkSize; i++)
                     for (j = 0; j < map.ChunkSize; j++)
                     {
-                        TileData tile = walls[i, j];
-                        tile.Tile?.Loaded(false, map, x * map.ChunkSize + i, y * map.ChunkSize + j, tile);
+                        ref TileData tile = ref walls[i, j];
+                        tile.Tile?.Loaded(false, map, x * map.ChunkSize + i, y * map.ChunkSize + j, ref tile);
                         tile = tiles[i, j];
-                        tile.Tile?.Loaded(true, map, x * map.ChunkSize + i, y * map.ChunkSize + j, tile);
-                    }
-            }
-
-            public void Update(IMap map, int x, int y)
-            {
-                int j;
-                for (int i = 0; i < map.ChunkSize; i++)
-                    for (j = 0; j < map.ChunkSize; j++)
-                    {
-                        TileData tile = tiles[i, j];
-                        if (!tile.IsReference)
-                            tile.Tile?.Update(map, x * map.ChunkSize + i, y * map.ChunkSize + j, tile);
+                        tile.Tile?.Loaded(true, map, x * map.ChunkSize + i, y * map.ChunkSize + j, ref tile);
                     }
             }
 
@@ -632,10 +665,10 @@ namespace Tendeos.World
 
             public float Mine(bool type, int cx, int cy, int x, int y, float power, IMap map)
             {
-                TileData data;
-                if ((data = (type ? tiles : walls)[x, y]).IsReference)
+                ref TileData data = ref (type ? tiles : walls)[x, y];
+                if (data.IsReference)
                 {
-                    map.MineTile(type, BitConverter.ToInt32(data.Data), BitConverter.ToInt32(data.Data, 4), power);
+                    map.MineTile(type, (int)data.GetU32(0), (int)data.GetU32(32), power);
                     return 1;
                 }
                 float h = (type ? tiles : walls)[x, y].Health -= power;

@@ -73,5 +73,15 @@ namespace Tendeos.Physical.Content
                 rotation = MathHelper.ToDegrees(MathF.Atan2(velocity.Y, velocity.X));
             }
         }
+
+        public override byte[] NetworkSend()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void NetworkAccept(byte[] data)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

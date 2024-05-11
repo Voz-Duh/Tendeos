@@ -116,5 +116,15 @@ namespace Tendeos.Physical.Content
                 builder.components[i].OnDie(this, data);
             }
         }
+
+        public override byte[] NetworkSend()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void NetworkAccept(byte[] data)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 
 namespace Tendeos.Utils
@@ -100,6 +99,8 @@ namespace Tendeos.Utils
         public static Noise CSimplex(float scaleX, float scaleY, uint seed = 0) => new Noise(Type.Simplex, seed, new Vec2(scaleX, scaleY));
         public static Noise CVoronoi(float scaleX, float scaleY, uint seed = 0) => new Noise(Type.Voronoi, seed, new Vec2(scaleX, scaleY));
         public static Noise CVoronoiFill(float scaleX, float scaleY, uint seed = 0) => new Noise(Type.VoronoiFill, seed, new Vec2(scaleX, scaleY));
+
+        public static implicit operator Noise(float a) => new Noise(Type.Constant, 0, a);
 
         #region PERLIN
         public static float Perlin(uint seed, float x) => Perlin(seed, x, 0, 0);

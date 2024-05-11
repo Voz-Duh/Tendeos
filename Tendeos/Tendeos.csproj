@@ -20,41 +20,37 @@
   <ItemGroup>
     <None Remove="Icon.ico" />
     <None Remove="Icon.bmp" />
+    <None Remove="Scenes\GameplayScene.cs~RFb67a5fe.TMP" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Icon.ico" />
     <EmbeddedResource Include="Icon.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Jint" Version="3.0.1" />
+    <PackageReference Include="FontStashSharp.MonoGame" Version="1.3.6" />
+    <PackageReference Include="lz4net" Version="1.0.15.93" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
+    <PackageReference Include="NativeFileDialogSharp" Version="0.5.0" />
+    <PackageReference Include="TextCopy" Version="6.2.1" />
+    <PackageReference Include="Jint" Version="3.1.0" />
     <PackageReference Include="NLua" Version="1.7.2" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="va">
-      <HintPath>..\va.dll</HintPath>
+      <HintPath>.\va.dll</HintPath>
     </Reference>
-    <Reference Include="LZ4">
-      <HintPath>..\LZ4.dll</HintPath>
-    </Reference>
-    <Reference Include="FontStashSharp">
-      <HintPath>..\FontStashSharp.MonoGame.dll</HintPath>
+    <Reference Include="Tendeos.Network">
+      <HintPath>.\Tendeos.Network.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-	<None Update="..\FontStashSharp.Base.dll">
-		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	</None>
-	<None Update="..\FontStashSharp.Rasterizers.StbTrueTypeSharp.dll">
-		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	</None>
-	<None Update="..\StbTrueTypeSharp.dll">
-		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	</None>
-	<None Update="..\Noise.dll">
-		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	</None>
+    <None Update=".\Noise.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update=".\Noise.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
     <Message Text="Restoring dotnet tools" Importance="High" />
