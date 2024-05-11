@@ -486,5 +486,15 @@ namespace Tendeos.Scenes
         {
             throw new NotImplementedException();
         }
+
+        public void DestroyTile(bool top, int x, int y)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void DestroyTile(bool top, (int x, int y) position)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

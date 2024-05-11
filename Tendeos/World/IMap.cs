@@ -27,6 +27,9 @@ namespace Tendeos.World
         void MineTile(bool top, (int x, int y) position, float power, float radius);
         void SetTile(bool top, ITile tile, int x, int y);
         void SetTile(bool top, ITile tile, (int x, int y) position);
+        void DestroyTile(bool top, int x, int y);
+        void DestroyTile(bool top, (int x, int y) position);
+
         void SetTileData<T>(bool top, int x, int y, Func<TileData, TileData> action) where T : ITile;
         void SetTileData<T>(bool top, (int x, int y) position, Func<TileData, TileData> action) where T : ITile;
         IChunk GetChunk(int x, int y);

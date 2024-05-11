@@ -255,32 +255,6 @@ namespace Tendeos.World.Generation
                         }
                     }
             });
-            Message = Localization.Translate("generate_structures");
-            await Task.Run(() =>
-            {
-                Rectangle[] quadtree = { new Rectangle(0, 0, map.FullWidth, map.FullHeight) };
-                Structure structure;
-                BaseBiome biome;
-                Rectangle spawn;
-                int x, y;
-
-                for (int i = 0; i < 50; i++)
-                {
-                    spawn = quadtree[URandom.SInt(Math.Min(5, quadtree.Length - 1))];
-                    x = spawn.X + URandom.SInt(spawn.Width);
-                    y = spawn.Y + URandom.SInt(spawn.Height);
-                    biome = map.GetTileChunk(x, y).Biome;
-                    if (biome.Structures != null)
-                    {
-                        structure = biome.Structures[URandom.SInt(biome.Structures.Length - 1)];
-                        x -= structure.Width;
-                        y -= structure.Height;
-                        structure.Spawn(map, x, y);
-                        RemoveRectangle(new Rectangle(x, y, structure.Width + structure.Width / 2, structure.Height + structure.Height / 2), ref quadtree);
-                        Array.Sort(quadtree, (a, b) =>  Math.Max(a.Height, a.Width) > Math.Max(b.Height, b.Width) ? -1 : 1);
-                    }
-                }
-            });
             Message = Localization.Translate("generate_ground");
             await Task.Run(() =>
             {
@@ -327,9 +301,35 @@ namespace Tendeos.World.Generation
                     }
             });
             Message = Localization.Translate("generate_small_smooth_ground");
-            await Task.Run(() => Smooth(map, true));
+            await Task.Run(() => Smooth(map, true, random));
             Message = Localization.Translate("generate_small_smooth_walls");
-            await Task.Run(() => Smooth(map, false));
+            await Task.Run(() => Smooth(map, false, random));
+            Message = Localization.Translate("generate_structures");
+            await Task.Run(() =>
+            {
+                Rectangle[] quadtree = { new Rectangle(0, 0, map.FullWidth, map.FullHeight) };
+                Structure structure;
+                BaseBiome biome;
+                Rectangle spawn;
+                int x, y;
+
+                for (int i = 0; i < 50; i++)
+                {
+                    spawn = quadtree[URandom.SInt(Math.Min(5, quadtree.Length - 1))];
+                    x = spawn.X + URandom.SInt(spawn.Width);
+                    y = spawn.Y + URandom.SInt(spawn.Height);
+                    biome = map.GetTileChunk(x, y).Biome;
+                    if (biome.Structures != null)
+                    {
+                        structure = biome.Structures[URandom.SInt(biome.Structures.Length - 1)];
+                        x -= structure.Width;
+                        y -= structure.Height;
+                        structure.Spawn(map, x, y);
+                        RemoveRectangle(new Rectangle(x, y, structure.Width + structure.Width / 2, structure.Height + structure.Height / 2), ref quadtree);
+                        Array.Sort(quadtree, (a, b) =>  Math.Max(a.Height, a.Width) > Math.Max(b.Height, b.Width) ? -1 : 1);
+                    }
+                }
+            });
             Done = true;
         }
 
@@ -360,7 +360,7 @@ namespace Tendeos.World.Generation
             quads = nquadtree.ToArray();
         }
 
-        public void Smooth(IMap map, bool top)
+        public void Smooth(IMap map, bool top, URandom random)
         {
             TileData data, left, right, up, down, leftup, leftdown, rightup, rightdown;
             int y;
@@ -379,10 +379,10 @@ namespace Tendeos.World.Generation
                         rightup = map.GetTile(top, x + 1, y - 1);
                         rightdown = map.GetTile(top, x + 1, y + 1);
 
-                        if ((leftup.Tile != null ? rightup.Tile == null : rightup.Tile != null) &&
+                        if (((leftup.Tile != null ? rightup.Tile == null : rightup.Tile != null) &&
                             (leftdown.Tile != null ? rightdown.Tile == null : rightdown.Tile != null) ||
                             (leftup.Tile != null ? leftup.Tile == null : leftup.Tile != null) &&
-                            (rightup.Tile != null ? rightdown.Tile == null : rightdown.Tile != null))
+                            (rightup.Tile != null ? rightdown.Tile == null : rightdown.Tile != null)) && (up.Tile == null || down.Tile == null))
                         {
                             map.SetTileData<AutoTile>(top, x, y, data => { data.HasTriangleCollision = true; return data; });
                         }
@@ -390,11 +390,19 @@ namespace Tendeos.World.Generation
                         {
                             if (up.Tile == null && down.Tile != null && (left.Tile != null && right.Tile != null || left.Tile != null ? right.Tile == null : right.Tile != null))
                             {
-                                map.SetTileData<AutoTile>(top, x, y, data => data.SetU6(0, AutoTile.Down));
+                                map.SetTileData<AutoTile>(top, x, y, data =>
+                                {
+                                    //data.HasTriangleCollision = random.Int(10) > 5;
+                                    return data.SetU6(0, AutoTile.Down);
+                                });
                             }
                             else if (down.Tile == null && up.Tile != null && (left.Tile != null && right.Tile != null || left.Tile != null ? right.Tile == null : right.Tile != null))
                             {
-                                map.SetTileData<AutoTile>(top, x, y, data => data.SetU6(0, AutoTile.Up));
+                                map.SetTileData<AutoTile>(top, x, y, data =>
+                                {
+                                    //data.HasTriangleCollision = random.Int(10) > 5;
+                                    return data.SetU6(0, AutoTile.Up);
+                                });
                             }
                         }
                     }

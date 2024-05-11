@@ -42,7 +42,7 @@ namespace Tendeos.World.EntitySpawn
                 if (chunk.Biome.Enemies.Length != 0)
                 {
                     enemy = chunk.Biome.Enemies[URandom.SInt(chunk.Biome.Enemies.Length)];
-                    if (enemy.spawnChance <= URandom.SFloat(100))
+                    if (enemy.spawnChance >= URandom.SFloat(100))
                     {
                         (int width, int height) = map.World2Cell(enemy.size);
                         int offset = map.ChunkSize / 2 + map.ChunkSize * 5;

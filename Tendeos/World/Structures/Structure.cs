@@ -38,9 +38,12 @@ namespace Tendeos.World.Structures
 
         public void Spawn(IMap map, int x, int y)
         {
+            int j;
             for (int i = 0; i < data.Length; i++)
-                for (int j = 0; j < data[i].Length; j++)
+                for (j = 0; j < data[i].Length; j++)
                 {
+                    map.DestroyTile(false, x + j, y + i);
+                    map.DestroyTile(true, x + j, y + i);
                     map.SetTile(false, data[i][j].w, x + j, y + i);
                     map.SetTile(true, data[i][j].t, x + j, y + i);
                 }

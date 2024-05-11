@@ -28,7 +28,7 @@ namespace Tendeos.Content
                 Power = 1,
                 Radius = 1,
                 SwingAngle = 65,
-                SwingPerSecond = 20,
+                SwingPerSecond = 3,
                 State = 2,
                 Offset = 6,
                 AttackOffset = 16,

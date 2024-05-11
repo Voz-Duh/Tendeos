@@ -18,7 +18,11 @@ namespace Tendeos.Content
                 Speed = 200,
                 Damage = 1
             };
-            dummy = new EnemyBuilder(50, 10, 25, new Vec2(10, 20),
+            dummy = new EnemyBuilder(
+                spawnChance: 0,
+                health: 10,
+                viewRadius: 25,
+                size: new Vec2(10, 20),
                 new GroundComponent()
                 {
                     Acceleration = 5,

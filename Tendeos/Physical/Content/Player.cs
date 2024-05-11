@@ -1,5 +1,8 @@
-﻿using Microsoft.Xna.Framework.Content;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;      
+#if DEBUG
 using Microsoft.Xna.Framework.Graphics;
+#endif
 using Tendeos.Inventory;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
@@ -154,18 +157,50 @@ namespace Tendeos.Physical.Content
             if (Keyboard.IsDown(Keys.A)) x--;
             moving = x != 0;
             flip = x < 0;
+            if (moving && transform.body.velocity.Y <= 0 && transform.body.velocity.Y > -Physics.TileSize/2)
+            {
+                Vec2 point = Vec2.Zero;
+                float fromY = transform.Position.Y + (transform.body.halfSize.Y-2-Physics.TileSize/2);
+                float offsetX = (transform.body.halfSize.X + 0.2f) * x;
+                bool haveCollision = false;
+                Physics.RaycastMap((_, _, p, _, _) => 
+                    {
+                        point = p;
+                        haveCollision = true;
+                    },
+                    new Vec2(transform.Position.X + offsetX, fromY),
+                    new Vec2(0, Physics.TileSize/3));
+                if (haveCollision)
+                {
+                    haveCollision = false;
+                    Physics.RaycastMap((_, _, _, _, _) => haveCollision = true,
+                        transform.Position + new Vec2(offsetX, 0),
+                        new Vec2(0, -transform.body.halfSize.Y - Physics.TileSize/2));
+                    if (!haveCollision)
+                    {
+                        haveCollision = false;
+                        Physics.RaycastMap((_, _, _, _, _) => haveCollision = true,
+                            new Vec2(transform.Position.X, fromY),
+                            new Vec2(offsetX, 0));
+                        
+                        if (!haveCollision)
+                        {
+                            transform.Position -= new Vec2(0, point.Y - fromY + 3);
+                        }
+                    }
+                }
+            }
             if (item?.Flip ?? true)
             {
                 if (moving) transform.flipX = flip;
             }
-            else
-                transform.flipX = Mouse.Position.X - transform.Position.X < 0;
+            else transform.flipX = Mouse.Position.X - transform.Position.X < 0;
 
-            if (onFloor && Keyboard.IsDown(Keys.Space)) yVel = -jumpPower;
+            if (onFloor && Keyboard.IsPressed(Keys.Space)) yVel = -jumpPower;
 
             transform.body.velocity = new Vec2(x * baseSpeed, yVel);
 
-            camera.Position = transform.Position;
+            camera.Position = Vec2.Lerp(camera.Position, transform.Position, Time.Delta*8);
 
             if (!item?.Animated ?? true) armsAnimationTimer = 0;
             armData.Clear();

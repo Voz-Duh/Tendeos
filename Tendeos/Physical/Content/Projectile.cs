@@ -26,7 +26,7 @@ namespace Tendeos.Physical.Content
 
         public Projectile Spawn(Vec2 position, float rotation, float power)
         {
-            var clone = new Projectile()
+            var clone = new Projectile
             {
                 sprite = sprite,
                 Speed = Speed * power,
@@ -56,7 +56,7 @@ namespace Tendeos.Physical.Content
                     velocity = Vec2.Zero;
                     return true;
                 }
-                if (collider.tag is Enemy enemy)
+                else if (collider.tag is Enemy enemy)
                 {
                     position = point + normal * 0.1f;
                     Remove();

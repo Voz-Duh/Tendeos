@@ -207,6 +207,46 @@ namespace Tendeos.World
 
         public ref TileData GetTile(bool top, (int x, int y) position) => ref GetTile(top, position.x, position.y);
 
+        public void DestroyTile(bool top, int x, int y)
+        {
+            if (x < 0) return;
+            else if (x >= FullWidth) return;
+            else if (y < 0) return;
+            else if (y >= FullHeight) return;
+
+            var chunk = Cell2Chunk(x, y);
+
+            Chunk c = chunks[chunk.x, chunk.y];
+            ref TileData data = ref c.GetTile(top, x - chunk.x * ChunkSize, y - chunk.y * ChunkSize);
+            if (data.IsReference)
+            {
+                x = (int)data.GetU32(0);
+                y = (int)data.GetU32(32);
+                data = ref GetTile(top, x, y);
+            }
+            data.Tile?.Destroy(top, this, x, y, data);
+
+            if (top)
+            {
+                waterWorld.cells[x, y] = 0;
+                c.ComputeAirQuadtree(this, chunk.x, chunk.y);
+            }
+
+            data = ref GetTile(top, x + 1, y);
+            data.Tile?.Changed(top, this, x + 1, y, ref data);
+
+            data = ref GetTile(top, x - 1, y);
+            data.Tile?.Changed(top, this, x - 1, y, ref data);
+
+            data = ref GetTile(top, x, y + 1);
+            data.Tile?.Changed(top, this, x, y + 1, ref data);
+
+            data = ref GetTile(top, x, y - 1);
+            data.Tile?.Changed(top, this, x, y - 1, ref data);
+        }
+
+        public void DestroyTile(bool top, (int x, int y) position) => DestroyTile(top, position.x, position.y);
+
         public void SetTile(bool top, ITile tile, int x, int y)
         {
             if (tile == Ignore) return;
@@ -479,7 +519,7 @@ namespace Tendeos.World
                                 if (data.Tile != null)
                                 {
                                     buffer.Append(data.Health);
-                                    buffer.Append(((BigInteger)data.data).ToByteArray());
+                                    buffer.Append(data.data.ToBytes());
                                 }
                             }
                             data = chunks[cx, cy].GetTile(false, x, y);
@@ -490,7 +530,7 @@ namespace Tendeos.World
                                 if (data.Tile != null)
                                 {
                                     buffer.Append(data.Health);
-                                    buffer.Append(((BigInteger)data.data).ToByteArray());
+                                    buffer.Append(data.data.ToBytes());
                                 }
                             }
                         }
@@ -531,7 +571,7 @@ namespace Tendeos.World
                                     IsReference = false,
                                     Health = tile == null ? 0 : buffer.ReadFloat(),
                                 });
-                                data.data = (UInt128)new BigInteger(buffer.Read(16));
+                                data.data = buffer.Read(16).ToUInt128();
                             }
                             reference = buffer.ReadBool();
                             if (reference)
@@ -544,7 +584,7 @@ namespace Tendeos.World
                                     IsReference = false,
                                     Health = tile == null ? 0 : buffer.ReadFloat(),
                                 });
-                                data.data = (UInt128)new BigInteger(buffer.Read(16));
+                                data.data = buffer.Read(16).ToUInt128();
                             }
                         }
                 }
@@ -559,12 +599,12 @@ namespace Tendeos.World
             public List<Rectangle> AirQuadtree { get; }
             private readonly TileData[,] tiles, walls;
 
-            public void SetTile(bool type, int x, int y, TileData tileData) => (type? tiles : walls)[x, y] = tileData;
-            public ref TileData GetTile(bool type, int x, int y) => ref (type? tiles : walls)[x, y];
+            public void SetTile(bool type, int x, int y, TileData tileData) => (type ? tiles : walls)[x, y] = tileData;
+            public ref TileData GetTile(bool type, int x, int y) => ref (type ? tiles : walls)[x, y];
             public ref TileData SetGetTile(bool type, int x, int y, TileData tileData)
             {
-                (type? tiles : walls)[x, y] = tileData;
-                return ref (type? tiles : walls)[x, y];
+                SetTile(type, x, y, tileData);
+                return ref GetTile(type, x, y);
             }
 
             public Chunk(int chunkSize)

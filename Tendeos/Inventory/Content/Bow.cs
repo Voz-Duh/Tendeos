@@ -38,7 +38,7 @@ namespace Tendeos.Inventory.Content
         [GetName]
         public void GetName(string name)
         {
-            if (Projectile == "") Projectile = "arrow";
+            if (string.IsNullOrEmpty(Projectile)) Projectile = "arrow";
         }
 
         public void Use(IMap map, ITransform transform, ref byte armsState, ref float armLRotation, ref float armRRotation, ref int count, ref float timer, ArmData armData)
@@ -76,7 +76,7 @@ namespace Tendeos.Inventory.Content
             armData.Get(out int frame, "frame");
             armData.Get(out Vec2 position, "position");
 
-            Vec2 offset = Vec2.UpOf(armLRotation) * this.Offset;
+            Vec2 offset = Vec2.UpOf(armLRotation) * Offset;
             spriteBatch.Rect(sprites[frame], transform.Local2World(new Vec2(2, -4)) + offset, armLRotation + 90);
             spriteBatch.Rect(projectile.sprite, position + offset, armLRotation + 90, 1, 0, Origin.Zero);
         }
