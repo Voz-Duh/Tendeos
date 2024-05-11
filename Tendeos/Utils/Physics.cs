@@ -228,9 +228,6 @@ namespace Tendeos.Utils
 
             point = origin - direction * tMin;
             distance = tMin;
-            Batch.Color = Color.Green;
-            Batch.Vertex(origin);
-            Batch.Vertex(origin + direction * maxDistance);
             if (a == tMin) normal = Vec2.UnitX;
             else if (b == tMin) normal = -Vec2.UnitX;
             else if (c == tMin) normal = Vec2.UnitY;
@@ -238,7 +235,6 @@ namespace Tendeos.Utils
             return tMax <= 0 && tMin <= maxDistance && tMin >= tMax;
         }
         
-        public static Batch Batch;
         private static bool RaycastTriangleTile(int x, int y, Vec2 origin, Vec2 direction, float maxDistance, TileData data, out Vec2 point, out Vec2 normal, out float distance)
         {
             Vec2 a = new Vec2(
@@ -250,14 +246,6 @@ namespace Tendeos.Utils
             Vec2 c = new Vec2(
                 x * TileSize + data.CollisionXAdd switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
                 y * TileSize + data.CollisionYAdd switch { 1 => tileD2Size, 2 => tileSize, _ => 0 });
-                
-            Batch.Color = Color.White;
-            Batch.Vertex(a);
-            Batch.Vertex(b);
-            Batch.Vertex(b);
-            Batch.Vertex(c);
-            Batch.Vertex(c);
-            Batch.Vertex(a);
 
             point = Vec2.Zero;
             normal = Vec2.Zero;
@@ -268,20 +256,8 @@ namespace Tendeos.Utils
 
             distance = MathF.Min(ar, MathF.Min(br, cr));
 
-            Batch.Color = Color.Green;
-            Batch.Vertex(origin);
-            Batch.Vertex(origin + direction * maxDistance);
-
-            Batch.Color = Color.Magenta;
-            Batch.Vertex(origin);
-            Batch.Vertex(origin + direction * distance);
-
             if (distance > maxDistance) return false;
             point = origin + direction * distance;
-
-            Batch.Color = Color.Red;
-            Batch.Vertex(point);
-            Batch.Vertex(point + normal);
 
             return true;
         }
