@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using Tendeos.Content.Utlis;
 using Tendeos.Utils;
@@ -14,10 +13,11 @@ namespace Tendeos.Physical.Content
         private Vec2 position;
         public float Speed { get; set; }
         public float Damage { get; set; }
-        [SpriteLoad("@")]
-        public Sprite sprite;
+        [SpriteLoad("@")] public Sprite sprite;
         private Vec2 hitNormal;
         private float rotation;
+
+        public override Vec2 Position => position;
 
         public Projectile()
         {
@@ -40,7 +40,7 @@ namespace Tendeos.Physical.Content
 
         public override void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Rect(sprite, position, rotation, 1, 0, Origin.One);
+            spriteBatch.Rect(sprite, position, 1, rotation, 1);
         }
 
         public override void Update()
@@ -50,21 +50,21 @@ namespace Tendeos.Physical.Content
             {
                 if (collider == null)
                 {
-                    position = point;
+                    position = point + normal;
                     collided = true;
-                    hitNormal = normal;
+                    hitNormal = -normal;
                     velocity = Vec2.Zero;
                     return true;
                 }
                 else if (collider.tag is Enemy enemy)
                 {
-                    position = point + normal * 0.1f;
                     Remove();
                     enemy.Hit(Damage);
                     return true;
                 }
+
                 return false;
-            }, position, velocity == Vec2.Zero ? -hitNormal : velocity * Time.Delta, true);
+            }, position, velocity == Vec2.Zero ? hitNormal : velocity * Time.Delta, true);
             if (!collided)
             {
                 position += velocity * Time.Delta;
@@ -76,11 +76,13 @@ namespace Tendeos.Physical.Content
 
         public override byte[] NetworkSend()
         {
+            // TODO: network send of projectile data
             throw new NotImplementedException();
         }
 
         public override void NetworkAccept(byte[] data)
         {
+            // TODO: network accept of projectile data
             throw new NotImplementedException();
         }
     }

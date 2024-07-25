@@ -1,5 +1,4 @@
-﻿
-namespace Tendeos.Modding
+﻿namespace Tendeos.Modding
 {
     public interface IModMethod
     {

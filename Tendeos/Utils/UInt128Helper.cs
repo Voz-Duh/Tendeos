@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Tendeos.Utils
 {
@@ -13,7 +14,7 @@ namespace Tendeos.Utils
             byte[] a = BitConverter.GetBytes(split.a);
             byte[] b = BitConverter.GetBytes(split.b);
             Array.Copy(a, bytes, 8);
-            Array.Copy(b, 0, bytes, 0, 8);
+            Array.Copy(b, 0, bytes, 8, 8);
             return bytes;
         }
 
@@ -22,14 +23,16 @@ namespace Tendeos.Utils
             UInt128Split split = new UInt128Split
             {
                 a = BitConverter.ToUInt64(value),
-                b = BitConverter.ToUInt64(value, 4)
+                b = BitConverter.ToUInt64(value, 8)
             };
             return Unsafe.As<UInt128Split, UInt128>(ref split);
         }
 
+        [StructLayout(LayoutKind.Explicit)]
         private struct UInt128Split
         {
-            public ulong a, b;
+            [FieldOffset(0)] public ulong a;
+            [FieldOffset(8)] public ulong b;
         }
     }
 }

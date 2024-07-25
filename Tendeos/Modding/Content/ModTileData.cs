@@ -1,4 +1,3 @@
-
 using Tendeos.World;
 
 namespace Tendeos.Modding.Content
@@ -9,8 +8,12 @@ namespace Tendeos.Modding.Content
 
         public ModTileData(TileData tileData) => this.tileData = tileData;
 
-        public float Health { get => tileData.Health; set => tileData.Health = value; }
-        
+        public float Health
+        {
+            get => tileData.Health;
+            set => tileData.Health = value;
+        }
+
         public uint u32(byte offset) => tileData.GetU32(offset);
         public void u32(byte offset, uint value) => tileData.SetU32(offset, value);
         public uint u24(byte offset) => tileData.GetU24(offset);
@@ -25,10 +28,35 @@ namespace Tendeos.Modding.Content
         public void u2(byte offset, byte value) => tileData.SetU2(offset, value);
         public bool boolean(byte offset) => tileData.GetBool(offset);
         public void boolean(byte offset, bool value) => tileData.SetBool(offset, value);
-        public bool hasTriangleCollision { get => tileData.HasTriangleCollision; set => tileData.HasTriangleCollision = value; }
-        public byte collisionXFrom { get => tileData.CollisionXFrom; set => tileData.CollisionXFrom = value; }
-        public byte collisionYFrom { get => tileData.CollisionYFrom; set => tileData.CollisionYFrom = value; }
-        public byte collisionXTo { get => tileData.CollisionXTo; set => tileData.CollisionXTo = value; }
-        public byte collisionYTo { get => tileData.CollisionYTo; set => tileData.CollisionYTo = value; }
-    } 
+
+        public bool hasTriangleCollision
+        {
+            get => tileData.HasTriangleCollision;
+            set => tileData.HasTriangleCollision = value;
+        }
+
+        public byte collisionXFrom
+        {
+            get => tileData.CollisionXFrom;
+            set => tileData.CollisionXFrom = value;
+        }
+
+        public byte collisionYFrom
+        {
+            get => tileData.CollisionYFrom;
+            set => tileData.CollisionYFrom = value;
+        }
+
+        public byte collisionXTo
+        {
+            get => tileData.CollisionXTo;
+            set => tileData.CollisionXTo = value;
+        }
+
+        public byte collisionYTo
+        {
+            get => tileData.CollisionYTo;
+            set => tileData.CollisionYTo = value;
+        }
+    }
 }

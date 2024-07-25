@@ -35,6 +35,7 @@ namespace Tendeos.World.EntitySpawn
                     chunks.Add(map.GetChunk(i, j));
                 }
             }
+
             EnemyBuilder enemy;
             if (chunks.Count != 0)
             {
@@ -60,19 +61,23 @@ namespace Tendeos.World.EntitySpawn
                                 if (j + height >= map.FullHeight)
                                     continue;
                                 for (x = 0; x <= width; x++)
-                                    for (y = 0; y <= height; y++)
-                                        if (map.GetTile(true, i + x, j + y).Tile != null)
-                                            goto BAD;
-                                canSpawnIn.Add(new FRectangle(i * map.TileSize, j * map.TileSize, width * map.TileSize, height * map.TileSize));
-                                BAD:;
+                                for (y = 0; y <= height; y++)
+                                    if (map.GetTile(true, i + x, j + y).Tile != null)
+                                        goto BAD;
+                                canSpawnIn.Add(new FRectangle(i * map.TileSize, j * map.TileSize, width * map.TileSize,
+                                    height * map.TileSize));
+                                BAD: ;
                             }
                         }
+
                         if (canSpawnIn.Count != 0)
                         {
                             FRectangle spawnRect = canSpawnIn[URandom.SInt(canSpawnIn.Count)];
                             enemy.Spawn(new Vector2(
-                                URandom.SFloat(spawnRect.X + enemy.size.X / 2, spawnRect.X + spawnRect.Width - enemy.size.X / 2),
-                                URandom.SFloat(spawnRect.Y + enemy.size.Y / 2, spawnRect.Y + spawnRect.Height - enemy.size.Y / 2)));
+                                URandom.SFloat(spawnRect.X + enemy.size.X / 2,
+                                    spawnRect.X + spawnRect.Width - enemy.size.X / 2),
+                                URandom.SFloat(spawnRect.Y + enemy.size.Y / 2,
+                                    spawnRect.Y + spawnRect.Height - enemy.size.Y / 2)));
                         }
                     }
                 }

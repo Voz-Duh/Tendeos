@@ -17,10 +17,11 @@ namespace Tendeos.Inventory
             Items = new (IItem, int)[size];
         }
 
-        public virtual void Open(Vec2 offset)
+        public virtual void Open(Vec2 anchor, Vec2 offset, string name)
         {
             Opened = true;
         }
+
         public virtual void Close(Vec2 position)
         {
             Opened = false;
@@ -52,7 +53,7 @@ namespace Tendeos.Inventory
         public void Get(int index, Type type)
         {
             var item = Items[index];
-            if ((!Selected.item?.GetType().IsAssignableFrom(type)) ?? true) return;
+            if ((!Selected.item?.GetType().IsAssignableFrom(type)) ?? false) return;
             if (Selected.item == null && Items[index].item == null) return;
             if (Selected.item != item.item || item.count == item.item.MaxCount)
             {
@@ -73,14 +74,14 @@ namespace Tendeos.Inventory
 
         public int Add(IItem item, int count)
         {
-            int i, с;
+            int i, c;
             for (i = 0; i < Items.Length; i++)
                 if (Items[i].item == item && item != null)
                 {
-                    с = Items[i].count += count;
-                    if (с > item.MaxCount)
+                    c = Items[i].count += count;
+                    if (c > item.MaxCount)
                     {
-                        count = с - item.MaxCount;
+                        count = c - item.MaxCount;
                         Items[i].count = item.MaxCount;
                     }
                     else return 0;
@@ -100,6 +101,7 @@ namespace Tendeos.Inventory
                         return 0;
                     }
                 }
+
             return count;
         }
 
@@ -114,8 +116,7 @@ namespace Tendeos.Inventory
                         Items[i].count = -count;
                         return;
                     }
-                    else
-                        Items[i] = default;
+                    else Items[i] = default;
                 }
         }
 
@@ -144,7 +145,7 @@ namespace Tendeos.Inventory
             for (i = 0; i < Items.Length; i++)
             {
                 data = Items[i];
-                buffer.Append((byte)items.IndexOf(data.Item1));
+                buffer.Append((byte) items.IndexOf(data.Item1));
                 buffer.Append(data.Item2);
             }
         }
@@ -160,6 +161,7 @@ namespace Tendeos.Inventory
                 string str = buffer.ReadString();
                 items[i] = str == "" ? null : Tendeos.Content.Items.Get(str);
             }
+
             for (i = 0; i < il; i++)
             {
                 Items[i].item = items[buffer.ReadByte()];

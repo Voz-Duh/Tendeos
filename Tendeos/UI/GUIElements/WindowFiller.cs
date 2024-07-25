@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using Tendeos.Utils;
+﻿using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.Input;
 
@@ -7,11 +6,12 @@ namespace Tendeos.UI.GUIElements
 {
     public class WindowFiller : GUIElement
     {
-        private readonly Camera camera;
-        private readonly Sprite style;
-        private readonly bool closeOnClick;
+        protected readonly Camera camera;
+        public readonly Sprite style;
+        protected readonly bool closeOnClick;
 
-        public WindowFiller(Camera camera, Sprite style = default, bool closeOnClick = false) : base(Vec2.Zero, FRectangle.Zero)
+        public WindowFiller(Camera camera, Sprite style = default, bool closeOnClick = false, GUIElement[] childs = null) : base(Vec2.Zero,
+            FRectangle.Zero, childs)
         {
             this.camera = camera;
             this.style = style;
@@ -27,10 +27,10 @@ namespace Tendeos.UI.GUIElements
 
         public override void Draw(SpriteBatch spriteBatch, FRectangle rectangle)
         {
-            this.rectangle = new FRectangle(Vec2.Zero, camera.WorldViewport);
+            Rectangle = new FRectangle(Vec2.Zero, camera.WorldViewport);
             if (style.Texture != null)
             {
-                spriteBatch.Rect(style, this.rectangle);
+                spriteBatch.Rect(style, this.Rectangle);
             }
         }
     }

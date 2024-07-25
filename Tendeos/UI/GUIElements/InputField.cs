@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using Tendeos.Utils;
@@ -12,12 +11,13 @@ namespace Tendeos.UI.GUIElements
     {
         public string Text => text;
 
-        private readonly Style style;
-        private readonly HashSet<char> limitation;
-        private int position, otherPosition;
-        private string text;
+        public readonly Style style;
+        protected readonly HashSet<char> limitation;
+        protected int position, otherPosition;
+        protected string text;
 
-        public InputField(Vec2 anchor, Vec2 position, float length, Style style, HashSet<char> limitation = null) : base(anchor, new FRectangle(position, new Vec2(length, style.Height)))
+        public InputField(Vec2 anchor, Vec2 position, float length, Style style, HashSet<char> limitation = null, GUIElement[] childs = null) :
+            base(anchor, new FRectangle(position, new Vec2(length, style.Height)), childs)
         {
             this.style = style;
             this.limitation = limitation;
@@ -30,7 +30,10 @@ namespace Tendeos.UI.GUIElements
             if (Selected == this)
             {
                 if (position == otherPosition)
-                    spriteBatch.Rect(style.Carriage, rectangle.Location + new Vec2(style.TextOffset + style.Font.MeasureString(text[..position], style.FontScale).X, rectangle.Height / 2));
+                    spriteBatch.Rect(style.Carriage,
+                        rectangle.Location +
+                        new Vec2(style.TextOffset + style.Font.MeasureString(text[..position], style.FontScale).X,
+                            rectangle.Height / 2));
                 else
                 {
                     float
@@ -38,10 +41,14 @@ namespace Tendeos.UI.GUIElements
                         to = style.Font.MeasureString(text[..Math.Max(position, otherPosition)], style.FontScale).X,
                         y = rectangle.Height / 2,
                         relativeHeight = style.Carriage.Rect.Height / 2;
-                    spriteBatch.Rect(style.Carriage, new FRectangle(rectangle.Location + new Vec2(style.TextOffset + from, y - relativeHeight), new Vec2(to - from, style.Carriage.Rect.Height)));
+                    spriteBatch.Rect(style.Carriage,
+                        new FRectangle(rectangle.Location + new Vec2(style.TextOffset + from, y - relativeHeight),
+                            new Vec2(to - from, style.Carriage.Rect.Height)));
                 }
             }
-            spriteBatch.Text(style.Font, text, rectangle.Location + new Vec2(style.TextOffset, rectangle.Height / 2), style.FontScale, Origin.Zero);
+
+            spriteBatch.Text(style.Font, text, rectangle.Location + new Vec2(style.TextOffset, rectangle.Height / 2),
+                style.FontScale, 0, 0);
         }
 
         public override void Update(FRectangle rectangle)
@@ -60,7 +67,8 @@ namespace Tendeos.UI.GUIElements
                             float from;
                             for (int i = 1; i <= text.Length; i++)
                             {
-                                from = rectangle.X + style.TextOffset + style.Font.MeasureString(text[..(i - 1)], style.FontScale).X;
+                                from = rectangle.X + style.TextOffset +
+                                       style.Font.MeasureString(text[..(i - 1)], style.FontScale).X;
                                 if (Mouse.GUIPosition.X >= from)
                                 {
                                     position = i;
@@ -74,22 +82,26 @@ namespace Tendeos.UI.GUIElements
                         float from;
                         for (int i = 1; i <= text.Length; i++)
                         {
-                            from = rectangle.X + style.TextOffset + style.Font.MeasureString(text[..(i - 1)], style.FontScale).X;
+                            from = rectangle.X + style.TextOffset +
+                                   style.Font.MeasureString(text[..(i - 1)], style.FontScale).X;
                             if (Mouse.GUIPosition.X >= from)
                             {
                                 position = i;
                             }
                         }
                     }
+
                     Select(this);
                 }
+
                 if (Mouse.LeftDown)
                 {
                     otherPosition = 0;
                     float from;
                     for (int i = 1; i <= text.Length; i++)
                     {
-                        from = rectangle.X + style.TextOffset + style.Font.MeasureString(text[..(i - 1)], style.FontScale).X;
+                        from = rectangle.X + style.TextOffset +
+                               style.Font.MeasureString(text[..(i - 1)], style.FontScale).X;
                         if (Mouse.GUIPosition.X >= from)
                         {
                             otherPosition = i;
@@ -152,6 +164,7 @@ namespace Tendeos.UI.GUIElements
                     {
                         ClearSelected();
                     }
+
                     break;
                 case Keys.Back:
                     if (position == otherPosition)
@@ -167,6 +180,7 @@ namespace Tendeos.UI.GUIElements
                     {
                         ClearSelected();
                     }
+
                     break;
                 case Keys.Up:
                     otherPosition = position = 0;
@@ -204,6 +218,7 @@ namespace Tendeos.UI.GUIElements
                     {
                         position = otherPosition = Math.Max(position, otherPosition);
                     }
+
                     break;
                 case Keys.Left:
                     ctrl = Keyboard.IsDown(Keys.RightControl) || Keyboard.IsDown(Keys.LeftControl);
@@ -235,6 +250,7 @@ namespace Tendeos.UI.GUIElements
                     {
                         position = otherPosition = Math.Min(position, otherPosition);
                     }
+
                     break;
                 case Keys.C:
                     if (Keyboard.IsDown(Keys.RightControl) || Keyboard.IsDown(Keys.LeftControl))
@@ -242,6 +258,7 @@ namespace Tendeos.UI.GUIElements
                         if (position == otherPosition) Clipboard.Text = text;
                         else CopySelected();
                     }
+
                     break;
                 case Keys.X:
                     if (Keyboard.IsDown(Keys.RightControl) || Keyboard.IsDown(Keys.LeftControl))
@@ -257,12 +274,14 @@ namespace Tendeos.UI.GUIElements
                             ClearSelected();
                         }
                     }
+
                     break;
                 case Keys.V:
                     if (Keyboard.IsDown(Keys.RightControl) || Keyboard.IsDown(Keys.LeftControl))
                     {
                         Paste();
                     }
+
                     break;
                 case Keys.A:
                     if (Keyboard.IsDown(Keys.RightControl) || Keyboard.IsDown(Keys.LeftControl))
@@ -270,6 +289,7 @@ namespace Tendeos.UI.GUIElements
                         position = 0;
                         otherPosition = text.Length;
                     }
+
                     break;
             }
         }
@@ -296,6 +316,7 @@ namespace Tendeos.UI.GUIElements
             {
                 return;
             }
+
             bool have = char.IsLetterOrDigit(text[carriage - 1]);
             if (carriage == text.Length)
             {
@@ -308,6 +329,7 @@ namespace Tendeos.UI.GUIElements
                 carriage--;
                 return;
             }
+
             for (; carriage > 0; carriage--)
             {
                 if (have ? !char.IsLetterOrDigit(text[carriage - 1]) : char.IsLetterOrDigit(text[carriage - 1]))
@@ -315,6 +337,7 @@ namespace Tendeos.UI.GUIElements
                     return;
                 }
             }
+
             carriage = 0;
         }
 
@@ -324,12 +347,14 @@ namespace Tendeos.UI.GUIElements
             {
                 return;
             }
+
             bool have = char.IsLetterOrDigit(text[carriage]);
             if (have ? !char.IsLetterOrDigit(text[carriage]) : char.IsLetterOrDigit(text[carriage]))
             {
                 carriage++;
                 return;
             }
+
             for (; carriage < text.Length; carriage++)
             {
                 if (have ? !char.IsLetterOrDigit(text[carriage]) : char.IsLetterOrDigit(text[carriage]))
@@ -337,6 +362,7 @@ namespace Tendeos.UI.GUIElements
                     return;
                 }
             }
+
             carriage = text.Length;
         }
 
@@ -359,30 +385,38 @@ namespace Tendeos.UI.GUIElements
             text = text.Remove(min, max - min);
             otherPosition = position = min;
         }
+
         private void Print(char character)
         {
             int min = Math.Min(otherPosition, position),
                 max = Math.Max(otherPosition, position);
             string result = text[..min] + character + text[max..];
-            if (!char.IsControl(character) && !char.IsSurrogate(character) && (limitation == null || limitation.Contains(character)) &&
-                style.Font.MeasureString(result, style.FontScale).X + style.TextEndOffset + style.TextOffset <= rectangle.Width)
+            if (!char.IsControl(character) && !char.IsSurrogate(character) &&
+                (limitation == null || limitation.Contains(character)) &&
+                style.Font.MeasureString(result, style.FontScale).X + style.TextEndOffset + style.TextOffset <=
+                Rectangle.Width)
             {
                 text = result;
                 otherPosition = position = min + 1;
             }
         }
+
         private bool Print(char character, int p)
         {
             string result = text[..p] + character + text[p..];
-            if (!char.IsControl(character) && !char.IsSurrogate(character) && (limitation == null || limitation.Contains(character)) && 
-                style.Font.MeasureString(result, style.FontScale).X + style.TextEndOffset + style.TextOffset <= rectangle.Width)
+            if (!char.IsControl(character) && !char.IsSurrogate(character) &&
+                (limitation == null || limitation.Contains(character)) &&
+                style.Font.MeasureString(result, style.FontScale).X + style.TextEndOffset + style.TextOffset <=
+                Rectangle.Width)
             {
                 text = result;
                 otherPosition = position = p + 1;
                 return true;
             }
+
             return false;
         }
+
         private void Paste()
         {
             string text = Clipboard.Text;
@@ -404,7 +438,8 @@ namespace Tendeos.UI.GUIElements
             public float TextEndOffset { get; }
             public float Height { get; }
 
-            public Style(Sprite rectangle, Sprite carriage, Font font, float fontScale, float textOffset, float textEndOffset, float height)
+            public Style(Sprite rectangle, Sprite carriage, Font font, float fontScale, float textOffset,
+                float textEndOffset, float height)
             {
                 Rectangle = rectangle.Split(3, 3, 1);
                 Carriage = carriage;

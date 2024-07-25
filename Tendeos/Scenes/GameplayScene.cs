@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Tendeos.Content;
 using Tendeos.Inventory;
 using Tendeos.Physical.Content;
@@ -11,13 +10,12 @@ using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.Input;
 using Tendeos.Utils.SaveSystem;
-using Tendeos.Utils.SaveSystem.Content;
 using Tendeos.World;
-using Tendeos.World.Content;
 using Tendeos.World.EntitySpawn;
 using Tendeos.World.Generation;
 using Tendeos.World.Liquid;
 using Tendeos.World.Shadows;
+using Console = Tendeos.UI.GUIElements.DeveloperUI.Console;
 
 namespace Tendeos.Scenes
 {
@@ -30,8 +28,11 @@ namespace Tendeos.Scenes
             [ToByte] public IMap map;
             [ToByte] public WaterWorld waterWorld;
 
-            [ToByte] public void ToByte(ByteBuffer buffer) => EntityManager.ToByte(buffer);
-            [FromByte] public void FromByte(ByteBuffer buffer) => EntityManager.FromByte(buffer);
+            [ToByte]
+            public void ToByte(ByteBuffer buffer) => EntityManager.ToByte(buffer);
+
+            [FromByte]
+            public void FromByte(ByteBuffer buffer) => EntityManager.FromByte(buffer);
         }
 
         public static string SaveName;
@@ -46,9 +47,11 @@ namespace Tendeos.Scenes
         private PlayerInventoryContainer playerInventory;
         private SaveInstance saveInstance;
         private ThreadLoop physicsLoop;
-        
+
         private GUIElement menuPlane;
-        
+        private Console console;
+        private bool consoleOpened;
+
         private int mapWidth = 30, mapHeight = 40, chunkSize = 8;
 
         public GameplayScene(Core game) : base(game)
@@ -56,23 +59,25 @@ namespace Tendeos.Scenes
             Save.SetInstance(saveInstance = new SaveInstance());
             physicsLoop = new ThreadLoop(Physics.Process);
         }
+
         uint a;
 
         public override async void Init()
         {
             generator = new WorldGenerator(
                 Noise.CPerlin(0.3f, 3) - Noise.CSimplex(0.2f, 4),
-                (Noise.CSimplex(0.1f) + Noise.CPerlin(0.17f, 0.3f)) / 2 + Noise.CSimplex(0.03f, 1) + Noise.CSimplex(0.1f, 2)/2,
+                (Noise.CSimplex(0.4f) + Noise.CPerlin(0.17f, 0.3f)) / 2 + Noise.CSimplex(0.03f, 1) +
+                Noise.CSimplex(0.1f, 2) / 2,
                 Noise.CPerlin(0.9f, 8) + Noise.CPerlin(0.8f, 3),
                 60, new[]
                 {
                     Biomes.test,
                     Biomes.hills,
                 }, GameSeed);
-
+            
             await Task.Run(() =>
             {
-                waterWorld = new WaterWorld(Game.GraphicsDevice, Game.Content, mapWidth, mapHeight, Game.camera, chunkSize);
+                waterWorld = new WaterWorld(Game.GraphicsDevice, mapWidth, mapHeight, Game.camera, chunkSize);
                 waterWorld.Map = Physics.Map = map = new Map(mapWidth, mapHeight, waterWorld, Game.camera, chunkSize);
                 map.CameraViewSet();
                 map.Ignore = Tiles.ignore;
@@ -81,7 +86,8 @@ namespace Tendeos.Scenes
 
                 shadowMatrix = new ShadowMatrix(Game.GraphicsDevice, map, waterWorld, Game.camera)
                 {
-                    Smooth = (ShadowMatrix.SmoothPower)Settings.GetInt("shadow_smoothing"),
+                    Smooth = (ShadowMatrix.SmoothPower) Settings.GetInt("shdsmth"),
+                    IsUpscaled = Settings.GetBool("shdup"),
                     DirectionLight = Color.White.ToVector3(),
                     DirectionLightFrom = 6,
                     DirectionLightTo = 44,
@@ -96,17 +102,17 @@ namespace Tendeos.Scenes
 
                 playerInventory = new PlayerInventoryContainer(GUI, Core.PlayerInventoryStyle);
 
-                Core.Player = player = new Player(playerInventory, Game.camera, map, Game.Content,
+                Core.Player = player = new Player(playerInventory, map, Game.Assets,
                     new PlayerInfo()
                     {
-                        body = 1,
-                        sex = true
+                        BodyType = 1,
+                        Sex = true
                     });
 
                 Item.GetItemDistance = map.TileSize * 2;
             });
             (saveInstance.map, saveInstance.waterWorld, saveInstance.player) =
-            (map, waterWorld, player);
+                (map, waterWorld, player);
 
             if (!await Save.LoadAsync(SaveName))
             {
@@ -116,6 +122,7 @@ namespace Tendeos.Scenes
                 Save.Unload();
             }
             else generator.Loaded();
+
             shadowMatrix.Start();
             entitySpawner.Start();
             physicsLoop.Start();
@@ -126,69 +133,179 @@ namespace Tendeos.Scenes
 
         public override async void InitGUI()
         {
+            console = new Console(
+                camera: Game.camera,
+
+                inputField: new InputField(
+                    style: Core.InputFieldStyle,
+                    anchor: Vec2.Zero,
+                    position: Vec2.Zero,
+                    length: 100
+                ),
+                
+                style: Core.WindowFillerStyle,
+
+                closeOnClick: false,
+                childs: null,
+
+                Console.CreateCommand(
+                    "give",
+                    delegate (string item, int value)
+                    {
+                        // TODO: Multiplayer, give to command executer.
+                        new Item((Items.Get(item), value), Core.Player.Position);
+                    }
+                ));
+            
             Recipe[] recipes = new Recipe[]
             {
-                new Recipe((Items.pickaxe, 1), (Tiles.test, 2), (Tiles.stone, 5)),
-                new Recipe((Items.bow, 1), (Tiles.test, 6), (Tiles.dirt, 3)),
-                new Recipe((Tiles.test, 2), (Tiles.dirt, 1)),
-                new Recipe((Tiles.test, 4), (Tiles.stone, 1)),
-                new Recipe((Tiles.dirt, 1), (Tiles.test, 2)),
-                new Recipe((Tiles.stone, 1), (Tiles.test, 4)),
-                new Recipe((Tiles.tree, 1), (Tiles.test, 20), (Tiles.stone, 12)),
+                new((Items.pickaxe, 1), (Tiles.test, 2), (Tiles.stone, 5)),
+                new((Items.bow, 1), (Tiles.test, 6), (Tiles.dirt, 3)),
+                new((Tiles.test, 2), (Tiles.dirt, 1)),
+                new((Tiles.test, 4), (Tiles.stone, 1)),
+                new((Tiles.dirt, 1), (Tiles.test, 2)),
+                new((Tiles.stone, 1), (Tiles.test, 4)),
+                new((Tiles.tree, 1), (Tiles.test, 20), (Tiles.stone, 12)),
             };
             while (player == null) await Task.Yield();
             GUIElement settingsPlane = null;
-            settingsPlane = new WindowFiller(Game.camera, Core.WindowFillerStyle)
-                .Add(new Window(new Vec2(0.5f), new FRectangle(0, 0, 70, 35), Core.LabelWindowStyle, Core.Text2Icon("settings"))
-                    .Add(new Button(new Vec2(0.5f, 1), new FRectangle(0, -2, 66, 10),
-                    () =>
-                    {
-                        menuPlane.Remove(settingsPlane);
-                        Settings.SaveAsync();
-                    }, Core.ButtonStyle, Core.Text2Icon("back")))
-                    .Add(new EnumSwitcher<ShadowMatrix.SmoothPower>(new Vec2(0.5f, 1), new FRectangle(0, -13, 66, 10), Core.Font, Core.ButtonStyle,
-                    () => (ShadowMatrix.SmoothPower)Settings.GetInt("shadow_smoothing"),
-                    v =>
-                    {
-                        Settings.Set(Settings.Type.Int, "shadow_smoothing", (int)v);
-                        shadowMatrix.Smooth = v;
-                    }))
-                    .Add(new Toggle(Vec2.Zero, Vec2.Zero, Core.ToggleStyle, value => shadowMatrix.IsUpscaled = value))
-                );
-            menuPlane = new WindowFiller(Game.camera, Core.WindowFillerStyle)
-                .Add(new Window(new Vec2(0.5f), new FRectangle(0, 0, 70, 35), Core.LabelWindowStyle, Core.Text2Icon("pause"))
-                    .Add(new Button(new Vec2(0.5f, 1), new FRectangle(0, -13, 66, 10),
-                    () =>
-                    {
-                        menuPlane.Add(settingsPlane);
-                    }, Core.ButtonStyle, Core.Text2Icon("settings")))
-                    .Add(new Button(new Vec2(0.5f, 1), new FRectangle(0, -2, 66, 10),
-                    () =>
-                    {
-                        GUI.Remove(menuPlane);
-                        Game.Paused = false;
-                    }, Core.ButtonStyle, Core.Text2Icon("back")))
-                );
-            CraftMenu craftMenu = new CraftMenu(Vec2.Zero, new Vec2(0, 11 + playerInventory.style.Window.rectangle.Height), playerInventory, player.transform, Core.PlayerCraftMenuStyle, recipes);
-            GUI.Add(new SwitchButton(Vec2.Zero, new FRectangle(0, 0, 11, 11), Core.ButtonStyle,
-                () => playerInventory.Close(player.transform.Position),
-                Core.Icons["on_inventory_icon"],
-                () => playerInventory.Open(new Vec2(0, 11)),
-                Core.Icons["off_inventory_icon"]
-                ))
-                .Add(new SwitchButton(Vec2.Zero, new FRectangle(11, 0, 11, 11), Core.ButtonStyle,
-                () => GUI.Remove(craftMenu),
-                Core.Icons["craft_menu_icon"],
-                () => GUI.Add(craftMenu),
-                Core.Icons["craft_menu_icon"]
-                ))
-                .Add(new Button(Vec2.Zero, new FRectangle(22, 0, 11, 11),
-                () =>
+            settingsPlane = new WindowFiller(
+                style: Core.WindowFillerStyle,
+                camera: Game.camera,
+                
+                childs: new GUIElement[]
                 {
-                    GUI.Add(menuPlane);
-                    Game.Paused = true;
-                }, Core.ButtonStyle,
-                Core.Icons["pause_menu_icon"]
+                    new Window(
+                        style: Core.LabelWindowStyle,
+                        addativeDraw: Core.Text2Icon("settings"),
+                    
+                        anchor: new Vec2(0.5f),
+                        rectangle: new FRectangle(0, 0, 70, 100),
+                        childs: new GUIElement[]
+                        {
+                            new Button(
+                                icon: Core.Text2Icon("back"),
+                                style: Core.ButtonStyle,
+                                
+                                anchor: new Vec2(0.5f, 1),
+                                rectangle: new FRectangle(0, -2, 66, 10),
+                                
+                                action: () =>
+                                {
+                                    menuPlane.Remove(settingsPlane);
+                                    Settings.SaveAsync();
+                                }
+                            ),
+                            new EnumSwitcher<ShadowMatrix.SmoothPower>(
+                                font: Core.Font,
+                                style: Core.ButtonStyle,
+                                
+                                anchor: Vec2.UnitY,
+                                rectangle: new FRectangle(0, -13, 66, 10),
+                                
+                                get: () => (ShadowMatrix.SmoothPower) Settings.GetInt("shdsmth"),
+                                set: v =>
+                                {
+                                    Settings.Set(Settings.Type.Int, "shdsmth", (int) v);
+                                    shadowMatrix.Smooth = v;
+                                }
+                            ),
+                            new Toggle(
+                                style: Core.ToggleStyle,
+                                
+                                anchor: Vec2.UnitY,
+                                position: new(0, -24),
+                                
+                                changed: value => Settings.Set(Settings.Type.Bool, "shdup", shadowMatrix.IsUpscaled = value),
+                                startValue: Settings.GetBool("shdup")
+                            )
+                        })
+                });
+            menuPlane = new WindowFiller(
+                style: Core.WindowFillerStyle,
+                camera: Game.camera,
+                
+                childs: new GUIElement[]
+                {
+                    new Window(
+                        style: Core.LabelWindowStyle,
+                        addativeDraw: Core.Text2Icon("pause"),
+                        
+                        anchor: new Vec2(0.5f),
+                        rectangle: new FRectangle(0, 0, 70, 35),
+                        
+                        childs: new GUIElement[]
+                        {
+                            new Button(
+                                icon: Core.Text2Icon("settings"),
+                                style: Core.ButtonStyle,
+                                
+                                anchor: new Vec2(0.5f, 1),
+                                rectangle: new FRectangle(0, -13, 66, 10),
+                                
+                                action: () => menuPlane.Add(settingsPlane)
+                            ),
+                            new Button(
+                                icon: Core.Text2Icon("back"),
+                                style: Core.ButtonStyle,
+                                
+                                anchor: new Vec2(0.5f, 1),
+                                rectangle: new FRectangle(0, -2, 66, 10),
+                                
+                                action: () =>
+                                {
+                                    GUI.Remove(menuPlane);
+                                    Game.Paused = false;
+                                }
+                            )
+                        })
+                });
+            CraftMenu craftMenu = new CraftMenu(
+                    style: Core.PlayerCraftMenuStyle,
+                    
+                    anchor: Vec2.Zero,
+                    position: new Vec2(0, 11 + playerInventory.style.Window.Rectangle.Height),
+                    
+                    inventory: playerInventory,
+                    recipes: recipes,
+                    
+                    transform: player.transform
+                );
+            GUI.Add(
+                new SwitchButton(
+                    style: Core.ButtonStyle,
+                    
+                    anchor: Vec2.Zero,
+                    rectangle: new FRectangle(0, 0, 11, 11),
+                    
+                    actionOff: () => playerInventory.Close(player.transform.Position),
+                    iconOff: Core.Icons["on_inventory_icon"],
+                    
+                    actionOn: () => playerInventory.Open(Vec2.Zero, new Vec2(0, 11), ""),
+                    iconOn: Core.Icons["off_inventory_icon"]
+                ),
+                new SwitchButton(
+                    style: Core.ButtonStyle,
+                    
+                    anchor: Vec2.Zero,
+                    rectangle: new FRectangle(11, 0, 11, 11), 
+                    
+                    actionOff: () => GUI.Remove(craftMenu),
+                    iconOff: Core.Icons["craft_menu_icon"],
+                    actionOn: () => GUI.Add(craftMenu),
+                    iconOn: Core.Icons["craft_menu_icon"]
+                ),
+                new Button(
+                    icon: Core.Icons["pause_menu_icon"],
+                    style: Core.ButtonStyle,
+                    
+                    anchor: Vec2.Zero,
+                    rectangle: new FRectangle(22, 0, 11, 11),
+                    action: () =>
+                    {
+                        GUI.Add(menuPlane);
+                        Game.Paused = true;
+                    }
                 ));
             Core.ExtraGuiDraw += DrawSelected;
             Core.ExtraGuiUpdate += UpdateSelected;
@@ -216,7 +333,8 @@ namespace Tendeos.Scenes
         {
             if (Inventory.Inventory.Selected.item == null) return;
             spriteBatch.Rect(Inventory.Inventory.Selected.item.ItemSprite, Mouse.GUIPosition);
-            spriteBatch.Text(Core.Font, $"{Inventory.Inventory.Selected.count}", Mouse.GUIPosition + Vec2.One * -4, 1, Origin.Zero, Origin.Zero);
+            spriteBatch.Text(Core.Font, $"{Inventory.Inventory.Selected.count}", Mouse.GUIPosition + Vec2.One * -4, 1,
+                0, 0, 0);
         }
 
         public void UpdateSelected()
@@ -241,6 +359,7 @@ namespace Tendeos.Scenes
             EntityManager.Draw(spriteBatch);
             EffectManager.Draw(spriteBatch);
         }
+
         public override void AfterDraw(SpriteBatch spriteBatch)
         {
             if (!generator.Done) return;
@@ -250,11 +369,12 @@ namespace Tendeos.Scenes
         }
 
         int sad = 0;
+
         public override void Update()
         {
             if (!generator.Done) return;
 
-            //waterWorld.Update();
+            waterWorld.Update();
 
             saveInstance.playTime += Time.Delta;
 
@@ -262,37 +382,50 @@ namespace Tendeos.Scenes
             float s = MathF.Sin(t);
             shadowMatrix.DirectionLightAngle = t * 2;
             shadowMatrix.DirectionLightIntensity = (s - .75f) / .25f;
-            
+
             if (Keyboard.IsPressed(Keys.Escape))
             {
                 GUI.Add(menuPlane);
                 Game.Paused = true;
             }
-            if (Keyboard.IsPressed(Keys.M))
+
+            if (Keyboard.IsPressed(Keys.F1))
+            {
+                Save.Unload();
+            }
+
+            if (Keyboard.IsPressed(Keys.F2))
             {
                 EntityManager.Clear();
                 EntityManager.Add(player);
-                Save.Load("Test");
+                map.TryUnuseTile();
+                Save.Load(Save.Name);
             }
+
+            if (Keyboard.IsPressed(Keys.F12))
+            {
+                consoleOpened = !consoleOpened;
+                GUIElement.Deselect();
+                if (consoleOpened) GUI.Add(console);
+                else GUI.Remove(console);
+            }
+
             if (Keyboard.IsPressed(Keys.RightShift))
             {
-                shadowMatrix.Create(sad == 0 ? Color.Red : (sad == 1 ? Color.Green : Color.Blue), Mouse.Position, 1, 30);
+                shadowMatrix.Create(sad == 0 ? Color.Red : (sad == 1 ? Color.Green : Color.Blue), Mouse.Position, 1,
+                    30);
                 sad++;
                 if (sad == 3) sad = 0;
             }
-            if (Keyboard.IsPressed(Keys.E))
+
+            if (Keyboard.IsPressed(Keys.N))
             {
-                player.transform.Position = Mouse.Position;
+                new Item((Tiles.chest, 1), Mouse.Position);
             }
+
             if (Keyboard.IsPressed(Keys.F))
             {
-                map.SetTileData<AutoTile>(true, map.World2Cell(Mouse.Position), data => AutoTile.Collisions[data.GetU6(0)] switch
-                {
-                    0 => data.SetU6(0, 7),
-                    1 => data.SetU6(0, 11+7),
-                    2 => data.SetU6(0, 0),
-                    _ => data,
-                });
+                generator.Generate(map);
             }
 
             if (Keyboard.IsPressed(Keys.O))
@@ -312,13 +445,31 @@ namespace Tendeos.Scenes
 
             if (Keyboard.IsPressed(Keys.L))
             {
-                Entities.dummy.Spawn(Mouse.Position);
+                Entities.zombie_0.Spawn(Mouse.Position);
             }
+
+            ControlPlayer(Core.Player);
 
             EntityManager.Update();
             EffectManager.Update();
 
             shadowMatrix.SetPosition(a, player.transform.Position);
+        }
+
+        public void ControlPlayer(Player player)
+        {
+            Game.camera.Position = Vec2.Lerp(Game.camera.Position, player.transform.Position, Time.Delta * 8);
+            
+            player.XMovement = 0;
+            if (Controls.GoRight) player.XMovement++;
+            if (Controls.GoLeft) player.XMovement--;
+
+            player.LeftDown = !Mouse.OnGUI && Controls.UpHit;
+            player.RightDown = !Mouse.OnGUI && Controls.DownHit;
+            
+            player.LookDirection = Controls.GetRelativeCursorPosition(Mouse.Position);
+
+            this.player.MouseOnGUI = Mouse.OnGUI;
         }
 
         public override void OnResize()

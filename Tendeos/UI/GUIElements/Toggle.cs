@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.Xna.Framework.Graphics;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.Input;
@@ -9,23 +8,28 @@ namespace Tendeos.UI.GUIElements
     public class Toggle : GUIElement
     {
         public bool Value { get; private set; }
-        protected readonly Style style;
-        private readonly Action<bool> changed;
+        public readonly Style style;
+        protected readonly Action<bool> changed;
 
-        public Toggle(Vec2 anchor, Vec2 position, Style style) : base(anchor, new FRectangle(position, style.Sprites[0].Rect.Size.ToVector2()))
+        public Toggle(Vec2 anchor, Vec2 position, Style style, bool startValue = false, GUIElement[] childs = null) : base(anchor,
+            new FRectangle(position, style.Sprites[0].Rect.Size.ToVector2()), childs)
         {
             this.style = style;
+            Value = startValue;
         }
 
-        public Toggle(Vec2 anchor, Vec2 position, Style style, Action<bool> changed) : base(anchor, new FRectangle(position, style.Sprites[0].Rect.Size.ToVector2()))
+        public Toggle(Vec2 anchor, Vec2 position, Style style, Action<bool> changed, bool startValue = false, GUIElement[] childs = null) : base(anchor,
+            new FRectangle(position, style.Sprites[0].Rect.Size.ToVector2()), childs)
         {
             this.style = style;
             this.changed = changed;
+            Value = startValue;
         }
 
         public override void Draw(SpriteBatch spriteBatch, FRectangle rectangle)
         {
-            spriteBatch.Rect(MouseOn && Mouse.LeftDown ? style.Sprites[2] : Value ? style.Sprites[0] : style.Sprites[1], rectangle.Location, 0, 1, 0, Origin.Zero, Origin.Zero);
+            spriteBatch.Rect(MouseOn && Mouse.LeftDown ? style.Sprites[2] : Value ? style.Sprites[0] : style.Sprites[1],
+                rectangle.Location, 1, 0, 0, 0);
         }
 
         public override void Update(FRectangle rectangle)

@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Content;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection;
 using Tendeos.Inventory;
 using Tendeos.Inventory.Content;
@@ -13,8 +12,11 @@ namespace Tendeos.Content
         public static MeleeWeapon pickaxeSword;
         public static Pickaxe pickaxe;
         public static Bow bow;
+        public static Helmet start_set_helmet;
+        public static Cuirass start_set_cuirass;
+        public static Legging start_set_legging;
 
-        public static void Init(ContentManager content)
+        public static void Init()
         {
             bow = new Bow()
             {
@@ -34,6 +36,18 @@ namespace Tendeos.Content
                 AttackOffset = 16,
                 Damage = 2,
                 AttackRange = 3
+            };
+            start_set_helmet = new Helmet()
+            {
+                Folder = "items/clothes/start_set"
+            };
+            start_set_cuirass = new Cuirass()
+            {
+                Folder = "items/clothes/start_set"
+            };
+            start_set_legging = new Legging()
+            {
+                Folder = "items/clothes/start_set"
             };
             /*
             pickaxeSword = new MeleeWeapon("pickaxe")
@@ -62,11 +76,14 @@ namespace Tendeos.Content
                         if (mod.Items.TryGetValue(value, out IModItem item)) return item;
                         if (mod.Tiles.TryGetValue(value, out IModTile tile)) return tile;
                     }
+
                     throw new KeyNotFoundException(value);
                 }
-                return (ITile)tileFiled.GetValue(null);
+
+                return (ITile) tileFiled.GetValue(null);
             }
-            return (IItem)field.GetValue(null);
+
+            return (IItem) field.GetValue(null);
         }
     }
 }

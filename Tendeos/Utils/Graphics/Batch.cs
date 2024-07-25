@@ -6,25 +6,25 @@ namespace Tendeos.Utils.Graphics
 {
     public class Batch
     {
+        private readonly RasterizerState RasterizerState;
+
         private GraphicsDevice GraphicsDevice;
 
         private VertexBuffer vertexBuffer;
 
         private BasicEffect basicEffect;
         private readonly static Matrix world = Matrix.CreateTranslation(0, 0, 0);
-        private readonly static Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+
+        private readonly static Matrix view =
+            Matrix.CreateLookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
 
         private VertexPositionColorNormalTexture[] vertices;
         private int primitives;
-        private readonly RasterizerState rasterizerState = new RasterizerState()
-        {
-            CullMode = CullMode.None
-        };
 
         private PrimitiveType primitiveType;
-        public Color Color { private get; set; } = Color.White;
-        public Vec2 UV { private get; set; } = Vec2.Zero;
-        public Vector3 Normal { private get; set; } = Vector3.Zero;
+        public Color Color { get; set; } = Color.White;
+        public Vec2 UV { get; set; } = Vec2.Zero;
+        public Vector3 Normal { get; set; } = Vector3.Zero;
 
         public BlendState BlendState;
 
@@ -32,6 +32,10 @@ namespace Tendeos.Utils.Graphics
 
         public Batch(GraphicsDevice GraphicsDevice)
         {
+            RasterizerState = new RasterizerState()
+            {
+                CullMode = CullMode.None
+            };
             this.GraphicsDevice = GraphicsDevice;
             basicEffect = new BasicEffect(GraphicsDevice);
         }
@@ -87,19 +91,21 @@ namespace Tendeos.Utils.Graphics
             {
                 vertexBuffer?.Dispose();
 
-                vertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColorNormalTexture), vertices.Length, BufferUsage.WriteOnly);
+                vertexBuffer = new VertexBuffer(GraphicsDevice, typeof(VertexPositionColorNormalTexture),
+                    vertices.Length, BufferUsage.WriteOnly);
             }
+
             vertexBuffer.SetData(vertices);
 
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
 
-            GraphicsDevice.RasterizerState = rasterizerState;
+            GraphicsDevice.RasterizerState = RasterizerState;
             if (BlendState != null) GraphicsDevice.BlendState = BlendState;
 
             foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                GraphicsDevice.DrawPrimitives(primitiveType, 0,
+                GraphicsDevice.DrawPrimitives((Microsoft.Xna.Framework.Graphics.PrimitiveType) primitiveType, 0,
                     primitiveType switch
                     {
                         PrimitiveType.TriangleList => primitives / 3,
@@ -115,9 +121,13 @@ namespace Tendeos.Utils.Graphics
             (new VertexBuffer(GraphicsDevice, typeof(T), vertexCount, BufferUsage.WriteOnly), new T[vertexCount]);
 
         public (VertexBuffer, T[]) UpdateBuffer<T>(VertexBuffer vertexBuffer, T[] vertexes, int vertexCount) =>
-            vertexBuffer.VertexCount == vertexCount ? (vertexBuffer, vertexes) : (new VertexBuffer(GraphicsDevice, vertexBuffer.VertexDeclaration, vertexCount, BufferUsage.WriteOnly), new T[vertexCount]);
+            vertexBuffer.VertexCount == vertexCount
+                ? (vertexBuffer, vertexes)
+                : (new VertexBuffer(GraphicsDevice, vertexBuffer.VertexDeclaration, vertexCount, BufferUsage.WriteOnly),
+                    new T[vertexCount]);
 
-        public void Draw(VertexBuffer vertexBuffer, PrimitiveType primitiveType, int validVertexes, Matrix? matrix = null)
+        public void Draw(VertexBuffer vertexBuffer, PrimitiveType primitiveType, int validVertexes,
+            Matrix? matrix = null)
         {
             if (validVertexes == 0) return;
 
@@ -131,14 +141,14 @@ namespace Tendeos.Utils.Graphics
 
             GraphicsDevice.SetVertexBuffer(vertexBuffer);
 
-            GraphicsDevice.RasterizerState = rasterizerState;
+            GraphicsDevice.RasterizerState = RasterizerState;
             if (BlendState != null) GraphicsDevice.BlendState = BlendState;
             else GraphicsDevice.BlendState = BlendState.AlphaBlend;
 
             foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                GraphicsDevice.DrawPrimitives(primitiveType, 0,
+                GraphicsDevice.DrawPrimitives((Microsoft.Xna.Framework.Graphics.PrimitiveType) primitiveType, 0,
                     primitiveType switch
                     {
                         PrimitiveType.TriangleList => validVertexes / 3,

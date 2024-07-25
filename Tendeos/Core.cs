@@ -1,8 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.IO;
+using System.Reflection;
 using Tendeos.Content;
 using Tendeos.Content.Utlis;
+using Tendeos.Inventory.Content;
 using Tendeos.Scenes;
 using Tendeos.UI;
 using Tendeos.UI.GUIElements;
@@ -10,10 +12,16 @@ using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.Input;
 using Tendeos.Utils.SaveSystem;
+using Tendeos.World.Shadows;
 
 namespace Tendeos
 {
-    public enum GameScene { Menu, Gameplay, StructureEditor }
+    public enum GameScene
+    {
+        Menu,
+        Gameplay,
+        StructureEditor
+    }
 
     public partial class Core : Game
     {
@@ -23,23 +31,26 @@ namespace Tendeos
 
         private Scene[] scenes;
         private int scene;
+
         public GameScene Scene
         {
-            get => (GameScene)scene;
+            get => (GameScene) scene;
             set
             {
                 scenes[scene].Clear();
-                scene = (int)value;
+                scene = (int) value;
                 scenes[scene].Setup();
+                MainGUI = scenes[scene].GUI;
             }
         }
 
         public Scene this[GameScene scene]
         {
-            get => scenes[(int)scene];
+            get => scenes[(int) scene];
         }
 
         private bool paused;
+
         public bool Paused
         {
             get => paused;
@@ -51,76 +62,98 @@ namespace Tendeos
         }
 
         public Camera camera;
+        public Assets Assets;
 
-        public Core()
+        public bool Pixelated = true;
+
+        private Shader defaultShader;
+
+        public Core() : base()
         {
             Game = this;
             graphics = new GraphicsDeviceManager(this)
             {
-                PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8
+                PreferredDepthStencilFormat = Microsoft.Xna.Framework.Graphics.DepthFormat.Depth24Stencil8
             };
-            Content.RootDirectory = "Assets";
             IsMouseVisible = true;
-            Window.Title = $"{ApplicationName}: v{Version}";
             Window.AllowUserResizing = true;
             Window.ClientSizeChanged += new EventHandler<EventArgs>(OnResize);
 
             loaded = false;
         }
 
+        private void DefineDefaultSettings()
+        {
+            Settings.Default(Settings.Type.String, "lng", "en");
+            Settings.Default(Settings.Type.Int, "shdsmth", (int) ShadowMatrix.SmoothPower.Blocky);
+            Settings.Default(Settings.Type.Bool, "shdup", false);
+        }
+
         protected override void Initialize()
         {
+            DefineDefaultSettings();
+            Settings.Load();
+            
+            Localization.Load(AssetsPath, "lng");
+            Window.Title = $"{ApplicationName} v{FormatVersion}: <title_text_{URandom.SInt(0, 10)}>".WithTranslates();
+            
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
-            Settings.Load();
-            Localization.Load(Content);
+            Font = new Font(130, .05f);
+            Assets = new Assets(GraphicsDevice, Font, AssetsPath, 4096, 4096);
 
-            spriteBatch = new SpriteBatch(GraphicsDevice);
+            defaultShader = Assets.GetShader("default");
 
-            camera = new Camera(160, GraphicsDevice.Viewport);
+            spriteBatch = new SpriteBatch(GraphicsDevice, Assets.atlas);
 
-            Mods.Init(spriteBatch, Content);
-            Liquids.Init(Content);
-            Effects.Init(Content);
-            Entities.Init(Content);
-            Items.Init(Content);
-            Tiles.Init(Content);
-            Structures.Init(Content);
-            Biomes.Init(Content);
-            ContentAttributes.Compute(Content, typeof(Liquids));
-            ContentAttributes.Compute(Content, typeof(Effects));
-            ContentAttributes.Compute(Content, typeof(Entities));
-            ContentAttributes.Compute(Content, typeof(Items));
-            ContentAttributes.Compute(Content, typeof(Tiles));
-            ContentAttributes.Compute(Content, typeof(Structures));
-            ContentAttributes.Compute(Content, typeof(Biomes));
-            Mods.Start(GraphicsDevice);
+            Mouse.Camera = camera = new Camera(160, GraphicsDevice.Viewport);
 
-            Mouse.Camera = camera;
-            Font = new Font(Content, new[] {
-                "NotoSans-Regular.ttf",
-                "NotoSansKR-Regular.ttf"
-            }, 130, .05f);
-            InputFieldStyle = new InputField.Style(Sprite.Load(Content, "ui/input_field"), Sprite.Load(Content, "ui/input_field_carriage"), Font, 1, 2, 2, 10);
-            ButtonStyle = new Button.Style(Sprite.Load(Content, "ui/button"));
-            WindowStyle = new Window.Style(Sprite.Load(Content, "ui/window"));
-            LabelWindowStyle = new Window.Style(Sprite.Load(Content, "ui/window_topless"), Sprite.Load(Content, "ui/window_label"));
-            ScrollSliderStyle = new Slider.Style(Sprite.Load(Content, "ui/scroll_slider"), 3..3, false, Sprite.Load(Content, "ui/scroll_slider_thumb"));
+            InputFieldStyle = new InputField.Style(Assets.GetSprite("ui/input_field"),
+                Assets.GetSprite("ui/input_field_carriage"), Font, 1, 2, 2, 10);
+            ButtonStyle = new Button.Style(Assets.GetSprite("ui/button"));
+            SlotButtonStyle = new Button.Style(Assets.GetSprite("ui/slot_button"));
+            WindowStyle = new Window.Style(Assets.GetSprite("ui/window"));
+            LabelWindowStyle =
+                new Window.Style(Assets.GetSprite("ui/window_topless"), Assets.GetSprite("ui/window_label"));
+            ScrollSliderStyle = new Slider.Style(Assets.GetSprite("ui/scroll_slider"), 3..3, false,
+                Assets.GetSprite("ui/scroll_slider_thumb"));
             ScrollButtonsStyle = new ScrollButtonsStyle(ScrollSliderStyle, ButtonStyle);
             PlayerInventoryStyle = new PlayerInventoryContainer.Style(
-                new Image(Vec2.Zero, new Vec2(0, 0), Sprite.Load(Content, "ui/player_inventory_window")),
+                new Image(Vec2.Zero, new Vec2(0, 0), Assets.GetSprite("ui/player_inventory_window")),
                 6, 5, 8,
-                new Button.Style(Sprite.Load(Content, "ui/slot_button")),
-                new Vec2(4)/*,
-                (new Vec2(69, 3), )*/);
-            PlayerCraftMenuStyle = new CraftMenu.Style(LabelWindowStyle, ScrollSliderStyle, ButtonStyle, 4, new Vec2(50, 12));
-            ToggleStyle = new Toggle.Style(Sprite.Load(Content, "ui/toggle"));
-            WindowFillerStyle = Sprite.Load(Game.Content, "ui/filler");
-            InventoryContainer.itemInfoBack = Sprite.Load(Content, "ui/item_info_back");
-            Content.LoadSpriteData("ui/icons", Icons);
+                SlotButtonStyle,
+                new Vec2(4),
+                (new Vec2(70, 3), typeof(Helmet)),
+                (new Vec2(70, 12), typeof(Cuirass)),
+                (new Vec2(70, 21), typeof(Legging)));
+            PlayerCraftMenuStyle =
+                new CraftMenu.Style(LabelWindowStyle, ScrollSliderStyle, ButtonStyle, 4, new Vec2(50, 12));
+            ToggleStyle = new Toggle.Style(Assets.GetSprite("ui/toggle"));
+            WindowFillerStyle = Assets.GetSprite("ui/filler");
+            InventoryContainer.itemInfoBack = Assets.GetSprite("ui/item_info_back");
+            Assets.LoadSpriteData("ui/icons", Icons);
+
+            Mods.Init(spriteBatch, Assets);
+            Liquids.Init();
+            Effects.Init(Assets);
+            Entities.Init();
+            Items.Init();
+            Tiles.Init();
+            Structures.Init();
+            Biomes.Init();
+            ContentAttributes.Compute(Assets, typeof(Liquids));
+            ContentAttributes.Compute(Assets, typeof(Effects));
+            ContentAttributes.Compute(Assets, typeof(Entities));
+            ContentAttributes.Compute(Assets, typeof(Items));
+            ContentAttributes.Compute(Assets, typeof(Tiles));
+            ContentAttributes.Compute(Assets, typeof(Structures));
+            ContentAttributes.Compute(Assets, typeof(Biomes));
+            Mods.Start();
+
+            Font.Init();
 
             scenes = new Scene[]
             {
@@ -129,6 +162,7 @@ namespace Tendeos
                 new StructureEditorScene(this, 8),
             };
             scenes[scene].Setup();
+            MainGUI = scenes[scene].GUI;
 
             loaded = true;
         }
@@ -141,33 +175,42 @@ namespace Tendeos
 
         protected override void Draw(GameTime gameTime)
         {
+            if (!IsActive) return;
+
             extraShootGuiDraw = b => { };
             Time.gameTime = gameTime;
 
             if (!loaded)
             {
-
             }
-            
+
             GraphicsDevice.Clear(Color.CornflowerBlue);
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, null, null, null, camera.GetViewMatrix());
+            spriteBatch.Begin(defaultShader, Assets.atlas.texture, 8172, camera.GetViewMatrix());
             scenes[scene].Draw(spriteBatch);
             spriteBatch.End();
             scenes[scene].AfterDraw(spriteBatch);
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, null, null, null, camera.GetGUIMatrix());
+            spriteBatch.Begin(defaultShader, Assets.atlas.texture, 8172, camera.GetGUIMatrix());
             scenes[scene].GUI.Draw(spriteBatch);
             extraGuiDraw(spriteBatch);
             extraShootGuiDraw(spriteBatch);
             spriteBatch.End();
+
             base.Draw(gameTime);
         }
 
         protected override void Update(GameTime gameTime)
         {
+            if (!IsActive) return;
+
             Keyboard.Update();
             Mouse.Update();
 
             Time.gameTime = gameTime;
+
+            if (Keyboard.IsPressed(Keys.Tab))
+            {
+                MessageBox.Show("Test title", "Test", MessageBox.Type.Info);
+            }
 
             scenes[scene].GUI.Reset();
             scenes[scene].GUI.Update();
@@ -176,6 +219,7 @@ namespace Tendeos
             {
                 scenes[scene].Update();
             }
+
             extraGuiUpdate();
         }
     }

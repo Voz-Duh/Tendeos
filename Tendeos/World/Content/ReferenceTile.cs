@@ -1,7 +1,7 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System;
+﻿using System;
 using Tendeos.Inventory;
 using Tendeos.Physical;
+using Tendeos.Physical.Content;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 
@@ -9,6 +9,7 @@ namespace Tendeos.World.Content
 {
     public class ReferenceTile : ITile
     {
+        bool ITile.Multitile => false;
         public string Name { get; set; }
         public static (int x, int y) Next { private get; set; }
 
@@ -38,14 +39,17 @@ namespace Tendeos.World.Content
 
         public bool Collision => throw new NotImplementedException();
 
-        public string Folder { get => null; set { } }
+        public string Folder
+        {
+            get => null;
+            set { }
+        }
 
-        object ITile.RealInterface { get; set; }
-        TileInterface ITile.Interface { get; set; }
+        public ITileInterface Interface { get; set; }
 
         public void Changed(bool top, IMap map, int x, int y, ref TileData data)
         {
-            TileData main = map.GetTile(top, (int)data.GetU32(0), (int)data.GetU32(32));
+            TileData main = map.GetTile(top, (int) data.GetU32(0), (int) data.GetU32(32));
             main.Tile?.Changed(top, map, x, y, ref main);
         }
 
@@ -56,8 +60,8 @@ namespace Tendeos.World.Content
 
         public void Start(bool top, IMap map, int x, int y, ref TileData data)
         {
-            data.SetU32(0, (uint)Next.x);
-            data.SetU32(32, (uint)Next.y);
+            data.SetU32(0, (uint) Next.x);
+            data.SetU32(32, (uint) Next.y);
         }
 
         public void Destroy(bool top, IMap map, int x, int y, TileData data)
@@ -70,17 +74,42 @@ namespace Tendeos.World.Content
             throw new NotImplementedException();
         }
 
-        public void Use(IMap map, ITransform transform, ref byte armsState, ref float armLRotation, ref float armRRotation, ref int count, ref float timer, ArmData armData)
+        public void InArmUpdate(
+            IMap map, ITransform transform,
+            Vec2 lookDirection,
+            bool onGUI, bool leftDown, bool rightDown,
+            ref byte armsState,
+            ref float armLRotation,
+            ref float armRRotation,
+            ref int count,
+            ref float timer,
+            ArmData armData)
         {
             throw new NotImplementedException();
         }
 
-        public void With(SpriteBatch spriteBatch, IMap map, ITransform transform, byte armsState, float armLRotation, float armRRotation, ArmData armData)
+        public void InArmDraw(
+            SpriteBatch spriteBatch,
+            IMap map, ITransform transform,
+            byte armsState,
+            float armLRotation,
+            float armRRotation,
+            ArmData armData)
         {
             throw new NotImplementedException();
         }
 
         public void Loaded(bool top, IMap map, int x, int y, ref TileData data)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Use(IMap map, ref TileData data, Player player)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Unuse(IMap map, ref TileData data, Player player)
         {
             throw new NotImplementedException();
         }

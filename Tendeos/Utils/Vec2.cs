@@ -2,6 +2,8 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using NVector2 = System.Numerics.Vector2;
+using NVector3 = System.Numerics.Vector3;
 
 namespace Tendeos.Utils
 {
@@ -15,11 +17,9 @@ namespace Tendeos.Utils
 
         private static readonly Vec2 unitYVector = new Vec2(0f, 1f);
 
-        [DataMember]
-        public float X;
+        [DataMember] public float X;
 
-        [DataMember]
-        public float Y;
+        [DataMember] public float Y;
 
         public static Vec2 Zero => zeroVector;
 
@@ -48,6 +48,7 @@ namespace Tendeos.Utils
             angle = MathHelper.ToRadians(angle);
             return new Vec2(-MathF.Sin(angle), MathF.Cos(angle));
         }
+
         public static Vec2 DownOf(float angle) => -UpOf(angle);
 
         public static Vec2 RightOf(float angle)
@@ -55,6 +56,7 @@ namespace Tendeos.Utils
             angle = MathHelper.ToRadians(angle);
             return new Vec2(MathF.Cos(angle), MathF.Sin(angle));
         }
+
         public static Vec2 LeftOf(float angle) => -RightOf(angle);
 
         public static Vec2 RadUpOf(float angle)
@@ -62,6 +64,7 @@ namespace Tendeos.Utils
             angle = MathHelper.ToRadians(angle);
             return new Vec2(-MathF.Sin(angle), MathF.Cos(angle));
         }
+
         public static Vec2 RadDownOf(float angle) => -RadUpOf(angle);
 
         public static Vec2 RadRightOf(float angle)
@@ -69,13 +72,8 @@ namespace Tendeos.Utils
             angle = MathHelper.ToRadians(angle);
             return new Vec2(MathF.Cos(angle), MathF.Sin(angle));
         }
+
         public static Vec2 RadLeftOf(float angle) => -RadRightOf(angle);
-
-
-        public static implicit operator Vec2(System.Numerics.Vector2 value)
-        {
-            return new Vec2(value.X, value.Y);
-        }
 
         public static Vec2 operator -(Vec2 value)
         {
@@ -171,10 +169,12 @@ namespace Tendeos.Utils
 
         public static Vec2 Barycentric(Vec2 value1, Vec2 value2, Vec2 value3, float amount1, float amount2)
         {
-            return new Vec2(MathHelper.Barycentric(value1.X, value2.X, value3.X, amount1, amount2), MathHelper.Barycentric(value1.Y, value2.Y, value3.Y, amount1, amount2));
+            return new Vec2(MathHelper.Barycentric(value1.X, value2.X, value3.X, amount1, amount2),
+                MathHelper.Barycentric(value1.Y, value2.Y, value3.Y, amount1, amount2));
         }
 
-        public static void Barycentric(ref Vec2 value1, ref Vec2 value2, ref Vec2 value3, float amount1, float amount2, out Vec2 result)
+        public static void Barycentric(ref Vec2 value1, ref Vec2 value2, ref Vec2 value3, float amount1, float amount2,
+            out Vec2 result)
         {
             result.X = MathHelper.Barycentric(value1.X, value2.X, value3.X, amount1, amount2);
             result.Y = MathHelper.Barycentric(value1.Y, value2.Y, value3.Y, amount1, amount2);
@@ -182,10 +182,12 @@ namespace Tendeos.Utils
 
         public static Vec2 CatmullRom(Vec2 value1, Vec2 value2, Vec2 value3, Vec2 value4, float amount)
         {
-            return new Vec2(MathHelper.CatmullRom(value1.X, value2.X, value3.X, value4.X, amount), MathHelper.CatmullRom(value1.Y, value2.Y, value3.Y, value4.Y, amount));
+            return new Vec2(MathHelper.CatmullRom(value1.X, value2.X, value3.X, value4.X, amount),
+                MathHelper.CatmullRom(value1.Y, value2.Y, value3.Y, value4.Y, amount));
         }
 
-        public static void CatmullRom(ref Vec2 value1, ref Vec2 value2, ref Vec2 value3, ref Vec2 value4, float amount, out Vec2 result)
+        public static void CatmullRom(ref Vec2 value1, ref Vec2 value2, ref Vec2 value3, ref Vec2 value4, float amount,
+            out Vec2 result)
         {
             result.X = MathHelper.CatmullRom(value1.X, value2.X, value3.X, value4.X, amount);
             result.Y = MathHelper.CatmullRom(value1.Y, value2.Y, value3.Y, value4.Y, amount);
@@ -295,7 +297,7 @@ namespace Tendeos.Utils
         {
             if (obj is Vec2)
             {
-                return Equals((Vec2)obj);
+                return Equals((Vec2) obj);
             }
 
             return false;
@@ -337,10 +339,12 @@ namespace Tendeos.Utils
 
         public static Vec2 Hermite(Vec2 value1, Vec2 tangent1, Vec2 value2, Vec2 tangent2, float amount)
         {
-            return new Vec2(MathHelper.Hermite(value1.X, tangent1.X, value2.X, tangent2.X, amount), MathHelper.Hermite(value1.Y, tangent1.Y, value2.Y, tangent2.Y, amount));
+            return new Vec2(MathHelper.Hermite(value1.X, tangent1.X, value2.X, tangent2.X, amount),
+                MathHelper.Hermite(value1.Y, tangent1.Y, value2.Y, tangent2.Y, amount));
         }
 
-        public static void Hermite(ref Vec2 value1, ref Vec2 tangent1, ref Vec2 value2, ref Vec2 tangent2, float amount, out Vec2 result)
+        public static void Hermite(ref Vec2 value1, ref Vec2 tangent1, ref Vec2 value2, ref Vec2 tangent2, float amount,
+            out Vec2 result)
         {
             result.X = MathHelper.Hermite(value1.X, tangent1.X, value2.X, tangent2.X, amount);
             result.Y = MathHelper.Hermite(value1.Y, tangent1.Y, value2.Y, tangent2.Y, amount);
@@ -369,7 +373,8 @@ namespace Tendeos.Utils
 
         public static Vec2 LerpPrecise(Vec2 value1, Vec2 value2, float amount)
         {
-            return new Vec2(MathHelper.LerpPrecise(value1.X, value2.X, amount), MathHelper.LerpPrecise(value1.Y, value2.Y, amount));
+            return new Vec2(MathHelper.LerpPrecise(value1.X, value2.X, amount),
+                MathHelper.LerpPrecise(value1.Y, value2.Y, amount));
         }
 
         public static void LerpPrecise(ref Vec2 value1, ref Vec2 value2, float amount, out Vec2 result)
@@ -498,7 +503,8 @@ namespace Tendeos.Utils
 
         public static Vec2 SmoothStep(Vec2 value1, Vec2 value2, float amount)
         {
-            return new Vec2(MathHelper.SmoothStep(value1.X, value2.X, amount), MathHelper.SmoothStep(value1.Y, value2.Y, amount));
+            return new Vec2(MathHelper.SmoothStep(value1.X, value2.X, amount),
+                MathHelper.SmoothStep(value1.Y, value2.Y, amount));
         }
 
         public static void SmoothStep(ref Vec2 value1, ref Vec2 value2, float amount, out Vec2 result)
@@ -527,12 +533,13 @@ namespace Tendeos.Utils
 
         public Point ToPoint()
         {
-            return new Point((int)X, (int)Y);
+            return new Point((int) X, (int) Y);
         }
 
         public static Vec2 Transform(Vec2 position, Matrix matrix)
         {
-            return new Vec2(position.X * matrix.M11 + position.Y * matrix.M21 + matrix.M41, position.X * matrix.M12 + position.Y * matrix.M22 + matrix.M42);
+            return new Vec2(position.X * matrix.M11 + position.Y * matrix.M21 + matrix.M41,
+                position.X * matrix.M12 + position.Y * matrix.M22 + matrix.M42);
         }
 
         public static void Transform(ref Vec2 position, ref Matrix matrix, out Vec2 result)
@@ -557,13 +564,16 @@ namespace Tendeos.Utils
             Vector3 vector4 = vector * vector2;
             Vector3 vector5 = vector * vector3;
             Vec2 vector6 = default(Vec2);
-            vector6.X = (float)((double)value.X * (1.0 - (double)vector5.Y - (double)vector5.Z) + (double)value.Y * ((double)vector4.Y - (double)vector4.Z));
-            vector6.Y = (float)((double)value.X * ((double)vector4.Y + (double)vector4.Z) + (double)value.Y * (1.0 - (double)vector4.X - (double)vector5.Z));
+            vector6.X = (float) ((double) value.X * (1.0 - (double) vector5.Y - (double) vector5.Z) +
+                                 (double) value.Y * ((double) vector4.Y - (double) vector4.Z));
+            vector6.Y = (float) ((double) value.X * ((double) vector4.Y + (double) vector4.Z) +
+                                 (double) value.Y * (1.0 - (double) vector4.X - (double) vector5.Z));
             result.X = vector6.X;
             result.Y = vector6.Y;
         }
 
-        public static void Transform(Vec2[] sourceArray, int sourceIndex, ref Matrix matrix, Vec2[] destinationArray, int destinationIndex, int length)
+        public static void Transform(Vec2[] sourceArray, int sourceIndex, ref Matrix matrix, Vec2[] destinationArray,
+            int destinationIndex, int length)
         {
             if (sourceArray == null)
             {
@@ -595,7 +605,8 @@ namespace Tendeos.Utils
             }
         }
 
-        public static void Transform(Vec2[] sourceArray, int sourceIndex, ref Quaternion rotation, Vec2[] destinationArray, int destinationIndex, int length)
+        public static void Transform(Vec2[] sourceArray, int sourceIndex, ref Quaternion rotation,
+            Vec2[] destinationArray, int destinationIndex, int length)
         {
             if (sourceArray == null)
             {
@@ -640,7 +651,8 @@ namespace Tendeos.Utils
 
         public static Vec2 TransformNormal(Vec2 normal, Matrix matrix)
         {
-            return new Vec2(normal.X * matrix.M11 + normal.Y * matrix.M21, normal.X * matrix.M12 + normal.Y * matrix.M22);
+            return new Vec2(normal.X * matrix.M11 + normal.Y * matrix.M21,
+                normal.X * matrix.M12 + normal.Y * matrix.M22);
         }
 
         public static void TransformNormal(ref Vec2 normal, ref Matrix matrix, out Vec2 result)
@@ -651,7 +663,8 @@ namespace Tendeos.Utils
             result.Y = y;
         }
 
-        public static void TransformNormal(Vec2[] sourceArray, int sourceIndex, ref Matrix matrix, Vec2[] destinationArray, int destinationIndex, int length)
+        public static void TransformNormal(Vec2[] sourceArray, int sourceIndex, ref Matrix matrix,
+            Vec2[] destinationArray, int destinationIndex, int length)
         {
             if (sourceArray == null)
             {
@@ -676,7 +689,8 @@ namespace Tendeos.Utils
             for (int i = 0; i < length; i++)
             {
                 Vec2 vector = sourceArray[sourceIndex + i];
-                destinationArray[destinationIndex + i] = new Vec2(vector.X * matrix.M11 + vector.Y * matrix.M21, vector.X * matrix.M12 + vector.Y * matrix.M22);
+                destinationArray[destinationIndex + i] = new Vec2(vector.X * matrix.M11 + vector.Y * matrix.M21,
+                    vector.X * matrix.M12 + vector.Y * matrix.M22);
             }
         }
 
@@ -700,7 +714,8 @@ namespace Tendeos.Utils
             for (int i = 0; i < sourceArray.Length; i++)
             {
                 Vec2 vector = sourceArray[i];
-                destinationArray[i] = new Vec2(vector.X * matrix.M11 + vector.Y * matrix.M21, vector.X * matrix.M12 + vector.Y * matrix.M22);
+                destinationArray[i] = new Vec2(vector.X * matrix.M11 + vector.Y * matrix.M21,
+                    vector.X * matrix.M12 + vector.Y * matrix.M22);
             }
         }
 
@@ -710,16 +725,16 @@ namespace Tendeos.Utils
             y = Y;
         }
 
-        public System.Numerics.Vector2 ToNumerics()
-        {
-            return new System.Numerics.Vector2(X, Y);
-        }
-
         public static Vec2 Abs(Vec2 value) => new Vec2(Math.Abs(value.X), Math.Abs(value.Y));
 
         public static implicit operator Vector2(Vec2 a) => new Vector2(a.X, a.Y);
         public static implicit operator Vec2(Vector2 a) => new Vec2(a.X, a.Y);
         public static implicit operator Vector3(Vec2 a) => new Vector3(a.X, a.Y, 0);
         public static implicit operator Vec2(Vector3 a) => new Vec2(a.X, a.Y);
+
+        public static implicit operator NVector2(Vec2 a) => new NVector2(a.X, a.Y);
+        public static implicit operator Vec2(NVector2 a) => new Vec2(a.X, a.Y);
+        public static implicit operator NVector3(Vec2 a) => new NVector3(a.X, a.Y, 0);
+        public static implicit operator Vec2(NVector3 a) => new Vec2(a.X, a.Y);
     }
 }

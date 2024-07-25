@@ -8,7 +8,8 @@ namespace Tendeos.UI.GUIElements
     {
         protected bool on;
 
-        public SwitchButton(Vec2 anchor, FRectangle rectangle, Style style, Action actionOff, Icon iconOff, Action actionOn, Icon iconOn) : base(anchor, rectangle, null, style, null)
+        public SwitchButton(Vec2 anchor, FRectangle rectangle, Style style, Action actionOff, Icon iconOff,
+            Action actionOn, Icon iconOn, GUIElement[] childs = null) : base(anchor, rectangle, null, style, null, childs)
         {
             on = false;
             action = () =>
@@ -32,7 +33,8 @@ namespace Tendeos.UI.GUIElements
             });
         }
 
-        public SwitchButton(Vec2 anchor, FRectangle rectangle, Style style, Action actionOff, Sprite iconOff, Action actionOn, Sprite iconOn) : base(anchor, rectangle, null, style, null)
+        public SwitchButton(Vec2 anchor, FRectangle rectangle, Style style, Action actionOff, Sprite iconOff,
+            Action actionOn, Sprite iconOn) : base(anchor, rectangle, null, style, null)
         {
             on = false;
             action = () =>

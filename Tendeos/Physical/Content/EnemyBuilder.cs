@@ -6,15 +6,15 @@ namespace Tendeos.Physical.Content
 {
     public class EnemyBuilder
     {
-        [ContentLoadable]
-        public readonly IEnemyComponent[] components;
+        [ContentLoadable] public readonly IEnemyComponent[] components;
         public readonly float viewRadius;
         public readonly Vec2 size;
         public readonly bool seeAnytime;
         public readonly float spawnChance;
         public readonly float health;
 
-        public EnemyBuilder(float spawnChance, float health, float viewRadius, Vec2 size, params IEnemyComponent[] components) : base()
+        public EnemyBuilder(float spawnChance, float health, float viewRadius, Vec2 size,
+            params IEnemyComponent[] components) : base()
         {
             this.components = components;
             this.viewRadius = viewRadius;
@@ -24,7 +24,8 @@ namespace Tendeos.Physical.Content
             this.health = health;
         }
 
-        public EnemyBuilder(float spawnChance, float health, float viewRadius, Vec2 size, bool seeAnytime, params IEnemyComponent[] components) : base()
+        public EnemyBuilder(float spawnChance, float health, float viewRadius, Vec2 size, bool seeAnytime,
+            params IEnemyComponent[] components) : base()
         {
             this.components = components;
             this.viewRadius = viewRadius;

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Prototype.Graphics;
+using Tendeos.UI;
 using Tendeos.Utils.Input;
 
 namespace Tendeos.Utils
@@ -10,9 +10,18 @@ namespace Tendeos.Utils
         public Vec2 Position { get; set; }
         public float Rotation { get; set; }
         public float ScreenHeight { get; set; }
-        public Vec2 Origin { get; private set; }
-        public Vec2 WorldViewport { get; private set; }
-        private float Scale { get; set; }
+        /// <summary>
+        /// Not recommended to change.
+        /// </summary>
+        public Vec2 Origin { get; set; }
+        /// <summary>
+        /// Not recommended to change.
+        /// </summary>
+        public Vec2 WorldViewport { get; set; }
+        /// <summary>
+        /// Not recommended to change.
+        /// </summary>
+        public float Scale { get; set; }
 
         public Camera(float screenHeight, Viewport viewport)
         {
@@ -25,7 +34,7 @@ namespace Tendeos.Utils
         public void SetViewport(Viewport viewport)
         {
             Scale = viewport.Height / ScreenHeight;
-            WorldViewport = new Vec2((float)viewport.Width / viewport.Height * ScreenHeight, ScreenHeight);
+            WorldViewport = new Vec2((viewport.Width / (float) viewport.Height) * ScreenHeight, ScreenHeight);
 
             Origin = new Vec2(viewport.Width / 2f, viewport.Height / 2f);
         }

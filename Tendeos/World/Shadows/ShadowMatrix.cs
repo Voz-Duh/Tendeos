@@ -1,10 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.World.Liquid;
+using PrimitiveType = Tendeos.Utils.Graphics.PrimitiveType;
 
 namespace Tendeos.World.Shadows
 {
@@ -34,6 +36,7 @@ namespace Tendeos.World.Shadows
         public float DirectionLightShadowRange;
         public SmoothPower Smooth;
         private bool isUpscaled;
+
         public bool IsUpscaled
         {
             get => isUpscaled;
@@ -62,6 +65,15 @@ namespace Tendeos.World.Shadows
             Resize();
         }
 
+        /// <summary>
+        /// Creates a new light at the specified position with the given color, intensity, and radius.
+        /// </summary>
+        /// <param name="color">The color of the light.</param>
+        /// <param name="x">The X-coordinate of the light's position.</param>
+        /// <param name="y">The Y-coordinate of the light's position.</param>
+        /// <param name="intensity">The intensity of the light.</param>
+        /// <param name="radius">The radius of the light.</param>
+        /// <returns>The identifier of the newly created light.</returns>
         public uint Create(Color color, int x, int y, float intensity, float radius) =>
             lights.Add(new Light()
             {
@@ -73,6 +85,14 @@ namespace Tendeos.World.Shadows
                 available = true
             });
 
+        /// <summary>
+        /// Creates a new light at the specified position.
+        /// </summary>
+        /// <param name="color">The color of the light.</param>
+        /// <param name="pos">The position of the light.</param>
+        /// <param name="intensity">The intensity of the light.</param>
+        /// <param name="radius">The radius of the light.</param>
+        /// <returns>The identifier of the newly created light.</returns>
         public uint Create(Color color, Vec2 pos, float intensity, float radius) =>
             lights.Add(new Light()
             {
@@ -84,6 +104,15 @@ namespace Tendeos.World.Shadows
                 available = true
             });
 
+        /// <summary>
+        /// Creates a new light at the specified position.
+        /// </summary>
+        /// <param name="color">The color of the light.</param>
+        /// <param name="x">The X-coordinate of the light's position.</param>
+        /// <param name="y">The Y-coordinate of the light's position.</param>
+        /// <param name="intensity">The intensity of the light.</param>
+        /// <param name="radius">The radius of the light.</param>
+        /// <returns>The identifier of the newly created light.</returns>
         public uint Create(Color color, float x, float y, float intensity, float radius) =>
             lights.Add(new Light()
             {
@@ -95,34 +124,72 @@ namespace Tendeos.World.Shadows
                 available = true
             });
 
+        /// <summary>
+        /// Destroys the light with the specified identifier.
+        /// </summary>
+        /// <param name="lit">The identifier of the light to destroy.</param>
         public void Destroy(uint lit)
         {
             lights.Destroy(lit);
         }
 
+        /// <summary>
+        /// Sets the position of the light with the specified identifier.
+        /// </summary>
+        /// <param name="lit">The identifier of the light.</param>
+        /// <param name="x">The new X-coordinate of the light's position.</param>
+        /// <param name="y">The new Y-coordinate of the light's position.</param>
         public void SetPosition(uint lit, float x, float y)
         {
             lights.Mutable[lit].x = x;
             lights.Mutable[lit].y = y;
         }
 
+        /// <summary>
+        /// Sets the position of the light with the specified identifier.
+        /// </summary>
+        /// <param name="lit">The identifier of the light.</param>
+        /// <param name="position">The new position of the light.</param>
         public void SetPosition(uint lit, Vec2 position) => SetPosition(lit, position.X, position.Y);
 
+        /// <summary>
+        /// Sets the intensity of the light with the specified identifier.
+        /// </summary>
+        /// <param name="lit">The identifier of the light.</param>
+        /// <param name="intensity">The new intensity of the light.</param>
         public void SetIntensity(uint lit, float intensity) => lights.Mutable[lit].intensity = intensity;
+
+        /// <summary>
+        /// Sets the radius of the light with the specified identifier.
+        /// </summary>
+        /// <param name="lit">The identifier of the light.</param>
+        /// <param name="radius">The new radius of the light.</param>
         public void SetRadius(uint lit, float radius) => lights.Mutable[lit].radius = radius;
 
+        /// <summary>
+        /// Resizes the mask based on the camera's world viewport and the current upscaling setting.
+        /// </summary>
+        /// <remarks>
+        /// The width and height of the mask are calculated by calling the <see cref="Map.World2Cell"/> method with the camera's world viewport.
+        /// The resulting values are then increased by 4 to account for the padding.
+        /// If the current upscaling setting is enabled, the width and height are multiplied by 2.
+        /// Finally, a new mask array is created with the updated dimensions.
+        /// </remarks>
         public void Resize()
         {
             (width, height) = map.World2Cell(camera.WorldViewport);
-            width += 4; height += 4;
+            width += 4;
+            height += 4;
             if (IsUpscaled)
             {
                 width *= 2;
                 height *= 2;
             }
+
             mask = new Vector3[width, height];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float Ray(int x0, int y0, (int x, int y) p, float power, bool isUpscaled)
         {
             float f = 0;
@@ -136,10 +203,10 @@ namespace Tendeos.World.Shadows
             p.y = Math.Abs(dy);
             if (p.y > p.x)
             {
-                (x_incr, y_incr) = (dx / (float)p.y, dy < 0 ? -1 : 1);
+                (x_incr, y_incr) = (dx / (float) p.y, dy < 0 ? -1 : 1);
                 p.x = p.y;
             }
-            else (x_incr, y_incr) = (dx < 0 ? -1 : 1, dy / (float)p.x);
+            else (x_incr, y_incr) = (dx < 0 ? -1 : 1, dy / (float) p.x);
 
             float x = x0;
             float y = y0;
@@ -152,19 +219,22 @@ namespace Tendeos.World.Shadows
                 x += x_incr;
                 if (isUpscaled)
                 {
-                    dx = (int)MathF.Round(x/2);
-                    dy = (int)MathF.Round(y/2);
+                    dx = (int) MathF.Round(x / 2);
+                    dy = (int) MathF.Round(y / 2);
                 }
                 else
                 {
-                    dx = (int)MathF.Round(x);
-                    dy = (int)MathF.Round(y);
+                    dx = (int) MathF.Round(x);
+                    dy = (int) MathF.Round(y);
                 }
-                if (dx < 0 || dy < 0 || dx >= map.FullWidth || dy >= map.FullHeight) return f;
+
+                if (dx < 0 || dy < 0 || (isUpscaled
+                        ? dx >= map.FullWidth * 2 || dy >= map.FullHeight * 2
+                        : dx >= map.FullWidth || dy >= map.FullHeight)) return f;
 
                 tile = map.GetTile(true, dx, dy);
                 if (tile.IsReference)
-                    tile = map.GetTile(true, (int)tile.GetU32(0), (int)tile.GetU32(32));
+                    tile = map.GetTile(true, (int) tile.GetU32(0), (int) tile.GetU32(32));
                 if (tile.Tile?.ShadowAvailable ?? false)
                 {
                     if (isUpscaled) f += tile.Tile.ShadowIntensity / 2;
@@ -178,19 +248,23 @@ namespace Tendeos.World.Shadows
                     if (f >= power) return power;
                 }
             }
+
             return f;
         }
 
-        private Vector3 Mix(Vector3 a, Vector3 b)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Vector3 Mix(Vector3 a, Vector3 b)
         {
             const float pow = 0.5f;
             return new Vector3((a.X + b.X) * pow, (a.Y + b.Y) * pow, (a.Z + b.Z) * pow);
         }
 
-        static Vector3 Mix(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Vector3 Mix(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
         {
             const float pow = 0.25f;
-            return new Vector3((a.X + b.X + c.X + d.X) * pow, (a.Y + b.Y + c.Y + d.Y) * pow, (a.Z + b.Z + c.Z + d.Z) * pow);
+            return new Vector3((a.X + b.X + c.X + d.X) * pow, (a.Y + b.Y + c.Y + d.Y) * pow,
+                (a.Z + b.Z + c.Z + d.Z) * pow);
         }
 
         public void Draw()
@@ -229,44 +303,56 @@ namespace Tendeos.World.Shadows
                     thisy *= 2;
                 }
                 else d1 = map.TileSize;
+
                 d2 = d1 / 2;
 
                 #region COMPUTE LIGHTING
+
                 for (x = 0; x < width; x++)
-                    for (y = 0; y < height; y++)
-                        mask[x, y] = Vector3.Zero;
+                for (y = 0; y < height; y++)
+                    mask[x, y] = Vector3.Zero;
 
                 if (isUpscaled)
                 {
-                    sin = (int)(MathF.Sin(DirectionLightAngle) * DirectionLightShadowRange * 2);
-                    cos = (int)(MathF.Cos(DirectionLightAngle) * DirectionLightShadowRange * 2);
+                    sin = (int) (MathF.Sin(DirectionLightAngle) * DirectionLightShadowRange * 2);
+                    cos = (int) (MathF.Cos(DirectionLightAngle) * DirectionLightShadowRange * 2);
                 }
                 else
                 {
-                    sin = (int)(MathF.Sin(DirectionLightAngle) * DirectionLightShadowRange);
-                    cos = (int)(MathF.Cos(DirectionLightAngle) * DirectionLightShadowRange);
+                    sin = (int) (MathF.Sin(DirectionLightAngle) * DirectionLightShadowRange);
+                    cos = (int) (MathF.Cos(DirectionLightAngle) * DirectionLightShadowRange);
                 }
+
                 if (DirectionLightIntensity > 0)
                     for (_x = 0; _x < width; _x++)
-                        for (_y = 0; _y < height; _y++)
-                        {
-                            x = thisx + _x;
-                            y = thisy + _y;
-                            if (x < 0 || y < 0 || x >= map.FullWidth || y >= map.FullHeight) continue;
+                    for (_y = 0; _y < height; _y++)
+                    {
+                        x = thisx + _x;
+                        y = thisy + _y;
+                        if (x < 0 || y < 0 || x >= map.FullWidth || y >= map.FullHeight) continue;
 
-                            if (isUpscaled)
-                            {
-                                mask[_x, _y] += DirectionLight
-                                    * (1 - Ray(x, y, (x - sin, y + cos), DirectionLightIntensity, true) / DirectionLightIntensity) // shadow
-                                    * Math.Clamp(1 - MathF.Max(DirectionLightFrom*2 - DirectionLightRange*2 - y, y - (DirectionLightTo*2 + DirectionLightRange*2)) / (DirectionLightRange*2), 0, 1) * DirectionLightIntensity; // saturation
-                            }
-                            else
-                            {
-                                mask[_x, _y] += DirectionLight
-                                    * (1 - Ray(x, y, (x - sin, y + cos), DirectionLightIntensity, false) / DirectionLightIntensity) // shadow
-                                    * Math.Clamp(1 - MathF.Max(DirectionLightFrom - DirectionLightRange - y, y - (DirectionLightTo + DirectionLightRange)) / DirectionLightRange, 0, 1) * DirectionLightIntensity; // saturation
-                            }
+                        if (isUpscaled)
+                        {
+                            mask[_x, _y] += DirectionLight
+                                            * (1 - Ray(x, y, (x - sin, y + cos), DirectionLightIntensity, true) /
+                                                DirectionLightIntensity) // shadow
+                                            * Math.Clamp(
+                                                1 - MathF.Max(DirectionLightFrom * 2 - DirectionLightRange * 2 - y,
+                                                    y - (DirectionLightTo * 2 + DirectionLightRange * 2)) /
+                                                (DirectionLightRange * 2), 0, 1) *
+                                            DirectionLightIntensity; // saturation
                         }
+                        else
+                        {
+                            mask[_x, _y] += DirectionLight
+                                            * (1 - Ray(x, y, (x - sin, y + cos), DirectionLightIntensity, false) /
+                                                DirectionLightIntensity) // shadow
+                                            * Math.Clamp(
+                                                1 - MathF.Max(DirectionLightFrom - DirectionLightRange - y,
+                                                    y - (DirectionLightTo + DirectionLightRange)) / DirectionLightRange,
+                                                0, 1) * DirectionLightIntensity; // saturation
+                        }
+                    }
 
                 for (i = 0; i < lights.Max; i++)
                 {
@@ -280,152 +366,159 @@ namespace Tendeos.World.Shadows
                         rectangle.Width *= 2;
                         rectangle.Height *= 2;
                     }
+
                     for (_x = rectangle.X; _x <= rectangle.X + rectangle.Width; _x++)
-                        for (_y = rectangle.Y; _y <= rectangle.Y + rectangle.Height; _y++)
-                        {
-                            if (IsUpscaled)
-                            {
-                                x = _x - thisx;
-                                y = _y - thisy;
-                            }
-                            else
-                            {
-                                x = _x - thisx;
-                                y = _y - thisy;
-                            }
-                            if (x < 0 || x >= width || y < 0 || y >= height) continue;
-
-                            mask[x, y] += p.color
-                                * (1 - Ray(_x, _y, isUpscaled ? map.World2Cell(p.x+p.x, p.y+p.y) : map.World2Cell(p.x, p.y), p.intensity, isUpscaled) / p.intensity) // shadow
-                                * MathF.Max(0, 1 - new Vec2(p.x / d1 - _x, p.y / d1 - _y).Length() / (p.radius + (isUpscaled ? p.radius : 0))) * p.intensity; // saturation
-                        }
-                }
-                #endregion
-
-                smooth = Smooth;
-                vertexCount = width * height * (int)smooth;
-                (vertexBuffer, vertexes) = batch.CreateBuffer<VertexPositionColor>(vertexCount);
-                i = 0;
-                for (x = 0; x < width; x++)
-                    for (y = 0; y < height; y++)
+                    for (_y = rectangle.Y; _y <= rectangle.Y + rectangle.Height; _y++)
                     {
-                        _x = thisx + x;
-                        _y = thisy + y;
-                        if (smooth == SmoothPower.No)
+                        if (IsUpscaled)
                         {
-                            ac = new Color(mask[x, y]);
-                            a = new Vec2(_x, _y) * d1;
-                            b = new Vec2(a.X + d1, a.Y + d1);
-                            c = new Vec2(a.X, b.Y);
-                            d = new Vec2(b.X, a.Y);
-                            vertexes[i++] = new VertexPositionColor(b, ac);
-                            vertexes[i++] = new VertexPositionColor(b, ac);
-                            vertexes[i++] = new VertexPositionColor(d, ac);
-                            vertexes[i++] = new VertexPositionColor(c, ac);
-                            vertexes[i++] = new VertexPositionColor(a, ac);
-                            vertexes[i++] = new VertexPositionColor(a, ac);
-                        }
-                        else if (smooth == SmoothPower.Blocky)
-                        {
-                            b = new Vec2(_x, _y) * d1;
-                            a = new Vec2(b.X + d2, b.Y + d2);
-                            c = new Vec2(b.X + d1, b.Y);
-                            d = new Vec2(b.X, b.Y + d1);
-                            e = new Vec2(b.X + d1, b.Y + d1);
-                            w = x == width - 1 ? width - 1 : x + 1;
-                            z = x == 0 ? 0 : x - 1;
-                            u = y == height - 1 ? height - 1 : y + 1;
-                            l = y == 0 ? 0 : y - 1;
-                            at = mask[x, y];
-                            bt = mask[z, y];
-                            ct = mask[w, y];
-                            dt = mask[x, l];
-                            et = mask[x, u];
-                            ft = mask[z, l];
-                            gt = mask[w, l];
-                            ht = mask[z, u];
-                            jt = mask[w, u];
-                            ft = Mix(at, bt, dt, ft);
-                            gt = Mix(at, ct, dt, gt);
-                            ht = Mix(at, bt, et, ht);
-                            jt = Mix(at, ct, et, jt);
-                            ac = new Color(at);
-                            bc = new Color(ft);
-                            cc = new Color(gt);
-                            dc = new Color(ht);
-                            ec = new Color(jt);
-
-                            vertexes[i++] = new VertexPositionColor(e, ec);
-                            vertexes[i++] = new VertexPositionColor(e, ec);
-                            vertexes[i++] = new VertexPositionColor(c, cc);
-                            vertexes[i++] = new VertexPositionColor(a, ac);
-                            vertexes[i++] = new VertexPositionColor(b, bc);
-                            vertexes[i++] = new VertexPositionColor(d, dc);
-                            vertexes[i++] = new VertexPositionColor(d, dc);
-                            vertexes[i++] = new VertexPositionColor(a, ac);
-                            vertexes[i++] = new VertexPositionColor(e, ec);
-                            vertexes[i++] = new VertexPositionColor(e, ec);
+                            x = _x - thisx;
+                            y = _y - thisy;
                         }
                         else
                         {
-                            f = new Vec2(_x, _y) * d1;
-                            a = new Vec2(f.X + d2, f.Y + d2);
-                            b = new Vec2(f.X, f.Y + d2);
-                            c = new Vec2(f.X + d1, f.Y + d2);
-                            d = new Vec2(f.X + d2, f.Y);
-                            e = new Vec2(f.X + d2, f.Y + d1);
-                            g = new Vec2(f.X + d1, f.Y);
-                            h = new Vec2(f.X, f.Y + d1);
-                            j = new Vec2(f.X + d1, f.Y + d1);
-                            w = x == width - 1 ? width - 1 : x + 1;
-                            z = x == 0 ? 0 : x - 1;
-                            u = y == height - 1 ? height - 1 : y + 1;
-                            l = y == 0 ? 0 : y - 1;
-                            at = mask[x, y];
-                            bt = mask[z, y];
-                            ct = mask[w, y];
-                            dt = mask[x, l];
-                            et = mask[x, u];
-                            ft = mask[z, l];
-                            gt = mask[w, l];
-                            ht = mask[z, u];
-                            jt = mask[w, u];
-                            ft = Mix(at, bt, dt, ft);
-                            gt = Mix(at, ct, dt, gt);
-                            ht = Mix(at, bt, et, ht);
-                            jt = Mix(at, ct, et, jt);
-                            bt = Mix(bt, at);
-                            ct = Mix(ct, at);
-                            dt = Mix(dt, at);
-                            et = Mix(et, at);
-                            ac = new Color(at);
-                            bc = new Color(bt);
-                            cc = new Color(ct);
-                            dc = new Color(dt);
-                            ec = new Color(et);
-                            fc = new Color(ft);
-                            gc = new Color(gt);
-                            hc = new Color(ht);
-                            jc = new Color(jt);
-
-                            vertexes[i++] = new VertexPositionColor(g, gc);
-                            vertexes[i++] = new VertexPositionColor(g, gc);
-                            vertexes[i++] = new VertexPositionColor(d, dc);
-                            vertexes[i++] = new VertexPositionColor(c, cc);
-                            vertexes[i++] = new VertexPositionColor(a, ac);
-                            vertexes[i++] = new VertexPositionColor(b, bc);
-                            vertexes[i++] = new VertexPositionColor(e, ec);
-                            vertexes[i++] = new VertexPositionColor(h, hc);
-                            vertexes[i++] = new VertexPositionColor(j, jc);
-                            vertexes[i++] = new VertexPositionColor(e, ec);
-                            vertexes[i++] = new VertexPositionColor(c, cc);
-                            vertexes[i++] = new VertexPositionColor(a, ac);
-                            vertexes[i++] = new VertexPositionColor(b, bc);
-                            vertexes[i++] = new VertexPositionColor(d, dc);
-                            vertexes[i++] = new VertexPositionColor(f, fc);
-                            vertexes[i++] = new VertexPositionColor(f, fc);
+                            x = _x - thisx;
+                            y = _y - thisy;
                         }
+
+                        if (x < 0 || x >= width || y < 0 || y >= height) continue;
+
+                        mask[x, y] += p.color
+                                      * (1 - Ray(_x, _y,
+                                          isUpscaled ? map.World2Cell(p.x + p.x, p.y + p.y) : map.World2Cell(p.x, p.y),
+                                          p.intensity, isUpscaled) / p.intensity) // shadow
+                                      * MathF.Max(0,
+                                          1 - new Vec2(p.x / d1 - _x, p.y / d1 - _y).Length() /
+                                          (p.radius + (isUpscaled ? p.radius : 0))) * p.intensity; // saturation
                     }
+                }
+
+                #endregion
+
+                smooth = Smooth;
+                vertexCount = width * height * (int) smooth;
+                (vertexBuffer, vertexes) = batch.CreateBuffer<VertexPositionColor>(vertexCount);
+                i = 0;
+                for (x = 0; x < width; x++)
+                for (y = 0; y < height; y++)
+                {
+                    _x = thisx + x;
+                    _y = thisy + y;
+                    if (smooth == SmoothPower.No)
+                    {
+                        ac = new Color(mask[x, y]);
+                        a = new Vec2(_x, _y) * d1;
+                        b = new Vec2(a.X + d1, a.Y + d1);
+                        c = new Vec2(a.X, b.Y);
+                        d = new Vec2(b.X, a.Y);
+                        vertexes[i++] = new VertexPositionColor(b, ac);
+                        vertexes[i++] = new VertexPositionColor(b, ac);
+                        vertexes[i++] = new VertexPositionColor(d, ac);
+                        vertexes[i++] = new VertexPositionColor(c, ac);
+                        vertexes[i++] = new VertexPositionColor(a, ac);
+                        vertexes[i++] = new VertexPositionColor(a, ac);
+                    }
+                    else if (smooth == SmoothPower.Blocky)
+                    {
+                        b = new Vec2(_x, _y) * d1;
+                        a = new Vec2(b.X + d2, b.Y + d2);
+                        c = new Vec2(b.X + d1, b.Y);
+                        d = new Vec2(b.X, b.Y + d1);
+                        e = new Vec2(b.X + d1, b.Y + d1);
+                        w = x == width - 1 ? width - 1 : x + 1;
+                        z = x == 0 ? 0 : x - 1;
+                        u = y == height - 1 ? height - 1 : y + 1;
+                        l = y == 0 ? 0 : y - 1;
+                        at = mask[x, y];
+                        bt = mask[z, y];
+                        ct = mask[w, y];
+                        dt = mask[x, l];
+                        et = mask[x, u];
+                        ft = mask[z, l];
+                        gt = mask[w, l];
+                        ht = mask[z, u];
+                        jt = mask[w, u];
+                        ft = Mix(at, bt, dt, ft);
+                        gt = Mix(at, ct, dt, gt);
+                        ht = Mix(at, bt, et, ht);
+                        jt = Mix(at, ct, et, jt);
+                        ac = new Color(at);
+                        bc = new Color(ft);
+                        cc = new Color(gt);
+                        dc = new Color(ht);
+                        ec = new Color(jt);
+
+                        vertexes[i++] = new VertexPositionColor(e, ec);
+                        vertexes[i++] = new VertexPositionColor(e, ec);
+                        vertexes[i++] = new VertexPositionColor(c, cc);
+                        vertexes[i++] = new VertexPositionColor(a, ac);
+                        vertexes[i++] = new VertexPositionColor(b, bc);
+                        vertexes[i++] = new VertexPositionColor(d, dc);
+                        vertexes[i++] = new VertexPositionColor(d, dc);
+                        vertexes[i++] = new VertexPositionColor(a, ac);
+                        vertexes[i++] = new VertexPositionColor(e, ec);
+                        vertexes[i++] = new VertexPositionColor(e, ec);
+                    }
+                    else
+                    {
+                        f = new Vec2(_x, _y) * d1;
+                        a = new Vec2(f.X + d2, f.Y + d2);
+                        b = new Vec2(f.X, f.Y + d2);
+                        c = new Vec2(f.X + d1, f.Y + d2);
+                        d = new Vec2(f.X + d2, f.Y);
+                        e = new Vec2(f.X + d2, f.Y + d1);
+                        g = new Vec2(f.X + d1, f.Y);
+                        h = new Vec2(f.X, f.Y + d1);
+                        j = new Vec2(f.X + d1, f.Y + d1);
+                        w = x == width - 1 ? width - 1 : x + 1;
+                        z = x == 0 ? 0 : x - 1;
+                        u = y == height - 1 ? height - 1 : y + 1;
+                        l = y == 0 ? 0 : y - 1;
+                        at = mask[x, y];
+                        bt = mask[z, y];
+                        ct = mask[w, y];
+                        dt = mask[x, l];
+                        et = mask[x, u];
+                        ft = mask[z, l];
+                        gt = mask[w, l];
+                        ht = mask[z, u];
+                        jt = mask[w, u];
+                        ft = Mix(at, bt, dt, ft);
+                        gt = Mix(at, ct, dt, gt);
+                        ht = Mix(at, bt, et, ht);
+                        jt = Mix(at, ct, et, jt);
+                        bt = Mix(bt, at);
+                        ct = Mix(ct, at);
+                        dt = Mix(dt, at);
+                        et = Mix(et, at);
+                        ac = new Color(at);
+                        bc = new Color(bt);
+                        cc = new Color(ct);
+                        dc = new Color(dt);
+                        ec = new Color(et);
+                        fc = new Color(ft);
+                        gc = new Color(gt);
+                        hc = new Color(ht);
+                        jc = new Color(jt);
+
+                        vertexes[i++] = new VertexPositionColor(g, gc);
+                        vertexes[i++] = new VertexPositionColor(g, gc);
+                        vertexes[i++] = new VertexPositionColor(d, dc);
+                        vertexes[i++] = new VertexPositionColor(c, cc);
+                        vertexes[i++] = new VertexPositionColor(a, ac);
+                        vertexes[i++] = new VertexPositionColor(b, bc);
+                        vertexes[i++] = new VertexPositionColor(e, ec);
+                        vertexes[i++] = new VertexPositionColor(h, hc);
+                        vertexes[i++] = new VertexPositionColor(j, jc);
+                        vertexes[i++] = new VertexPositionColor(e, ec);
+                        vertexes[i++] = new VertexPositionColor(c, cc);
+                        vertexes[i++] = new VertexPositionColor(a, ac);
+                        vertexes[i++] = new VertexPositionColor(b, bc);
+                        vertexes[i++] = new VertexPositionColor(d, dc);
+                        vertexes[i++] = new VertexPositionColor(f, fc);
+                        vertexes[i++] = new VertexPositionColor(f, fc);
+                    }
+                }
 
                 vertexBuffer.SetData(vertexes);
                 this.vertexBuffer = vertexBuffer;
@@ -439,6 +532,11 @@ namespace Tendeos.World.Shadows
             thread.Start();
         }
 
-        public enum SmoothPower : byte { No = 6, Blocky = 10, Diamondly = 30 }
+        public enum SmoothPower : byte
+        {
+            No = 6,
+            Blocky = 10,
+            Diamondly = 30
+        }
     }
 }

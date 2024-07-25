@@ -1,5 +1,4 @@
-﻿
-namespace Tendeos.World.Generation
+﻿namespace Tendeos.World.Generation
 {
     public class Biome : BaseBiome
     {

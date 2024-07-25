@@ -1,17 +1,17 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using Tendeos.Utils.Graphics;
+﻿using Tendeos.Utils.Graphics;
 using Tendeos.Utils;
 
 namespace Tendeos.UI.GUIElements
 {
     public class TextLabel : GUIElement
     {
-        private readonly Font font;
-        private readonly float scale;
-        
+        public readonly Font font;
+        public readonly float scale;
+
         public string text;
 
-        public TextLabel(Vec2 anchor, FRectangle rectangle, string text, Font font, float scale = 1) : base(anchor, rectangle)
+        public TextLabel(Vec2 anchor, FRectangle rectangle, string text, Font font, float scale = 1, GUIElement[] childs = null) : base(anchor,
+            rectangle, childs)
         {
             this.text = text;
             this.font = font;

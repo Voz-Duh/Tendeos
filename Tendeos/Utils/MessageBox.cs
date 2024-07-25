@@ -1,9 +1,8 @@
-﻿using Esprima;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework;
 using System;
+using System.IO;
+using System.Reflection;
 using System.Text;
-using Tendeos.Content;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.Input;
 
@@ -11,9 +10,9 @@ namespace Tendeos.Utils;
 
 public class MessageBox : Game
 {
-    private const int width = 300;
+    private const int width = 600;
 
-    private static Color
+    private static readonly Color
         info = new Color(0xFFD6B378u),
         warning = new Color(0xFF69794Fu),
         error = new Color(0xFF6969D8u),
@@ -25,21 +24,29 @@ public class MessageBox : Game
     private readonly Type type;
     private string message, title;
     private Font font;
+    private Shader defaultShader;
     private Batch batch;
     private SpriteBatch spriteBatch;
+    private Assets assets;
 
     private MessageBox(string title, string message, Type type)
     {
         graphics = new GraphicsDeviceManager(this);
         IsMouseVisible = true;
         Window.Title = title;
-        Content.RootDirectory = "Assets";
         graphics.PreferredBackBufferWidth = width;
+        this.title = title;
+        this.message = message;
+        this.type = type;
+    }
 
-        font = new Font(Content, new[] {
-            "NotoSans-Regular.ttf",
-            "NotoSansKR-Regular.ttf"
-        }, 80, .25f);
+    protected override void LoadContent()
+    {
+        font = new Font(130, .14f);
+        assets = new Assets(GraphicsDevice, font,
+            Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Assets"), 4096, 4096);
+        defaultShader = assets.GetShader("default");
+        font.Init();
 
         StringBuilder resultMessage = new StringBuilder();
         int lines = 1;
@@ -60,8 +67,9 @@ public class MessageBox : Game
                 lines++;
             }
         }
+
         resultMessage.Append('\n').Append(title[last..]);
-        this.title = resultMessage.ToString().Trim();
+        title = resultMessage.ToString().Trim();
 
         resultMessage = new StringBuilder();
         lines = 1;
@@ -81,17 +89,16 @@ public class MessageBox : Game
                 lines++;
             }
         }
+
         resultMessage.Append('\n').Append(message[last..]);
 
-        graphics.PreferredBackBufferHeight = (int)Math.Ceiling(lines * font.LineHeight) + 100;
-        this.message = resultMessage.ToString().Trim();
-        this.type = type;
-    }
+        graphics.PreferredBackBufferHeight = (int) Math.Ceiling(lines * font.LineHeight) + 100;
+        message = resultMessage.ToString().Trim();
 
-    protected override void LoadContent()
-    {
         batch = new Batch(GraphicsDevice);
-        spriteBatch = new SpriteBatch(GraphicsDevice);
+        spriteBatch = new SpriteBatch(GraphicsDevice, assets.atlas);
+
+        graphics.ApplyChanges();
     }
 
     protected override void Draw(GameTime gameTime)
@@ -124,11 +131,14 @@ public class MessageBox : Game
                 batch.Color = error;
                 batch.DrawCircle(40, 40, 35, 6);
                 break;
-        };
+        }
+
+        ;
         batch.End();
 
-        spriteBatch.Begin();
-        spriteBatch.Text(font, text, type switch {
+        spriteBatch.Begin(defaultShader, assets.atlas.texture, 8172);
+        spriteBatch.Text(text, font, type switch
+        {
             Type.Info => "...",
             Type.Warning => "!",
             Type.Error => "X",
@@ -138,8 +148,8 @@ public class MessageBox : Game
             Type.Warning => new Vec2(38.5f, 30.5f),
             Type.Error => new Vec2(36.5f, 27),
         }, 3);
-        spriteBatch.Text(font, text, title, new Vec2(80, 30), 1.5f, Origin.Zero, Origin.Center);
-        spriteBatch.Text(font, text, message, new Vec2(10, 90), 1, Origin.Zero, Origin.Zero);
+        spriteBatch.Text(text, font, title, new Vec2(80, 30), 1.5f, 0, 0, 0);
+        spriteBatch.Text(text, font, message, new Vec2(10, 90), 1, 0, 0, 0);
         spriteBatch.End();
     }
 
@@ -149,5 +159,10 @@ public class MessageBox : Game
         dialog.Run();
     }
 
-    public enum Type : byte { Info, Warning, Error }
+    public enum Type : byte
+    {
+        Info,
+        Warning,
+        Error
+    }
 }

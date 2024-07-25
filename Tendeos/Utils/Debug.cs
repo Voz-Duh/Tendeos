@@ -1,14 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace Tendeos.Utils
 {
     public static class Debug
     {
-        private static int done;
-        public static bool Done => done == 0;
+        private static event Action showErrors;
 
         public static void Safe(Game game, Action action)
         {
@@ -29,24 +27,22 @@ namespace Tendeos.Utils
             Exception current = exception;
             while (current != null)
             {
-                ErrorBox(from, current);
                 from = $"{from}.{exception.GetType().Name}";
+                ErrorBox(from, current);
                 current = current.InnerException;
             }
         }
 
         private static void ErrorBox(string from, Exception exception)
         {
-            done++;
-            Task.Run(() =>
-            {
-                MessageBox.Show(from, $"Handled {exception.GetType().Name} \"{exception.Message}\"\n{exception.StackTrace}", MessageBox.Type.Error);
-                done--;
-            });
+            showErrors += () => MessageBox.Show(from,
+                $"Handled {exception.GetType().Name} \"{exception.Message}\"\n{exception.StackTrace}",
+                MessageBox.Type.Error);
         }
-        public static void WaitForDone()
+
+        public static void ShowErrors()
         {
-            while (!Done) { }
+            showErrors?.Invoke();
         }
     }
 }

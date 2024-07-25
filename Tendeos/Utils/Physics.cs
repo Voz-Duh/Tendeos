@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using System.Runtime.CompilerServices;
 using Tendeos.Utils.Graphics;
 using Tendeos.World;
 using Tendeos.World.Content;
@@ -13,7 +14,8 @@ namespace Tendeos.Utils
 
     public delegate void RaycastMapDelegate(int x, int y, Vec2 point, Vec2 normal, float distance);
 
-    public record struct RaycastHitInfo(Collider collider, Vec2 point, Vec2 normal, float distance) : IComparable<RaycastHitInfo>
+    public record struct RaycastHitInfo
+        (Collider collider, Vec2 point, Vec2 normal, float distance) : IComparable<RaycastHitInfo>
     {
         public int CompareTo(RaycastHitInfo o)
         {
@@ -26,38 +28,41 @@ namespace Tendeos.Utils
     {
         public const uint VELOCITY_ITERATIONS = 4;
         public const float VELOCITY_DIFFERENT = 1f / VELOCITY_ITERATIONS;
-        
+
         public static readonly SafeList<ColliderInfo> colliders = new SafeList<ColliderInfo>();
         private static readonly RaycastHitInfo[] colliderRays = new RaycastHitInfo[256];
         private static uint hitsCount;
 
         public static Vec2 Gravity { get; set; } = new Vec2(0, 9.8f);
         public static float Meter { get; set; }
+
         public static float TileSize
         {
             get => tileSize;
             set
             {
                 tileSize = value;
-                tileD2Size = value/2;
+                tileD2Size = value / 2;
             }
         }
+
         private static float tileSize;
-        private static float tileD2Size; 
+        private static float tileD2Size;
         public static IMap Map { get; set; }
 
         static Physics()
         {
             for (int i = 0; i < colliderRays.Length; i++)
             {
-                colliderRays[i].distance = float.MaxValue;   
+                colliderRays[i].distance = float.MaxValue;
             }
         }
 
         public static Collider Create(float width, float height, float evenness, float elastic)
         {
-            var collider = new Collider() { Size = new(width, height), evenness = evenness, elastic = elastic, index = colliders.Alloc() };
-            colliders[collider.index] = new ColliderInfo() { collider = collider };
+            var collider = new Collider()
+                {Size = new(width, height), evenness = evenness, elastic = elastic, index = colliders.Alloc()};
+            colliders[collider.index] = new ColliderInfo() {collider = collider};
             return collider;
         }
 
@@ -68,7 +73,9 @@ namespace Tendeos.Utils
         }
 
         #region RAYCASTS
-        public static void Raycast(RaycastDelegate action, Vec2 origin, Vec2 direction, float maxDistance, bool map = false)
+
+        public static void Raycast(RaycastDelegate action, Vec2 origin, Vec2 direction, float maxDistance,
+            bool map = false)
         {
             float rdistance = origin.X + direction.X * maxDistance;
             float
@@ -84,7 +91,8 @@ namespace Tendeos.Utils
             {
                 ColliderInfo info = colliders[y];
                 if (info.collider != null && info.collider.Overlap(mx, px, my, py)
-                    && Raycast(info.collider, origin, direction, maxDistance, out Vec2 point, out Vec2 normal, out float distance))
+                                          && Raycast(info.collider, origin, direction, maxDistance, out Vec2 point,
+                                              out Vec2 normal, out float distance))
                 {
                     colliderRays[hitsCount] = new RaycastHitInfo(info.collider, point, normal, distance);
                     hitsCount++;
@@ -101,20 +109,22 @@ namespace Tendeos.Utils
                 var (pcx, pcy) = Map.World2Cell(new Vec2(px, py));
                 TileData tile;
                 for (int x = mcx; x <= pcx; x++)
-                    for (y = mcy; y <= pcy; y++)
+                for (y = mcy; y <= pcy; y++)
+                {
+                    tile = Map.GetTile(true, x, y);
+                    if (tile.IsReference)
+                        tile = Map.GetTile(true, (int) tile.GetU32(0), (int) tile.GetU32(32));
+                    if (tile.HasCollision
+                        && RaycastMap(x, y, origin, direction, maxDistance, tile, out Vec2 point, out Vec2 normal,
+                            out float distance)
+                        && distance < rdistance)
                     {
-                        tile = Map.GetTile(true, x, y);
-                        if (tile.Tile is ReferenceTile)
-                            tile = Map.GetTile(true, (int)tile.GetU32(0), (int)tile.GetU32(32));
-                        if ((tile.Tile?.Collision ?? false)
-                            && RaycastMap(x, y, origin, direction, maxDistance, tile, out Vec2 point, out Vec2 normal, out float distance)
-                            && distance < rdistance)
-                        {
-                            rdistance = distance;
-                            rnormal = normal;
-                            rpoint = point;
-                        }
+                        rdistance = distance;
+                        rnormal = normal;
+                        rpoint = point;
                     }
+                }
+
                 if (rdistance != float.MaxValue)
                 {
                     colliderRays[hitsCount] = new RaycastHitInfo(null, rpoint, rnormal, rdistance);
@@ -132,7 +142,7 @@ namespace Tendeos.Utils
 
                 if (!done && action(info.collider, info.point, info.normal, info.distance))
                     done = true;
-                
+
                 colliderRays[i].distance = float.MaxValue;
             }
         }
@@ -156,22 +166,24 @@ namespace Tendeos.Utils
             int y, rx = 0, ry = 0;
             TileData tile;
             for (int x = mcx; x <= pcx; x++)
-                for (y = mcy; y <= pcy; y++)
+            for (y = mcy; y <= pcy; y++)
+            {
+                tile = Map.GetTile(true, x, y);
+                if (tile.IsReference)
+                    tile = Map.GetTile(true, (int) tile.GetU32(0), (int) tile.GetU32(32));
+                if (tile.HasCollision
+                    && RaycastMap(x, y, origin, direction, maxDistance, tile, out Vec2 point, out Vec2 normal,
+                        out float distance)
+                    && distance < rdistance)
                 {
-                    tile = Map.GetTile(true, x, y);
-                    if (tile.Tile is ReferenceTile)
-                        tile = Map.GetTile(true, (int)tile.GetU32(0), (int)tile.GetU32(32));
-                    if ((tile.Tile?.Collision ?? false)
-                        && RaycastMap(x, y, origin, direction, maxDistance, tile, out Vec2 point, out Vec2 normal, out float distance)
-                        && distance < rdistance)
-                    {
-                        rdistance = distance;
-                        rnormal = normal;
-                        rpoint = point;
-                        rx = x;
-                        ry = y;
-                    }
+                    rdistance = distance;
+                    rnormal = normal;
+                    rpoint = point;
+                    rx = x;
+                    ry = y;
                 }
+            }
+
             if (rdistance != float.MaxValue)
             {
                 action(rx, ry, rpoint, rnormal, rdistance);
@@ -206,7 +218,8 @@ namespace Tendeos.Utils
             RaycastMap(action, from, to, len);
         }
 
-        private static bool Raycast(Collider collider, Vec2 origin, Vec2 direction, float maxDistance, out Vec2 point, out Vec2 normal, out float distance)
+        private static bool Raycast(Collider collider, Vec2 origin, Vec2 direction, float maxDistance, out Vec2 point,
+            out Vec2 normal, out float distance)
         {
             float a = (origin.X - (collider.position.X + collider.halfSize.X)) / direction.X;
             float b = (origin.X - (collider.position.X - collider.halfSize.X)) / direction.X;
@@ -232,18 +245,30 @@ namespace Tendeos.Utils
             return true;
         }
 
-        private static bool RaycastMap(int x, int y, Vec2 origin, Vec2 direction, float maxDistance, TileData data, out Vec2 point, out Vec2 normal, out float distance)
+        private static bool RaycastMap(int x, int y, Vec2 origin, Vec2 direction, float maxDistance, TileData data,
+            out Vec2 point, out Vec2 normal, out float distance)
         {
-            if (data.HasTriangleCollision) return RaycastTriangleTile(x, y, origin, direction, maxDistance, data, out point, out normal, out distance);
-            else return RaycastAABBBTile(x, y, origin, direction, maxDistance, data, out point, out normal, out distance);
+            if (data.HasTriangleCollision)
+                return RaycastTriangleTile(x, y, origin, direction, maxDistance, data, out point, out normal,
+                    out distance);
+            else
+                return RaycastAABBBTile(x, y, origin, direction, maxDistance, data, out point, out normal,
+                    out distance);
         }
 
-        private static bool RaycastAABBBTile(int x, int y, Vec2 origin, Vec2 direction, float maxDistance, TileData data, out Vec2 point, out Vec2 normal, out float distance)
+        private static bool RaycastAABBBTile(int x, int y, Vec2 origin, Vec2 direction, float maxDistance,
+            TileData data, out Vec2 point, out Vec2 normal, out float distance)
         {
-            float a = (origin.X - (x * tileSize + data.CollisionXTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 })) / direction.X;
-            float b = (origin.X - (x * tileSize + data.CollisionXFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 })) / direction.X;
-            float c = (origin.Y - (y * tileSize + data.CollisionYTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 })) / direction.Y;
-            float d = (origin.Y - (y * tileSize + data.CollisionYFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 })) / direction.Y;
+            float a = (origin.X - (x * tileSize + data.CollisionXTo switch {1 => tileD2Size, 2 => tileSize, _ => 0})) /
+                      direction.X;
+            float b =
+                (origin.X - (x * tileSize + data.CollisionXFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0})) /
+                direction.X;
+            float c = (origin.Y - (y * tileSize + data.CollisionYTo switch {1 => tileD2Size, 2 => tileSize, _ => 0})) /
+                      direction.Y;
+            float d =
+                (origin.Y - (y * tileSize + data.CollisionYFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0})) /
+                direction.Y;
 
 
             point = Vec2.Zero;
@@ -264,104 +289,186 @@ namespace Tendeos.Utils
             else normal = -Vec2.UnitY;
             return true;
         }
-        
-        private static bool RaycastTriangleTile(int x, int y, Vec2 origin, Vec2 direction, float maxDistance, TileData data, out Vec2 point, out Vec2 normal, out float distance)
+
+        private static bool RaycastTriangleTile(int x, int y, Vec2 origin, Vec2 direction, float maxDistance,
+            TileData data, out Vec2 point, out Vec2 normal, out float distance)
         {
             Vec2 a = new Vec2(
-                x * TileSize + data.CollisionXFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
-                y * TileSize + data.CollisionYFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 });
+                x * TileSize + data.CollisionXFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                y * TileSize + data.CollisionYFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0});
             Vec2 b = new Vec2(
-                x * TileSize + data.CollisionXTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
-                y * TileSize + data.CollisionYTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 });
+                x * TileSize + data.CollisionXTo switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                y * TileSize + data.CollisionYTo switch {1 => tileD2Size, 2 => tileSize, _ => 0});
             Vec2 c = new Vec2(
-                x * TileSize + data.CollisionXAdd switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
-                y * TileSize + data.CollisionYAdd switch { 1 => tileD2Size, 2 => tileSize, _ => 0 });
+                x * TileSize + data.CollisionXAdd switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                y * TileSize + data.CollisionYAdd switch {1 => tileD2Size, 2 => tileSize, _ => 0});
 
             point = Vec2.Zero;
             normal = Vec2.Zero;
 
-            float ar = RaycastEdge(a, b, origin, direction, ref normal);
-            float br = RaycastEdge(b, c, origin, direction, ref normal);
-            float cr = RaycastEdge(c, a, origin, direction, ref normal);
+            var (ac, an, ar) = RaycastEdge(a, b, origin, direction);
+            var (bc, bn, br) = RaycastEdge(b, c, origin, direction);
+            var (cc, cn, cr) = RaycastEdge(c, a, origin, direction);
 
             distance = MathF.Min(ar, MathF.Min(br, cr));
 
+            //if (!(ac && bc) && !(bc && cc) && !(cc && ac)) return false;
+            if (distance == float.MaxValue) return false;
             if (distance > maxDistance) return false;
             point = origin + direction * distance;
+            
+            if (distance == ar) normal = an;
+            else if (distance == br) normal = bn;
+            else normal = cn;
 
             return true;
         }
 
-        
-        private static float RaycastEdge(Vec2 a, Vec2 b, Vec2 origin, Vec2 direction, ref Vec2 normal)
+
+        private static (bool, Vec2, float) RaycastEdge(Vec2 a, Vec2 b, Vec2 origin, Vec2 direction)
         {
             Vec2 edgeNormal = new Vec2(-(b.Y - a.Y), b.X - a.X);
             edgeNormal.Normalize();
 
-            float dot = Vec2.Dot(edgeNormal, direction);
-            if (dot < 0) return float.MaxValue;
             float cross = Vec2.Cross(Vec2.Normalize(b - a), b - origin);
-            if (cross < 0) return float.MaxValue;
-            normal = -edgeNormal;
-            return cross / dot;
+            if (cross < 0) return (false, Vec2.Zero, float.MaxValue);
+            float dot = Vec2.Dot(edgeNormal, direction);
+            if (dot <= 0) return (false, Vec2.Zero, float.MaxValue);
+            return (true, -edgeNormal, cross / dot);
         }
+
+        #endregion
+        
+        #region OVERLAP
+
+        public static bool Overlap(FRectangle rectangle)
+        {
+            var (mx, my) = Map.World2Cell(rectangle.Location);
+            var (px, py) = Map.World2Cell(rectangle.Location + rectangle.Size);
+            for (int x = mx; x <= px; x++)
+            for (int y = my; y <= py; y++)
+            {
+                TileData tile = Map.GetTile(true, x, y);
+                if (tile.IsReference)
+                    tile = Map.GetTile(true, (int) tile.GetU32(0), (int) tile.GetU32(32));
+                if (tile.HasCollision
+                    && Overlap(x * TileSize, y * TileSize, tile, tileD2Size, tileSize, rectangle))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool Overlap(float x, float y, TileData data, float tileD2Size, float tileSize, FRectangle rectangle)
+        {
+            if (data.HasTriangleCollision)
+                return OverlapTriangle(
+                    new Vec2(
+                        x + data.CollisionXFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                        y + data.CollisionYFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0}),
+                    new Vec2(
+                        x + data.CollisionXTo switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                        y + data.CollisionYTo switch {1 => tileD2Size, 2 => tileSize, _ => 0}),
+                    new Vec2(
+                        x + data.CollisionXAdd switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                        y + data.CollisionYAdd switch {1 => tileD2Size, 2 => tileSize, _ => 0}),
+                    rectangle.Location, rectangle.Location + rectangle.Size
+                );
+            return 
+                FRectangle.MinMax(
+                    x + data.CollisionXFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                    y + data.CollisionYFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                    x + data.CollisionXTo switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                    y + data.CollisionYTo switch {1 => tileD2Size, 2 => tileSize, _ => 0}
+                ).Overlap(rectangle);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool OverlapTriangle(Vec2 a, Vec2 b, Vec2 c, Vec2 min, Vec2 max)
+        {
+            return CheckEdgeOverlap(a, b, min, max)
+                   || CheckEdgeOverlap(b, c, min, max)
+                   || CheckEdgeOverlap(c, a, min, max);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool CheckEdgeOverlap(Vec2 edgeA, Vec2 edgeB, Vec2 min, Vec2 max)
+        {
+            Vec2 edgeNormal = new Vec2(edgeB.Y - edgeA.Y, -(edgeB.X - edgeA.X));
+
+            float edgeDot =
+                MathF.Max(
+                    Vec2.Dot(edgeNormal, edgeB - min),
+                    MathF.Max(
+                        Vec2.Dot(edgeNormal, edgeB - new Vec2(max.X, min.Y)),
+                        MathF.Max(
+                            Vec2.Dot(edgeNormal, edgeB - new Vec2(min.X, max.Y)),
+                            Vec2.Dot(edgeNormal, edgeB - max)
+                        )
+                    )
+                );
+
+            edgeDot = edgeDot / edgeNormal.Length();
+            
+            return edgeDot > 0;
+        }
+        
         #endregion
 
         public static void Process(float delta)
         {
-            IColliderEvents events;
-            int i, j, x, y, mx, my, px, py;
-            Vec2 rnormal, rvel, vel;
-            float rpush, bx, by;
-            ColliderInfo info;
-            TileData tile;
-            for (i = 0; i < colliders.Max; i++)
+            for (int i = 0; i < colliders.Max; i++)
             {
-                info = colliders[i];
+                ColliderInfo info = colliders[i];
                 if (info.collider != null && !info.collider.sleep)
                 {
-                    events = info.collider;
+                    IColliderEvents events = info.collider;
                     info.last = info.current;
                     info.current = false;
                     info.collider.velocity += Gravity * delta * Meter;
-                    for (j = 0; j < VELOCITY_ITERATIONS; j++)
+                    for (int j = 0; j < VELOCITY_ITERATIONS; j++)
                     {
                         info.current = false;
-                        rnormal = Vec2.Zero;
-                        rpush = float.MinValue;
-                        rvel = Vec2.Zero;
+                        Vec2 rnormal = Vec2.Zero;
+                        float rpush = float.MinValue;
+                        Vec2 rvel = Vec2.Zero;
 
                         info.collider.position += info.collider.velocity * delta * VELOCITY_DIFFERENT;
 
-                        (mx, my) = Map.World2Cell(info.collider.position - info.collider.halfSize);
-                        (px, py) = Map.World2Cell(info.collider.position + info.collider.halfSize);
-                        for (x = mx; x <= px; x++)
-                            for (y = my; y <= py; y++)
+                        var (mx, my) = Map.World2Cell(info.collider.position - info.collider.halfSize);
+                        var (px, py) = Map.World2Cell(info.collider.position + info.collider.halfSize);
+                        for (int x = mx; x <= px; x++)
+                        for (int y = my; y <= py; y++)
+                        {
+                            TileData tile = Map.GetTile(true, x, y);
+                            if (tile.IsReference)
+                                tile = Map.GetTile(true, (int) tile.GetU32(0), (int) tile.GetU32(32));
+                            if (tile.HasCollision)
                             {
-                                tile = Map.GetTile(true, x, y);
-                                if (tile.Tile is ReferenceTile)
-                                    tile = Map.GetTile(true, (int)tile.GetU32(0), (int)tile.GetU32(32));
-                                if (tile.Tile?.Collision ?? false)
+                                float bx = x * TileSize;
+                                float by = y * TileSize;
+                                Vec2 vel = info.collider.velocity;
+                                if (info.collider.Process(bx, by, tile, tileD2Size, tileSize, out Vec2 normal,
+                                        out float push, ref vel) && push > rpush)
                                 {
-                                    bx = x * TileSize; by = y * TileSize;
-                                    vel = info.collider.velocity;
-                                    if (info.collider.Process(bx, by, tile, tileD2Size, tileSize, out Vec2 normal, out float push, ref vel) && push > rpush)
+                                    rpush = push;
+                                    rvel = vel;
+                                    rnormal = normal;
+                                    info.current = true;
+                                    if (info.current)
                                     {
-                                        rpush = push;
-                                        rvel = vel;
-                                        rnormal = normal;
-                                        info.current = true;
-                                        if (info.current)
-                                        {
-                                            events.OnCollision(x, y, tile);
-                                            if (!info.last)
-                                                events.OnCollisionEnter(x, y, tile);
-                                        }
-                                        else if (info.last)
-                                            events.OnCollisionExit(x, y, tile);
+                                        events.OnCollision(x, y, tile);
+                                        if (!info.last)
+                                            events.OnCollisionEnter(x, y, tile);
                                     }
+                                    else if (info.last)
+                                        events.OnCollisionExit(x, y, tile);
                                 }
                             }
+                        }
+
                         if (info.current)
                         {
                             info.collider.position += rnormal * rpush;
@@ -392,6 +499,7 @@ namespace Tendeos.Utils
     {
         public uint index;
         public Vec2 halfSize;
+
         public Vec2 Size
         {
             get => halfSize * 2;
@@ -408,13 +516,28 @@ namespace Tendeos.Utils
         public bool sleep;
 
         private OnCollisionDelegate onCollisionEnter = (a, b, c) => { };
-        public event OnCollisionDelegate OnCollisionEnter { add => onCollisionEnter += value; remove => onCollisionEnter -= value; }
+
+        public event OnCollisionDelegate OnCollisionEnter
+        {
+            add => onCollisionEnter += value;
+            remove => onCollisionEnter -= value;
+        }
 
         private OnCollisionDelegate onCollisionExit = (a, b, c) => { };
-        public event OnCollisionDelegate OnCollisionExit { add => onCollisionExit += value; remove => onCollisionExit -= value; }
+
+        public event OnCollisionDelegate OnCollisionExit
+        {
+            add => onCollisionExit += value;
+            remove => onCollisionExit -= value;
+        }
 
         private OnCollisionDelegate onCollision = (a, b, c) => { };
-        public event OnCollisionDelegate OnCollision { add => onCollision += value; remove => onCollision -= value; }
+
+        public event OnCollisionDelegate OnCollision
+        {
+            add => onCollision += value;
+            remove => onCollision -= value;
+        }
 
         public bool Overlap(float mx, float px, float my, float py)
         {
@@ -425,27 +548,29 @@ namespace Tendeos.Utils
                 position.Y + halfSize.Y >= my;
         }
 
-        public bool Process(float x, float y, TileData data, float tileD2Size, float tileSize, out Vec2 normal, out float pushRange, ref Vec2 velocity)
+        public bool Process(float x, float y, TileData data, float tileD2Size, float tileSize, out Vec2 normal,
+            out float pushRange, ref Vec2 velocity)
         {
-            if (data.HasTriangleCollision) return ProcessTriangle(
-                new Vec2(
-                    x + data.CollisionXFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
-                    y + data.CollisionYFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 }),
-                new Vec2(
-                    x + data.CollisionXTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
-                    y + data.CollisionYTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 }),
-                new Vec2(
-                    x + data.CollisionXAdd switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
-                    y + data.CollisionYAdd switch { 1 => tileD2Size, 2 => tileSize, _ => 0 }),
-                position - halfSize, position + halfSize,
-                out normal, out pushRange, ref velocity
-            );
+            if (data.HasTriangleCollision)
+                return ProcessTriangle(
+                    new Vec2(
+                        x + data.CollisionXFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                        y + data.CollisionYFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0}),
+                    new Vec2(
+                        x + data.CollisionXTo switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                        y + data.CollisionYTo switch {1 => tileD2Size, 2 => tileSize, _ => 0}),
+                    new Vec2(
+                        x + data.CollisionXAdd switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                        y + data.CollisionYAdd switch {1 => tileD2Size, 2 => tileSize, _ => 0}),
+                    position - halfSize, position + halfSize,
+                    out normal, out pushRange, ref velocity
+                );
             return ProcessAABB(
                 new Vector4(
-                    x + data.CollisionXFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
-                    y + data.CollisionYFrom switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
-                    x + data.CollisionXTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 },
-                    y + data.CollisionYTo switch { 1 => tileD2Size, 2 => tileSize, _ => 0 }
+                    x + data.CollisionXFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                    y + data.CollisionYFrom switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                    x + data.CollisionXTo switch {1 => tileD2Size, 2 => tileSize, _ => 0},
+                    y + data.CollisionYTo switch {1 => tileD2Size, 2 => tileSize, _ => 0}
                 ),
                 out normal, out pushRange, ref velocity
             );
@@ -466,11 +591,13 @@ namespace Tendeos.Utils
                 normal = -Vec2.UnitX;
                 pushRange = pox;
             }
+
             if (pushRange > moy)
             {
                 normal = Vec2.UnitY;
                 pushRange = moy;
             }
+
             if (pushRange > mox)
             {
                 normal = Vec2.UnitX;
@@ -479,17 +606,20 @@ namespace Tendeos.Utils
 
             if (mox > 0 && pox > 0 && moy > 0 && poy > 0)
             {
-                velocity = velocity * Vec2.Abs(new Vec2(normal.Y, normal.X)) * evenness - velocity * Vec2.Abs(normal) * elastic;
+                velocity = velocity * Vec2.Abs(new Vec2(normal.Y, normal.X)) * evenness -
+                           velocity * Vec2.Abs(normal) * elastic;
                 return true;
             }
+
             return false;
         }
 
-        public bool ProcessTriangle(Vec2 a, Vec2 b, Vec2 c, Vec2 min, Vec2 max, out Vec2 normal, out float pushRange, ref Vec2 velocity)
+        public bool ProcessTriangle(Vec2 a, Vec2 b, Vec2 c, Vec2 min, Vec2 max, out Vec2 normal, out float pushRange,
+            ref Vec2 velocity)
         {
             normal = Vec2.Zero;
             pushRange = float.MaxValue;
-            
+
             CheckEdge(a, b, min, max, ref normal, ref pushRange);
             CheckEdge(b, c, min, max, ref normal, ref pushRange);
             CheckEdge(c, a, min, max, ref normal, ref pushRange);
@@ -499,9 +629,11 @@ namespace Tendeos.Utils
 
             if (pushRange > 0)
             {
-                velocity = velocity * Vec2.Abs(new Vec2(normal.Y, normal.X)) * evenness - velocity * Vec2.Abs(normal) * elastic;
+                velocity = velocity * Vec2.Abs(new Vec2(normal.Y, normal.X)) * evenness -
+                           velocity * Vec2.Abs(normal) * elastic;
                 return true;
             }
+
             return false;
         }
 
@@ -531,7 +663,8 @@ namespace Tendeos.Utils
             }
         }
 
-        private void CheckCorner(Vec2 corner, Vec2 otherA, Vec2 otherB, Vec2 min, Vec2 max, ref Vec2 normal, ref float pushRange)
+        private void CheckCorner(Vec2 corner, Vec2 otherA, Vec2 otherB, Vec2 min, Vec2 max, ref Vec2 normal,
+            ref float pushRange)
         {
             Vec2 cornerNormal = new Vec2(-(otherB.Y - otherA.Y), otherB.X - otherA.X);
 

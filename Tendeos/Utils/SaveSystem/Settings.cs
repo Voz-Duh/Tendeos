@@ -9,15 +9,21 @@ namespace Tendeos.Utils.SaveSystem
 {
     public static class Settings
     {
-        public static string AppData { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tendeos");
-        private static readonly Dictionary<(Type, string), object> data = new Dictionary<(Type, string), object>();
+        public static string AppData { get; } =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tendeos");
 
-        public static string GetString(string key) => (string)data[(Type.String, key)];
-        public static int GetInt(string key) => (int)data[(Type.Int, key)];
-        public static float GetFloat(string key) => (float)data[(Type.Float, key)];
-        public static bool GetBool(string key) => (bool)data[(Type.Bool, key)];
+        private static readonly Dictionary<(Type, string), object> data = new();
+        
+        private static event Action SetDefault;
+
+        public static string GetString(string key) => (string) data[(Type.String, key)];
+        public static int GetInt(string key) => (int) data[(Type.Int, key)];
+        public static float GetFloat(string key) => (float) data[(Type.Float, key)];
+        public static bool GetBool(string key) => (bool) data[(Type.Bool, key)];
 
         public static void Set(Type type, string key, object to) => data[(type, key)] = to;
+
+        public static void Default(Type type, string key, object to) => SetDefault += () => data[(type, key)] = to;
 
         public static async Task SaveAsync() => await Task.Run(Save);
         public static async Task LoadAsync() => await Task.Run(Load);
@@ -30,24 +36,25 @@ namespace Tendeos.Utils.SaveSystem
             buffer.Append(data.Count);
             foreach (var item in data)
             {
-                buffer.Append((byte)item.Key.Item1);
+                buffer.Append((byte) item.Key.Item1);
                 buffer.Append(item.Key.Item2);
                 switch (item.Key.Item1)
                 {
                     case Type.String:
-                        buffer.Append((string)item.Value);
+                        buffer.Append((string) item.Value);
                         break;
                     case Type.Int:
-                        buffer.Append((int)item.Value);
+                        buffer.Append((int) item.Value);
                         break;
                     case Type.Float:
-                        buffer.Append((float)item.Value);
+                        buffer.Append((float) item.Value);
                         break;
                     case Type.Bool:
-                        buffer.Append((bool)item.Value);
+                        buffer.Append((bool) item.Value);
                         break;
                 }
             }
+
             zStream.Close();
             stream.Close();
         }
@@ -56,10 +63,11 @@ namespace Tendeos.Utils.SaveSystem
         {
             string path = Path.Combine(AppData, ".settings");
             data.Clear();
+            
+            SetDefault();
 
             if (!File.Exists(path))
             {
-                Default();
                 Save();
                 return;
             }
@@ -72,7 +80,7 @@ namespace Tendeos.Utils.SaveSystem
             int length = buffer.ReadInt();
             for (int i = 0; i < length; i++)
             {
-                Type type = (Type)buffer.ReadByte();
+                Type type = (Type) buffer.ReadByte();
                 name = buffer.ReadString();
                 switch (type)
                 {
@@ -90,16 +98,11 @@ namespace Tendeos.Utils.SaveSystem
                         break;
                 }
 
-                data.Add((type, name), obj);
+                data[(type, name)] = obj;
             }
+
             zStream.Close();
             stream.Close();
-        }
-
-        private static void Default()
-        {
-            Set(Type.String, "language", "en");
-            Set(Type.Int, "shadow_smoothing", (int)ShadowMatrix.SmoothPower.Blocky);
         }
 
         public enum Type : byte

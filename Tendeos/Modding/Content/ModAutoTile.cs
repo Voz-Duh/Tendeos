@@ -1,5 +1,6 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Tendeos.Inventory;
 using Tendeos.Utils;
+using Tendeos.Utils.Graphics;
 using Tendeos.World;
 using Tendeos.World.Content;
 
@@ -8,7 +9,11 @@ namespace Tendeos.Modding.Content
     public class ModAutoTile : AutoTile, IModTile
     {
         public IModScript script { get; }
-        public IModMethod draw, update, start, destroy, changed, loaded;
+        private IModMethod draw, update, start, destroy, changed, loaded;
+        
+        public void SetSprites(Sprite[] sprites) => this.sprites = sprites;
+        public void SetItemSprite(Sprite sprite) => ItemSprite = sprite;
+        public void SetDrop(IItem drop) => Drop = drop;
 
         public ModAutoTile(IModScript script)
         {
@@ -20,13 +25,15 @@ namespace Tendeos.Modding.Content
             if (script?.has("destroy") ?? false) destroy = script.function("destroy");
         }
 
-        public override void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition, TileData data)
+        public override void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition,
+            TileData data)
         {
             if (draw == null) base.Draw(spriteBatch, top, map, x, y, drawPosition, data);
             else
             {
                 ModTileData tempData = new ModTileData(data);
-                draw.call(tempData, top, map, x, y, drawPosition, () => base.Draw(spriteBatch, top, map, x, y, drawPosition, data));
+                draw.call(tempData, top, map, x, y, drawPosition,
+                    () => base.Draw(spriteBatch, top, map, x, y, drawPosition, data));
             }
         }
 

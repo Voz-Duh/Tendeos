@@ -5,6 +5,7 @@ namespace Tendeos.Physical
     public class BodyTransform : ITransform
     {
         public bool flipX;
+
         public Vec2 Position
         {
             get => body.position;

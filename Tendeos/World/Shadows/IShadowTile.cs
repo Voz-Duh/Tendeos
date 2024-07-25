@@ -1,5 +1,4 @@
-﻿
-namespace Tendeos.World.Shadows
+﻿namespace Tendeos.World.Shadows
 {
     public interface IShadowTile
     {

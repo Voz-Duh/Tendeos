@@ -1,5 +1,6 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Tendeos.Inventory;
 using Tendeos.Utils;
+using Tendeos.Utils.Graphics;
 using Tendeos.World;
 using Tendeos.World.Content;
 
@@ -8,7 +9,10 @@ namespace Tendeos.Modding.Content
     public class ModTile : Tile, IModTile
     {
         public IModScript script { get; }
-        public IModMethod draw, update, start, destroy, changed, loaded;
+        private IModMethod draw, update, start, destroy, changed, loaded;
+        
+        public void SetItemSprite(Sprite sprite) => ItemSprite = sprite;
+        public void SetDrop(IItem drop) => Drop = drop;
 
         public ModTile(IModScript script)
         {
@@ -20,7 +24,8 @@ namespace Tendeos.Modding.Content
             if (script?.has("destroy") ?? false) destroy = script.function("destroy");
         }
 
-        public override void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition, TileData data)
+        public override void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition,
+            TileData data)
         {
             ModTileData tempData = new ModTileData(data);
             draw?.call(tempData, top, map, x, y, drawPosition);
@@ -45,7 +50,7 @@ namespace Tendeos.Modding.Content
             ModTileData tempData = new ModTileData(data);
             destroy?.call(tempData, top, map, x, y);
         }
-        
+
         public override void Loaded(bool top, IMap map, int x, int y, ref TileData data)
         {
             ModTileData tempData = new ModTileData(data);

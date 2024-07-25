@@ -6,10 +6,10 @@ namespace Tendeos.Inventory.Content
 {
     public class Pickaxe : MeleeWeapon
     {
-        public float Power { get; set; }
-        public float Radius { get; set; }
+        public float Power;
+        public float Radius;
 
-        public Pickaxe() : base()
+        public Pickaxe()
         {
             CanRight = true;
         }
@@ -17,7 +17,7 @@ namespace Tendeos.Inventory.Content
         public override void Attack(IMap map, Vec2 point)
         {
             base.Attack(map, point);
-            map.MineTile(Mouse.LeftDown, map.World2Cell(point), Power, Radius);
+            map.MineTile(Controls.UpHit, map.World2Cell(point), Power, Radius);
         }
     }
 }

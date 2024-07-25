@@ -6,14 +6,15 @@ namespace Tendeos.UI.GUIElements
 {
     public class ScrollButtons<T> : GUIElement
     {
-        protected readonly ScrollButtonsStyle style;
+        public readonly ScrollButtonsStyle style;
         protected readonly Action<T> buttonAction;
         protected readonly Icon<T> buttonIcon;
         protected readonly int maxButtonCount;
         protected int scroll;
         protected readonly T[] elements;
 
-        public ScrollButtons(Vec2 anchor, FRectangle rectangle, ScrollButtonsStyle style, Action<T> buttonAction, Icon<T> buttonIcon, int maxButtonCount, T[] elements) : base(anchor, rectangle)
+        public ScrollButtons(Vec2 anchor, FRectangle rectangle, ScrollButtonsStyle style, Action<T> buttonAction,
+            Icon<T> buttonIcon, int maxButtonCount, T[] elements, GUIElement[] childs = null) : base(anchor, rectangle, childs)
         {
             this.style = style;
             this.buttonAction = buttonAction;
@@ -35,12 +36,12 @@ namespace Tendeos.UI.GUIElements
         public override void OnAdd()
         {
             Add(new IntSlider(Vec2.Zero, Slider.Type.Up2Down, 0,
-                0, rectangle.Height,
+                0, Rectangle.Height,
                 style.ScrollSliderStyle,
                 Math.Max(elements.Length - maxButtonCount, 0),
                 () => scroll,
                 v => scroll = v));
-            float height = (rectangle.Height-maxButtonCount) / maxButtonCount;
+            float height = (Rectangle.Height - maxButtonCount) / maxButtonCount;
             int length = Math.Min(maxButtonCount, elements.Length);
             for (int i = 0; i < length; i++)
             {
@@ -48,8 +49,9 @@ namespace Tendeos.UI.GUIElements
                 Add(new Button(Vec2.Zero,
                     new FRectangle(
                         style.ScrollSliderStyle.Sprites[0].Rect.Height + 1, i * (height + 1),
-                        rectangle.Width - style.ScrollSliderStyle.Sprites[0].Rect.Height, height
-                    ), () => buttonAction(elements[__i + scroll]), style.ButtonStyle, Icon.From((batch, rect, self) => buttonIcon.Invoke(batch, rect, elements[__i + scroll], self))));
+                        Rectangle.Width - style.ScrollSliderStyle.Sprites[0].Rect.Height, height
+                    ), () => buttonAction(elements[__i + scroll]), style.ButtonStyle,
+                    Icon.From((batch, rect, self) => buttonIcon.Invoke(batch, rect, elements[__i + scroll], self))));
             }
         }
 

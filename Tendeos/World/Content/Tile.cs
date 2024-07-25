@@ -1,9 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using Tendeos.Content.Utlis;
 using Tendeos.Inventory;
 using Tendeos.Physical;
+using Tendeos.Physical.Content;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.Input;
@@ -12,7 +12,10 @@ namespace Tendeos.World.Content
 {
     public class Tile : ITile
     {
+        public virtual bool Multitile => false;
         public static readonly Color dark = new Color(0.56f, 0.5f, 0.51f);
+        public static readonly Color scheme = new HEXColor(0xADE7FF9B);
+        public static readonly Color invalideScheme = new HEXColor(0xFFADAD9B);
 
         public bool Collision { get; set; } = true;
 
@@ -23,7 +26,7 @@ namespace Tendeos.World.Content
 
         public int MaxCount { get; set; } = 100;
         [SpriteLoad("@_item")]
-        public Sprite ItemSprite { get; set; }
+        public Sprite ItemSprite { get; protected set; }
         public bool Flip => true;
         public bool Animated => false;
 
@@ -33,18 +36,21 @@ namespace Tendeos.World.Content
         public bool ShadowAvailable { get; set; } = true;
         public float ShadowIntensity { get; set; } = 0.5f;
 
-        public string DropTag { get; set; }
-        [ContentLoad("DropTag", true)]
-        public IItem Drop { get; set; }
+        public string DropTag;
+        [ContentLoad("DropTag", true)] public IItem Drop { get; protected set; }
         public Range DropCount { get; set; } = 1..1;
-        object ITile.RealInterface { get; set; }
-        TileInterface ITile.Interface { get; set; }
+        public ITileInterface Interface { get; set; }
 
         public virtual void Changed(bool top, IMap map, int x, int y, ref TileData data)
         {
         }
 
-        public virtual void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition, TileData data)
+        public virtual void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition,
+            TileData data)
+        {
+        }
+
+        public virtual void DrawScheme(SpriteBatch spriteBatch, Vec2 drawPosition, bool valid)
         {
         }
 
@@ -60,22 +66,49 @@ namespace Tendeos.World.Content
         {
         }
 
-        public void Use(IMap map, ITransform transform, ref byte armsState, ref float armLRotation, ref float armRRotation, ref int count, ref float timer, ArmData armData)
+        public virtual void Use(IMap map, ref TileData data, Player player)
+        {
+        }
+
+        public virtual void Unuse(IMap map, ref TileData data, Player player)
+        {
+        }
+
+        public void InArmUpdate(
+            IMap map, ITransform transform,
+            Vec2 lookDirection,
+            bool onGUI, bool leftDown, bool rightDown,
+            ref byte armsState,
+            ref float armLRotation,
+            ref float armRRotation,
+            ref int count,
+            ref float timer,
+            ArmData armData)
         {
             armsState = 1;
 
             if (!Mouse.OnGUI)
             {
                 if (Mouse.LeftDown)
-                    if (map.TryPlaceTile(true, this, map.World2Cell(Mouse.Position))) count -= 1;
+                    if (map.TryPlaceTile(true, this, map.World2Cell(Mouse.Position)))
+                        count -= 1;
                 if (Mouse.RightDown)
-                    if (map.TryPlaceTile(false, this, map.World2Cell(Mouse.Position))) count -= 1;
+                    if (map.TryPlaceTile(false, this, map.World2Cell(Mouse.Position)))
+                        count -= 1;
             }
         }
 
-        public void With(SpriteBatch spriteBatch, IMap map, ITransform transform, byte armsState, float armLRotation, float armRRotation, ArmData armData)
+        public void InArmDraw(
+            SpriteBatch spriteBatch,
+            IMap map, ITransform transform,
+            byte armsState,
+            float armLRotation,
+            float armRRotation,
+            ArmData armData)
         {
             spriteBatch.Rect(ItemSprite, transform.Local2World(new Vec2(2, -2)));
+            var cell = map.World2Cell(Mouse.Position);
+            DrawScheme(spriteBatch, map.Cell2World(cell), map.CanPlaceTile(true, cell));
         }
     }
 }

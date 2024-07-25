@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using Tendeos.Physical;
+﻿using Tendeos.Physical;
 using Tendeos.Utils.Graphics;
 using Tendeos.World;
 
@@ -9,12 +8,14 @@ namespace Tendeos.Utils
     {
         public Vec2 position;
         public float rotation;
+
         private Vec2
             emitLivetime = Vec2.One,
             emitRotation = Vec2.Zero,
             emitSize = Vec2.One,
             emitSpeed = Vec2.Zero,
             emits = Vec2.One;
+
         private Sprite[] emitAnimation;
         private float frameRate;
         private Particle[] particles;
@@ -26,7 +27,8 @@ namespace Tendeos.Utils
         {
         }
 
-        private Effect(Vec2 position, float rotation, Vec2 emitLivetime, Vec2 emitRotation, Vec2 emitSize, Vec2 emitSpeed, Vec2 emits, Sprite[] emitAnimation, float frameRate, Particle[] particles, float maxTime)
+        private Effect(Vec2 position, float rotation, Vec2 emitLivetime, Vec2 emitRotation, Vec2 emitSize,
+            Vec2 emitSpeed, Vec2 emits, Sprite[] emitAnimation, float frameRate, Particle[] particles, float maxTime)
         {
             this.position = position;
             this.rotation = rotation;
@@ -43,7 +45,7 @@ namespace Tendeos.Utils
 
         public Effect Spawn(Vec2 position, float angle)
         {
-            int len = URandom.SInt((int)emits.X, (int)emits.Y);
+            int len = URandom.SInt((int) emits.X, (int) emits.Y);
             float maxTime = 0;
             Particle[] particles = new Particle[len];
             for (int i = 0; i < len; i++)
@@ -59,7 +61,9 @@ namespace Tendeos.Utils
                 };
                 if (maxTime < time) maxTime = time;
             }
-            Effect clone = new Effect(position, angle, emitLivetime, emitRotation, emitSize, emitSpeed, emits, emitAnimation, frameRate, particles, maxTime);
+
+            Effect clone = new Effect(position, angle, emitLivetime, emitRotation, emitSize, emitSpeed, emits,
+                emitAnimation, frameRate, particles, maxTime);
             EffectManager.Add(clone);
             return clone;
         }
@@ -70,7 +74,8 @@ namespace Tendeos.Utils
             {
                 Particle p = particles[i];
                 if (timer > p.livetime) continue;
-                spriteBatch.Rect(emitAnimation[emitAnimation.Animation(frameRate, timer)], p.position + Vec2.RightOf(p.rotation + rotation) * timer * p.speed, p.rotation + rotation, p.size);
+                spriteBatch.Rect(emitAnimation[emitAnimation.Animation(frameRate, timer)],
+                    p.position + Vec2.RightOf(p.rotation + rotation) * timer * p.speed, p.size, p.rotation + rotation);
             }
         }
 
@@ -81,6 +86,7 @@ namespace Tendeos.Utils
         }
 
         #region Sets
+
         public void SetLivetime(float min, float max) => emitLivetime = new Vec2(min, max);
         public void SetLivetime(float value) => emitLivetime = new Vec2(value);
 
@@ -96,7 +102,8 @@ namespace Tendeos.Utils
         public void SetEmits(int min, int max) => emits = new Vec2(min, max);
         public void SetEmits(int value) => emits = new Vec2(value);
 
-        public void SetDraw(Sprite sprite) => emitAnimation = new Sprite[] { sprite };
+        public void SetDraw(Sprite sprite) => emitAnimation = new Sprite[] {sprite};
+
         public void SetDraw(Sprite[] animation, float frameRate, bool livetime = false)
         {
             emitAnimation = animation;
@@ -106,6 +113,7 @@ namespace Tendeos.Utils
                 emitLivetime = new Vec2((animation.Length - 1) * frameRate);
             }
         }
+
         #endregion
 
         private struct Particle

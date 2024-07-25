@@ -1,6 +1,6 @@
 ﻿using Tendeos.Utils;
 
-namespace Prototype.Graphics
+namespace Tendeos.UI
 {
     public interface IGUICamera
     {

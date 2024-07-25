@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System;
+﻿using System;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.Input;
@@ -8,18 +7,20 @@ namespace Tendeos.UI.GUIElements
 {
     public class Button : GUIElement
     {
-        protected readonly Style style;
+        public readonly Style style;
         protected Icon icon;
         protected Action action;
 
-        public Button(Vec2 anchor, FRectangle rectangle, Action action, Style style, Sprite icon) : base(anchor, rectangle)
+        public Button(Vec2 anchor, FRectangle rectangle, Action action, Style style, Sprite icon, GUIElement[] childs = null) : base(anchor,
+            rectangle, childs)
         {
             this.style = style;
             this.icon = Icon.From((spriteBatch, rectangle) => spriteBatch.Rect(icon, rectangle.Center));
             this.action = action;
         }
 
-        public Button(Vec2 anchor, FRectangle rectangle, Action action, Style style, Icon icon) : base(anchor, rectangle)
+        public Button(Vec2 anchor, FRectangle rectangle, Action action, Style style, Icon icon, GUIElement[] childs = null) : base(anchor,
+            rectangle, childs)
         {
             this.style = style;
             this.icon = icon;
@@ -32,6 +33,7 @@ namespace Tendeos.UI.GUIElements
             {
                 DrawRectWindow(spriteBatch, MouseOn ? Mouse.LeftDown ? style.Down : style.On : style.Idle, rectangle);
             }
+
             icon?.Invoke(spriteBatch, rectangle, this);
         }
 

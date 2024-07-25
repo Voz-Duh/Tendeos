@@ -1,10 +1,10 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Tendeos.Content;
 using Tendeos.Inventory;
 using Tendeos.Physical;
 using Tendeos.Physical.Content;
 using Tendeos.Utils;
+using Tendeos.Utils.Graphics;
 
 namespace Tendeos.World
 {
@@ -21,6 +21,7 @@ namespace Tendeos.World
                     return t;
                 }
             }
+
             return null;
         }
 
@@ -34,6 +35,7 @@ namespace Tendeos.World
                     list.Add(t);
                 }
             }
+
             return list.ToArray();
         }
 
@@ -41,6 +43,7 @@ namespace Tendeos.World
         {
             entity.ID = Entities.Add(entity);
         }
+
         public static void Remove(Entity entity)
         {
             Entities.Destroy(entity.ID);
@@ -83,7 +86,8 @@ namespace Tendeos.World
                 buffer.Append(item.Tag);
             buffer.Append(items.Count);
             foreach (Item item in items)
-                buffer.Append(itemTypes.IndexOf(item.item.Item1)).Append(item.item.Item2).Append(item.position.X).Append(item.position.Y).Append(item.velocity.X).Append(item.velocity.Y);
+                buffer.Append(itemTypes.IndexOf(item.item.Item1)).Append(item.item.Item2).Append(item.position.X)
+                    .Append(item.position.Y).Append(item.velocity.X).Append(item.velocity.Y);
         }
 
         public static void FromByte(ByteBuffer buffer)
@@ -96,8 +100,35 @@ namespace Tendeos.World
             buffer.Read(out int len);
             for (int i = 0; i < len; i++)
             {
-                Item item = new Item((items[buffer.ReadInt()], buffer.ReadInt()), new Vec2(buffer.ReadFloat(), buffer.ReadFloat()));
+                Item item = new Item((items[buffer.ReadInt()], buffer.ReadInt()),
+                    new Vec2(buffer.ReadFloat(), buffer.ReadFloat()));
                 buffer.Read(out item.velocity.X).Read(out item.velocity.Y);
+            }
+        }
+
+        public static class ViewlessDisposeLoop
+        {
+            public static float DisposeRange;
+            private static ThreadLoop viewlessDisposeThreadLoop = new(Loop, 1000*60*5);
+
+            private static void Loop(float _)
+            {
+                foreach (var (i, entity) in Entities.IndexEnumerable)
+                {
+                    // TODO: Multiplayer check.
+                    if (Vec2.Distance(entity.Position, Core.Player.Position) <= Core.ViewRadius)
+                    Remove(Entities[i]);
+                }
+            }
+
+            public static void Start()
+            {
+                viewlessDisposeThreadLoop.Start();
+            }
+
+            public static void End()
+            {
+                viewlessDisposeThreadLoop.Abort();
             }
         }
     }

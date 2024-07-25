@@ -1,59 +1,115 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
-    <RollForward>Major</RollForward>
-    <PublishReadyToRun>false</PublishReadyToRun>
-    <TieredCompilation>false</TieredCompilation>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>Icon.ico</ApplicationIcon>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
-  </PropertyGroup>
-  <ItemGroup>
-    <None Remove="Icon.ico" />
-    <None Remove="Icon.bmp" />
-    <None Remove="Scenes\GameplayScene.cs~RFb67a5fe.TMP" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Icon.ico" />
-    <EmbeddedResource Include="Icon.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="FontStashSharp.MonoGame" Version="1.3.6" />
-    <PackageReference Include="lz4net" Version="1.0.15.93" />
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
-    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
-    <PackageReference Include="NativeFileDialogSharp" Version="0.5.0" />
-    <PackageReference Include="TextCopy" Version="6.2.1" />
-    <PackageReference Include="Jint" Version="3.1.0" />
-    <PackageReference Include="NLua" Version="1.7.2" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="va">
-      <HintPath>.\va.dll</HintPath>
-    </Reference>
-    <Reference Include="Tendeos.Network">
-      <HintPath>.\Tendeos.Network.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Update=".\Noise.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update=".\Noise.so">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
-    <Message Text="Restoring dotnet tools" Importance="High" />
-    <Exec Command="dotnet tool restore" />
-  </Target>
+    <!-- Basic project settings -->
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <RollForward>Major</RollForward>
+        <PublishReadyToRun>false</PublishReadyToRun>
+        <TieredCompilation>false</TieredCompilation>
+        <LangVersion>latestmajor</LangVersion>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <!-- Application manifest and icon settings -->
+    <PropertyGroup>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationIcon>Icon.ico</ApplicationIcon>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <!-- Platform-specific conditions -->
+    <PropertyGroup>
+        <IS_WIN>false</IS_WIN>
+        <IS_OSX>false</IS_OSX>
+        <IS_LIN>false</IS_LIN>
+        <IS_WIN Condition="'$(OS)' == 'Windows_NT'">true</IS_WIN>
+        <IS_OSX Condition="'$(OS)' == 'Unix' And Exists('/System/Library/CoreServices/Finder.app')">true</IS_OSX>
+        <IS_LIN Condition="'$(OS)' == 'Unix' And !Exists('/System/Library/CoreServices/Finder.app')">true</IS_LIN>
+    </PropertyGroup>
+
+    <!-- Define constants for Debug configuration -->
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <DefineConstants Condition="$(IS_WIN)">$(DefineConstants);WINDOWS</DefineConstants>
+        <DefineConstants Condition="$(IS_OSX)">$(DefineConstants);MACOS</DefineConstants>
+        <DefineConstants Condition="$(IS_LIN)">$(DefineConstants);LINUX</DefineConstants>
+    </PropertyGroup>
+
+    <!-- Define constants for Release configuration -->
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <DefineConstants Condition="$(IS_WIN)">$(DefineConstants);WINDOWS</DefineConstants>
+        <DefineConstants Condition="$(IS_OSX)">$(DefineConstants);MACOS</DefineConstants>
+        <DefineConstants Condition="$(IS_LIN)">$(DefineConstants);LINUX</DefineConstants>
+    </PropertyGroup>
+
+    <!-- Remove default icons from None items -->
+    <ItemGroup>
+        <None Remove="Icon.ico" />
+        <None Remove="Icon.bmp" />
+    </ItemGroup>
+
+    <!-- Embed resources -->
+    <ItemGroup>
+        <EmbeddedResource Include="Icon.ico">
+            <LogicalName>Icon.ico</LogicalName>
+        </EmbeddedResource>
+        <EmbeddedResource Include="Icon.bmp">
+            <LogicalName>Icon.bmp</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <!-- Package references -->
+    <ItemGroup>
+        <PackageReference Include="FontStashSharp" Version="1.3.7" />
+        <PackageReference Include="lz4net" Version="1.0.15.93" />
+        <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
+        <PackageReference Include="NativeFileDialogSharp" Version="0.5.0" />
+        <PackageReference Include="TextCopy" Version="6.2.1" />
+        <PackageReference Include="Jint" Version="3.1.0" />
+        <PackageReference Include="NLua" Version="1.7.2" />
+    </ItemGroup>
+
+    <!-- Direct assembly references -->
+    <ItemGroup>
+        <Reference Include="Tendeos.Network" HintPath=".\Tendeos.Network.dll" />
+    </ItemGroup>
+
+    <!-- Shader files -->
+    <ItemGroup>
+        <ShaderFiles Include="Assets\**\*.shd" />
+    </ItemGroup>
+
+    <!-- Restore .NET tools -->
+    <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
+        <Message Text="Restoring dotnet tools" Importance="High" />
+        <Exec Command="dotnet tool restore" />
+
+        <!-- Check and install shader compiler if necessary -->
+        <Message Text="Checking and installing shader compiler if necessary" Importance="High" />
+
+        <!-- Windows -->
+        <Exec Command="where mgfxc || dotnet tool install -g dotnet-mgfxc" Condition="'$(OS)' == 'Windows_NT'" />
+
+        <!-- Unix-like -->
+        <Exec Command="command -v mgfxc || dotnet tool install -g dotnet-mgfxc" Condition="'$(OS)' != 'Windows_NT'" />
+
+        <!-- Compile shaders -->
+        <Message Text="Compiling shaders" Importance="High" />
+        <Exec Command="@(ShaderFiles->'mgfxc %(FullPath) %(RootDir)%(Directory)%(Filename).shdc /Profile:OpenGL')" />
+    </Target>
+
+    <!-- Asset files to be copied to the output directory -->
+    <ItemGroup>
+        <None Update="Assets\**\*.shdc" CopyToOutputDirectory="Always" />
+        <None Update="Assets\**\*.png" CopyToOutputDirectory="Always" />
+        <None Update="Assets\**\*.lng" CopyToOutputDirectory="Always" />
+        <None Update="Assets\**\*.ttf" CopyToOutputDirectory="Always" />
+        <None Update="Assets\**\*.sd" CopyToOutputDirectory="Always" />
+        <None Update="Assets\**\*.mis" CopyToOutputDirectory="Always" />
+        <None Update="Assets\**\*.cmis" CopyToOutputDirectory="Always" />
+
+        <None Update=".\Noise.dll" CopyToOutputDirectory="Always" Condition="$(IS_WIN)" />
+        <!-- No Noise.dylib rn. -->
+        <!-- <None Update=".\Noise.dylib" CopyToOutputDirectory="Always" Condition="$(IS_OSX)" /> -->
+        <None Update=".\Noise.so" CopyToOutputDirectory="Always" Condition="$(IS_LIN)" />
+    </ItemGroup>
 </Project>

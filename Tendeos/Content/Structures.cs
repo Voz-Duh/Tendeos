@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Content;
+﻿using Tendeos.Modding;
 using Tendeos.World.Structures;
 
 namespace Tendeos.Content
@@ -7,9 +7,9 @@ namespace Tendeos.Content
     {
         public static Structure test;
 
-        public static void Init(ContentManager content)
+        public static void Init()
         {
-            test = new Structure(@"
+            test = new Structure(MIS.GenerateVirtual(@"
 i: [ignore, ignore];
 s: [stone, stone];
 w: [stone, air];
@@ -21,9 +21,9 @@ struct: [
     [s, w, w, w, s],
     [i, s, s, s, i]
 ];
-");
+", "Virtual/test.mis"));
         }
 
-        public static Structure Get(string value) => (Structure)typeof(Structures).GetField(value).GetValue(null);
+        public static Structure Get(string value) => (Structure) typeof(Structures).GetField(value).GetValue(null);
     }
 }

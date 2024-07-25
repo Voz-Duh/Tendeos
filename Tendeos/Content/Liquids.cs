@@ -8,12 +8,12 @@ namespace Tendeos.Content
     {
         public static Liquid water, foo;
 
-        public static void Init(ContentManager content)
+        public static void Init()
         {
             water = new Liquid(Color.Aqua);
             foo = new Liquid(Color.BlueViolet);
         }
 
-        public static Liquid Get(string value) => (Liquid)typeof(Liquids).GetField(value).GetValue(null);
+        public static Liquid Get(string value) => (Liquid) typeof(Liquids).GetField(value).GetValue(null);
     }
 }

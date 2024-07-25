@@ -15,7 +15,9 @@ namespace Tendeos.Utils
         private bool abort;
         public bool paused;
 
-        public ThreadLoop(Action<float> action, int tick = 1) : this(action, tick, tick) { }
+        public ThreadLoop(Action<float> action, int tick = 1) : this(action, tick, tick)
+        {
+        }
 
         public ThreadLoop(Action<float> action, int tickFrom, int tickTo)
         {
@@ -52,7 +54,7 @@ namespace Tendeos.Utils
 
             while (!abort)
             {
-                float elapsedSeconds = stopwatch.ElapsedMilliseconds / 1000f;
+                float elapsedSeconds = paused ? 0 : stopwatch.ElapsedMilliseconds / 1000f;
                 stopwatch.Restart();
                 if (!paused) action(elapsedSeconds);
                 Thread.Sleep(URandom.SInt(tickFrom, tickTo));

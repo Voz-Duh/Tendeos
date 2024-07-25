@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Tendeos.Utils.Graphics;
 using Tendeos.UI;
 
 namespace Tendeos.Scenes
@@ -26,10 +26,16 @@ namespace Tendeos.Scenes
         public abstract void Clear();
         public abstract void Update();
         public abstract void Draw(SpriteBatch spriteBatch);
-        public virtual void OnResize() { }
-        public virtual void AfterDraw(SpriteBatch spriteBatch) { }
+
+        public virtual void OnResize()
+        {
+        }
+
+        public virtual void AfterDraw(SpriteBatch spriteBatch)
+        {
+        }
 
         public void SetValue(string name, object value) => GetType().GetField(name).SetValue(this, value);
-        public T GetValue<T>(string name) => (T)GetType().GetField(name).GetValue(this);
+        public T GetValue<T>(string name) => (T) GetType().GetField(name).GetValue(this);
     }
 }

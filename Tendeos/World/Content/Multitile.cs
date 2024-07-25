@@ -1,9 +1,10 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System;
+﻿using System;
+using System.Linq;
 using Tendeos.Content;
 using Tendeos.Content.Utlis;
 using Tendeos.Inventory;
 using Tendeos.Physical;
+using Tendeos.Physical.Content;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.Input;
@@ -12,6 +13,7 @@ namespace Tendeos.World.Content
 {
     public class Multitile : ITile
     {
+        bool ITile.Multitile => true;
         public bool Collision { get; set; }
 
         public string Tag { get; set; }
@@ -21,7 +23,7 @@ namespace Tendeos.World.Content
 
         public int MaxCount { get; set; } = 100;
         [SpriteLoad("@_item")]
-        public Sprite ItemSprite { get; set; }
+        public Sprite ItemSprite { get; protected set; }
         public bool Flip => true;
         public bool Animated => false;
 
@@ -33,26 +35,30 @@ namespace Tendeos.World.Content
 
         public string DropTag { get; set; }
         [ContentLoad("DropTag", true)]
-        public IItem Drop { get; set; }
-        public Range DropCount { get; set; }
+        public IItem Drop { get; protected set; }
+        public Range DropCount { get; set; } = 1..1;
 
         public Vec2 DrawOffset { get; set; }
         public (int x, int y)[] References { get; set; }
-        public bool FloorOnly { get; set; } = true;
+        public (int x, int y, bool floorOnly, bool isWall)[] Required { get; set; }
 
-        [SpriteLoad("@")]
-        public Sprite sprite;
+        [SpriteLoad("@")] protected Sprite sprite;
 
-        object ITile.RealInterface { get; set; }
-        TileInterface ITile.Interface { get; set; }
+        public ITileInterface Interface { get; set; }
 
         public virtual void Changed(bool top, IMap map, int x, int y, ref TileData data)
         {
         }
 
-        public virtual void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition, TileData data)
+        public virtual void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition,
+            TileData data)
         {
-            spriteBatch.Rect(sprite, drawPosition + DrawOffset * map.TileSize);
+            spriteBatch.Rect(sprite, drawPosition + DrawOffset);
+        }
+
+        public virtual void DrawScheme(SpriteBatch spriteBatch, Vec2 drawPosition, bool valid)
+        {
+            spriteBatch.Rect(valid ? Tile.scheme : Tile.invalideScheme, sprite, drawPosition + DrawOffset);
         }
 
         public virtual void Start(bool top, IMap map, int x, int y, ref TileData data)
@@ -84,34 +90,92 @@ namespace Tendeos.World.Content
             }
         }
 
-        public void Use(IMap map, ITransform transform, ref byte armsState, ref float armLRotation, ref float armRRotation, ref int count, ref float timer, ArmData armData)
+        public virtual void Use(IMap map, ref TileData data, Player player)
+        {
+        }
+
+        public virtual void Unuse(IMap map, ref TileData data, Player player)
+        {
+        }
+
+        public virtual void OnPlace(IMap map, ITransform transform, ref TileData data)
+        {
+        }
+
+        public void InArmUpdate(
+            IMap map, ITransform transform,
+            Vec2 lookDirection,
+            bool onGUI, bool leftDown, bool rightDown,
+            ref byte armsState,
+            ref float armLRotation,
+            ref float armRRotation,
+            ref int count,
+            ref float timer,
+            ArmData armData)
         {
             armsState = 1;
 
             if (!Mouse.OnGUI && Mouse.LeftDown)
             {
-                var (x, y) = map.World2Cell(Mouse.Position);
-                if (map.CanSetTile(true, x, y))
+                var cell = map.World2Cell(Mouse.Position - DrawOffset);
+                if (CanPlace(map, cell))
                 {
-                    bool can = true;
-                    for (int i = 0; i < References.Length; i++)
-                    {
-                        var (lx, ly) = References[i];
-                        if (!map.CanSetTile(true, x + lx, y + ly))
-                        {
-                            can = false;
-                            break;
-                        }
-                    }
-                    if (can) map.SetTile(true, this, x, y);
+                    map.SetTile(true, this, cell);
+                    OnPlace(map, transform, ref map.GetTile(true, cell));
                     count -= 1;
                 }
             }
         }
 
-        public void With(SpriteBatch spriteBatch, IMap map, ITransform transform, byte armsState, float armLRotation, float armRRotation, ArmData armData)
+        public void InArmDraw(
+            SpriteBatch spriteBatch,
+            IMap map, ITransform transform,
+            byte armsState,
+            float armLRotation,
+            float armRRotation,
+            ArmData armData)
         {
             spriteBatch.Rect(ItemSprite, transform.Local2World(new Vec2(2, -2)));
+
+            var cell = map.World2Cell(Mouse.Position - DrawOffset);
+            DrawScheme(spriteBatch, map.Cell2World(cell), CanPlace(map, cell));
+        }
+
+        public bool CanPlace(IMap map, (int x, int y) cell)
+        {
+            if (map.CanSetTile(true, cell))
+            {
+                for (int i = 0; i < References.Length; i++)
+                {
+                    var (lx, ly) = References[i];
+                    if (!map.CanSetTile(true, cell.x + lx, cell.y + ly))
+                    {
+                        return false;
+                    }
+                }
+
+                for (int i = 0; i < Required.Length; i++)
+                {
+                    var (lx, ly, floor, wall) = Required[i];
+                    if (wall && map.CanSetTile(false, cell.x + lx, cell.y + ly))
+                    {
+                        return false;
+                    }
+
+                    if (floor)
+                    {
+                        TileData data = map.GetTile(true, cell.x + lx, cell.y + ly);
+                        if (data.Tile == null || !data.IsFloor)
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

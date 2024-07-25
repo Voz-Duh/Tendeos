@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using Tendeos.Inventory;
+﻿using Tendeos.Inventory;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.SaveSystem;
@@ -16,6 +15,8 @@ namespace Tendeos.Physical.Content
         public Vec2 velocity;
         public Vec2 position;
         private bool droped;
+
+        public override Vec2 Position => position;
 
         public Item((IItem, int) item, Vec2 position, bool droped = false)
         {
@@ -52,6 +53,7 @@ namespace Tendeos.Physical.Content
                 }
             }
             else droped = false;
+
             if (!collided) position += velocity * Time.Delta;
             velocity += Physics.Gravity * Time.Delta * Physics.Meter;
         }

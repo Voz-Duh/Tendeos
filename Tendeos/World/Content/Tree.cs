@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System;
+﻿using System;
 using Tendeos.Content;
 using Tendeos.Content.Utlis;
 using Tendeos.Physical.Content;
@@ -10,12 +9,16 @@ namespace Tendeos.World.Content
 {
     public class Tree : Tile
     {
-        [SpriteLoad("@", 3, 1, 1)]
-        public Sprite[] sprites;
-        [SpriteLoad("@_trunk", 4, 4, 1)]
-        public Sprite[] trunkSprites;
-        [SpriteLoad("@_crown", 2, 2, 1)]
-        public Sprite[] crownSprites;
+        public override bool Multitile => true;
+
+        [SpriteLoad("@"), SplitSprite(3, 1, 1)]
+        protected Sprite[] sprites;
+
+        [SpriteLoad("@_trunk"), SplitSprite(4, 4, 1)]
+        protected Sprite[] trunkSprites;
+
+        [SpriteLoad("@_crown"), SplitSprite(2, 2, 1)]
+        protected Sprite[] crownSprites;
 
         public Range Height { get; set; } = 3..5;
 
@@ -29,7 +32,7 @@ namespace Tendeos.World.Content
 
         public override void Start(bool top, IMap map, int x, int y, ref TileData data)
         {
-            byte value = (byte)URandom.SInt(Height.Start.Value, Height.End.Value);
+            byte value = (byte) URandom.SInt(Height.Start.Value, Height.End.Value);
             data.SetU8(0, value);
 
             ReferenceTile.Next = (x, y);
@@ -48,14 +51,19 @@ namespace Tendeos.World.Content
             }
         }
 
-        public override void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition, TileData data)
+        public override void Draw(SpriteBatch spriteBatch, bool top, IMap map, int x, int y, Vec2 drawPosition,
+            TileData data)
         {
             spriteBatch.Rect(sprites[1], drawPosition, 0, 1.01f);
             byte value = data.GetU8(0);
 
             Random random = new Random(x + value);
             for (int i = 1; i <= value; i++)
-                spriteBatch.Rect(i == value ? crownSprites[random.Next(crownSprites.Length)] : trunkSprites[random.Next(trunkSprites.Length)], drawPosition - new Vec2(0, i) * map.TileSize, 0, 1.01f);
+                spriteBatch.Rect(
+                    i == value
+                        ? crownSprites[random.Next(crownSprites.Length)]
+                        : trunkSprites[random.Next(trunkSprites.Length)], drawPosition - new Vec2(0, i) * map.TileSize,
+                    0, 1.01f);
         }
 
         public override void Destroy(bool top, IMap map, int x, int y, TileData data)

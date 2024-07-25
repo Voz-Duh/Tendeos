@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Tendeos.Physical.Content;
 using Tendeos.Utils;
-using Tendeos.Utils.Graphics;
 
 namespace Tendeos.UI.GUIElements
 {
@@ -11,7 +10,8 @@ namespace Tendeos.UI.GUIElements
         protected readonly GUIElement parent;
         public readonly Style style;
 
-        public PlayerInventoryContainer(GUIElement GUI, Style style) : base(style.Width * style.Height + style.Addative.Length)
+        public PlayerInventoryContainer(GUIElement GUI, Style style) : base(style.Width * style.Height +
+                                                                            style.Addative.Length)
         {
             parent = GUI;
             this.style = style;
@@ -20,10 +20,11 @@ namespace Tendeos.UI.GUIElements
         public override Inventory.Inventory Copy() =>
             new PlayerInventoryContainer(parent, style);
 
-        public override void Open(Vec2 offset)
+        public override void Open(Vec2 anchor, Vec2 offset, string _)
         {
-            base.Open(offset);
-            style.Window.rectangle.Location = offset;
+            base.Open(anchor, offset, _);
+            style.Window.Anchor = anchor;
+            style.Window.Rectangle.Location = offset;
             parent.Add(style.Window.Add(OpenButtons()));
         }
 
@@ -31,32 +32,37 @@ namespace Tendeos.UI.GUIElements
         {
             int x, y;
             for (x = 0; x < style.Width; x++)
-                for (y = 0; y < style.Height; y++)
-                {
-                    int i = x + y * style.Width;
-                    yield return new Button(new Vec2(0, 0), new FRectangle(
+            for (y = 0; y < style.Height; y++)
+            {
+                int i = x + y * style.Width;
+                yield return new Button(new Vec2(0, 0), new FRectangle(
                         style.ButtonsOffset.X + x * (style.SlotSize + 1),
                         style.ButtonsOffset.Y + y * (style.SlotSize + 1),
                         style.SlotSize, style.SlotSize),
-                        () => Get(i), style.ButtonStyle,
-                        Icon.From((spriteBatch, rectangle) =>
-                        {
-                            if (Items[i].item == null) return;
-                            spriteBatch.Rect(Items[i].item.ItemSprite, rectangle.Center);
-                            spriteBatch.Text(Core.Font, $"{Items[i].count}", new Vec2(rectangle.Right, rectangle.Top), 1, Origin.One, Origin.One);
-                        }));
-                }
+                    () => Get(i), style.ButtonStyle,
+                    Icon.From((spriteBatch, rectangle) =>
+                    {
+                        if (Items[i].item == null) return;
+                        spriteBatch.Rect(Items[i].item.ItemSprite, rectangle.Center);
+                        spriteBatch.Text(Core.Font, $"{Items[i].count}", new Vec2(rectangle.Right, rectangle.Bottom), 1, 0,
+                            1, 1);
+                    }));
+            }
+
             for (x = 0; x < style.Addative.Length; x++)
             {
                 int i = style.Width * style.Height + x,
                     j = x;
-                yield return new Button(new Vec2(0, 0), new FRectangle(style.Addative[j].Item1.X, style.Addative[j].Item1.Y, style.SlotSize, style.SlotSize),
+                yield return new Button(new Vec2(0, 0),
+                    new FRectangle(style.Addative[j].Item1.X, style.Addative[j].Item1.Y, style.SlotSize,
+                        style.SlotSize),
                     () => Get(i, style.Addative[j].Item2), style.ButtonStyle,
                     Icon.From((spriteBatch, rectangle) =>
                     {
                         if (Items[i].item == null) return;
                         spriteBatch.Rect(Items[i].item.ItemSprite, rectangle.Center);
-                        spriteBatch.Text(Core.Font, $"{Items[i].count}", new Vec2(rectangle.Right, rectangle.Top), 1, Origin.One, Origin.One);
+                        spriteBatch.Text(Core.Font, $"{Items[i].count}", new Vec2(rectangle.Right, rectangle.Bottom), 1, 0,
+                            1, 1);
                     }));
             }
         }
@@ -70,6 +76,7 @@ namespace Tendeos.UI.GUIElements
                 int count = Add(Selected.item, Selected.count);
                 if (count != 0) new Item((Selected.item, count), position);
             }
+
             Selected = default;
         }
 
@@ -82,8 +89,9 @@ namespace Tendeos.UI.GUIElements
             public Button.Style ButtonStyle { get; }
             public Vec2 ButtonsOffset { get; }
             public (Vec2, Type)[] Addative { get; }
-            
-            public Style(GUIElement window, int width, int height, float slotSize, Button.Style buttonStyle, Vec2 buttonsOffset, params (Vec2, Type)[] addative)
+
+            public Style(GUIElement window, int width, int height, float slotSize, Button.Style buttonStyle,
+                Vec2 buttonsOffset, params (Vec2, Type)[] addative)
             {
                 Window = window;
                 Width = width;

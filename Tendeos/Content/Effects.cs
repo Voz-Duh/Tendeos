@@ -8,16 +8,16 @@ namespace Tendeos.Content
     {
         public static Effect slashMedium;
 
-        public static void Init(ContentManager content)
+        public static void Init(Assets assets)
         {
             //Sprite slashSmallSprite = Sprite.Load(content, "slash_small");
 
             slashMedium = new Effect();
-            slashMedium.SetDraw(Sprite.Load(content, "effects/slash_medium").Split(3, 1, 1), 0.15f, true);
+            slashMedium.SetDraw(assets.GetSprite("effects/slash_medium").Split(3, 1, 1), 0.15f, true);
             slashMedium.SetEmits(1);
             slashMedium.SetSpeed(50);
         }
 
-        public static Effect Get(string value) => (Effect)typeof(Effects).GetField(value).GetValue(null);
+        public static Effect Get(string value) => (Effect) typeof(Effects).GetField(value).GetValue(null);
     }
 }

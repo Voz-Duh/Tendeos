@@ -32,6 +32,7 @@ namespace Tendeos.Synchronization
                         .Append(collider.velocity.X).Append(collider.velocity.Y));
                 }
             }
+
             return objects.ToArray();
         }
     }

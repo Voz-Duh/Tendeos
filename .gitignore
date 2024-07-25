@@ -396,5 +396,10 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-*.aseprite
+
+
+# Custom
 .vscode/settings.json
+*.aseprite
+*.shdc
+/.idea

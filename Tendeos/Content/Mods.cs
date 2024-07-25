@@ -1,12 +1,11 @@
-﻿using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using Tendeos.Modding;
 using Tendeos.Modding.Content;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.SaveSystem;
+using Tendeos.World.Content;
 
 namespace Tendeos.Content
 {
@@ -27,7 +26,7 @@ namespace Tendeos.Content
                     mod.mainScript.invoke(name, value);
         }
 
-        public static void Init(SpriteBatch spriteBatch, ContentManager content)
+        public static void Init(SpriteBatch spriteBatch, Assets assets)
         {
             string modsPath = Path.Combine(Settings.AppData, "mods");
             if (!Directory.Exists(modsPath))
@@ -35,48 +34,57 @@ namespace Tendeos.Content
                 Directory.CreateDirectory(modsPath);
                 return;
             }
+
             foreach (string next in Directory.GetDirectories(modsPath))
             {
-                Mod mod = new Mod(next, spriteBatch, content);
-                if (mod.Objects.TryGetValue("", out MISObject modObject))
-                    if (modObject.type == "mod")
+                string misPath = Path.Combine(next, ".mis");
+                if (!File.Exists(misPath)) continue;
+                MISObject modObject = MIS.Generate(misPath);
+                if (modObject.type == "mod")
+                {
+                    string tag = "";
+                    string script = "";
+                    string name = tag;
+                    string description = $"{tag}_description";
+                    int atlasWidth = 4080;
+                    int atlasHeight = 4080;
+                    modObject.Chain()
+                        .Require("tag", (MISKey key) => tag = key.value)
+                        .Check("script", (string path) => script = path)
+                        .Check("name", (string key) => name = key)
+                        .Check("description", (string key) => name = key)
+                        .Check("atlasSize", (double s) => atlasWidth = atlasHeight = (int) s)
+                        .Check("atlasSize", (double w, double h) => (atlasWidth, atlasHeight) = ((int) w, (int) h));
+                    assets.AddFrom(next);
+                    Mod mod = new Mod(next, spriteBatch, assets)
                     {
-                        string tag = "";
-                        string script = "";
-                        string name = tag;
-                        string description = $"{tag}_description";
-                        modObject
-                            .Require("tag", (MISKey key) => tag = key.value)
-                            .Check("script", (string path) => script = path)
-                            .Check("name", (string key) => name = key)
-                            .Check("description", (string key) => name = key);
-                        mod.Tag = tag;
-                        mod.Name = name;
-                        mod.Description = description;
-                        if (Loaded.TryAdd(tag, mod))
+                        Tag = tag,
+                        Name = name,
+                        Description = description
+                    };
+                    if (Loaded.TryAdd(tag, mod))
+                    {
+                        if (mod.Scripts.TryGetValue(script, out IModScript modScript))
                         {
-                            if (mod.Scripts.TryGetValue(script, out IModScript modScript))
-                            {
-                                mod.mainScript = modScript;
-                                modScript.Init();
-                            }
+                            mod.mainScript = modScript;
+                            modScript.Init();
                         }
-                        else throw new DuplicateNameException($"Mod {next[(modsPath.Length + 1)..]}: duplicate.");
                     }
-                    else throw new InvalidDataException($"Mod {next[(modsPath.Length + 1)..]}: the main \".MIS\" file have not \"mod\" type.");
-                else throw new FileNotFoundException($"Mod {next[(modsPath.Length + 1)..]} do not have \".MIS\" file.");
+                    else throw new DuplicateNameException($"Mod {next[(modsPath.Length + 1)..]}: duplicate.");
+                }
             }
         }
 
-        public static void Start(GraphicsDevice graphicsDevice)
+        public static void Start()
         {
             foreach (Mod mod in Loaded.Values)
             {
-                foreach (var (path, mis) in mod.Objects)
+                foreach (var (path, mis) in mod.assets.GetMISDictionary())
                 {
                     string tag = path;
-                    string script = path;
-                    mis.Check("tag", (MISKey arg0) => tag = arg0.value)
+                    string script = tag;
+                    mis.Chain()
+                        .Check("tag", (MISKey arg0) => tag = arg0.value)
                         .Check("script", (string arg0) => script = arg0);
                     IModScript objScript = mod.Scripts.TryGetValue(script, out IModScript value) ? value : null;
                     string stmp;
@@ -85,64 +93,71 @@ namespace Tendeos.Content
                         case "tile":
                             ModTile tile = new ModTile(objScript)
                             {
-                                Tag = path,
-                                Description = path,
+                                Tag = tag,
+                                Description = tag,
                             };
-                            tile.Drop = tile;
-                            stmp = path;
-                            mis.Check("name", (string arg0) => tile.Name = arg0)
+                            tile.SetDrop(tile);
+                            stmp = tag;
+                            mis.Chain()
+                                .Check("name", (string arg0) => tile.Name = arg0)
                                 .Check("description", (string arg0) => tile.Description = arg0)
-                                .Check("health", (double arg0) => tile.Health = (float)arg0)
-                                .Check("hardness", (double arg0) => tile.Hardness = (byte)arg0)
+                                .Check("health", (double arg0) => tile.Health = (float) arg0)
+                                .Check("hardness", (double arg0) => tile.Hardness = (byte) arg0)
                                 .Check("have_collision", (bool arg0) => tile.Collision = arg0)
-                                .Check("max_count", (double arg0) => tile.MaxCount = (int)arg0)
-                                .Check("shadow", (double arg0) => tile.ShadowIntensity = (float)arg0)
-                                .Check("shadow", (double arg0, bool arg1) => {
-                                    tile.ShadowIntensity = (float)arg0;
+                                .Check("max_count", (double arg0) => tile.MaxCount = (int) arg0)
+                                .Check("shadow", (double arg0) => tile.ShadowIntensity = (float) arg0)
+                                .Check("shadow", (double arg0, bool arg1) =>
+                                {
+                                    tile.ShadowIntensity = (float) arg0;
                                     tile.ShadowAvailable = arg1;
                                 })
-                                .Check("shadow", (bool arg0, double arg1) => {
-                                    tile.ShadowIntensity = (float)arg1;
+                                .Check("shadow", (bool arg0, double arg1) =>
+                                {
+                                    tile.ShadowIntensity = (float) arg1;
                                     tile.ShadowAvailable = arg0;
                                 })
                                 .Check("shadow", (bool arg0) => tile.ShadowAvailable = arg0)
-                                .Check("drop_item", (MISRange arg0) => tile.DropCount = (int)arg0.from..(int)arg0.to)
-                                .Check("drop_item", (double arg0) => tile.DropCount = (int)arg0..(int)arg0)
+                                .Check("drop_item", (MISRange arg0) => tile.DropCount = (int) arg0.from..(int) arg0.to)
+                                .Check("drop_item", (double arg0) => tile.DropCount = (int) arg0..(int) arg0)
                                 .Check("item_sprite", (string arg0) => stmp = arg0);
-                            tile.ItemSprite = Sprite.Load(graphicsDevice, Path.Combine(mod.Path, $"{stmp.Replace("@", path)}.png"));
+                            tile.SetItemSprite(mod.assets.GetSprite(stmp.Replace("@", tag)));
                             mod.Tiles[tag] = tile;
                             break;
                         case "auto_tile":
                             ModAutoTile auto_tile = new ModAutoTile(objScript)
                             {
-                                Tag = path,
-                                Description = path,
+                                Tag = tag,
+                                Description = tag,
                             };
-                            auto_tile.Drop = auto_tile;
-                            stmp = $"{path}_item";
-                            mis.Check("name", (string arg0) => auto_tile.Name = arg0)
+                            auto_tile.SetDrop(auto_tile);
+                            stmp = $"{tag}_item";
+                            mis.Chain()
+                                .Check("name", (string arg0) => auto_tile.Name = arg0)
                                 .Check("description", (string arg0) => auto_tile.Description = arg0)
-                                .Check("health", (double arg0) => auto_tile.Health = (float)arg0)
-                                .Check("hardness", (double arg0) => auto_tile.Hardness = (byte)arg0)
+                                .Check("health", (double arg0) => auto_tile.Health = (float) arg0)
+                                .Check("hardness", (double arg0) => auto_tile.Hardness = (byte) arg0)
                                 .Check("have_collision", (bool arg0) => auto_tile.Collision = arg0)
-                                .Check("max_count", (double arg0) => auto_tile.MaxCount = (int)arg0)
-                                .Check("shadow", (double arg0) => auto_tile.ShadowIntensity = (float)arg0)
-                                .Check("shadow", (double arg0, bool arg1) => {
-                                    auto_tile.ShadowIntensity = (float)arg0;
+                                .Check("max_count", (double arg0) => auto_tile.MaxCount = (int) arg0)
+                                .Check("shadow", (double arg0) => auto_tile.ShadowIntensity = (float) arg0)
+                                .Check("shadow", (double arg0, bool arg1) =>
+                                {
+                                    auto_tile.ShadowIntensity = (float) arg0;
                                     auto_tile.ShadowAvailable = arg1;
                                 })
-                                .Check("shadow", (bool arg0, double arg1) => {
-                                    auto_tile.ShadowIntensity = (float)arg1;
+                                .Check("shadow", (bool arg0, double arg1) =>
+                                {
+                                    auto_tile.ShadowIntensity = (float) arg1;
                                     auto_tile.ShadowAvailable = arg0;
                                 })
                                 .Check("shadow", (bool arg0) => auto_tile.ShadowAvailable = arg0)
-                                .Check("drop_item", (MISRange arg0) => auto_tile.DropCount = (int)arg0.from..(int)arg0.to)
-                                .Check("drop_item", (double arg0) => auto_tile.DropCount = (int)arg0..(int)arg0)
+                                .Check("drop_item",
+                                    (MISRange arg0) => auto_tile.DropCount = (int) arg0.from..(int) arg0.to)
+                                .Check("drop_item", (double arg0) => auto_tile.DropCount = (int) arg0..(int) arg0)
                                 .Check("item_sprite", (string arg0) => stmp = arg0);
-                            auto_tile.ItemSprite = Sprite.Load(graphicsDevice, Path.Combine(mod.Path, $"{stmp.Replace("@", path)}.png"));
-                            stmp = path;
+                            auto_tile.SetItemSprite(mod.assets.GetSprite(stmp.Replace("@", tag)));
+                            stmp = tag;
                             mis.Check("sprite", (string arg0) => stmp = arg0);
-                            auto_tile.sprites = Sprite.Load(graphicsDevice, Path.Combine(mod.Path, $"{stmp.Replace("@", path)}.png")).Split(4, 4, 1);
+                            auto_tile.SetSprites(mod.assets.GetSprite(stmp.Replace("@", tag)).Split(4, 4, 1));
                             mod.Tiles[tag] = auto_tile;
                             break;
                     }

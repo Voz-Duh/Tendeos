@@ -11,7 +11,7 @@ namespace Tendeos.Content
         public static Cave strangeCave;
         public static Biome hills, test;
 
-        public static void Init(ContentManager content)
+        public static void Init()
         {
             strangeCave = new Cave()
             {
@@ -55,7 +55,7 @@ namespace Tendeos.Content
                 },
                 Enemies = new EnemyBuilder[]
                 {
-                    Entities.dummy
+                    Entities.zombie_0, Entities.zombie_1, Entities.zombie_2, Entities.zombie_3, Entities.zombie_4, Entities.zombie_5, Entities.zombie_6, Entities.zombie_7, Entities.zombie_8, Entities.zombie_9, Entities.zombie_10, Entities.zombie_11, Entities.zombie_12, Entities.zombie_13, Entities.zombie_14, Entities.zombie_15, Entities.zombie_16, Entities.zombie_17, Entities.zombie_18, Entities.zombie_19, Entities.zombie_20, Entities.zombie_21, Entities.zombie_22, Entities.zombie_23, Entities.zombie_24, Entities.zombie_25, Entities.zombie_26, Entities.zombie_27, Entities.zombie_28, Entities.zombie_29, Entities.zombie_30, Entities.zombie_31, Entities.zombie_32,
                 },
                 Structures = new Structure[]
                 {
@@ -64,6 +64,6 @@ namespace Tendeos.Content
             };
         }
 
-        public static BaseBiome Get(string value) => (BaseBiome)typeof(Biomes).GetField(value).GetValue(null);
+        public static BaseBiome Get(string value) => (BaseBiome) typeof(Biomes).GetField(value).GetValue(null);
     }
 }

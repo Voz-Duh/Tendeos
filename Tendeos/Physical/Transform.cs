@@ -47,6 +47,8 @@ namespace Tendeos.Physical
         public Vec2 Local2World(Vec2 point) => Vec2.Transform(point, Matrix);
         public Vec2 World2Local(Vec2 point) => Vec2.Transform(point, XMatrix.Invert(Matrix));
 
-        private XMatrix Matrix => (parent?.Matrix ?? XMatrix.Identity) * (XMatrix.CreateTranslation(flipX ? -position.X : position.X, position.Y, 0) * XMatrix.CreateRotationZ(rotation) * XMatrix.CreateScale(1));
+        private XMatrix Matrix => (parent?.Matrix ?? XMatrix.Identity) *
+                                  (XMatrix.CreateTranslation(flipX ? -position.X : position.X, position.Y, 0) *
+                                   XMatrix.CreateRotationZ(rotation) * XMatrix.CreateScale(1));
     }
 }

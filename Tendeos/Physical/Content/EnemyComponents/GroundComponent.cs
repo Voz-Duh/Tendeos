@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using Tendeos.Content.Utlis;
+﻿using Tendeos.Content.Utlis;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 
@@ -7,16 +6,12 @@ namespace Tendeos.Physical.Content.EnemyComponents
 {
     public class GroundComponent : IEnemyComponent
     {
-        [SpriteLoad("@")]
-        public Sprite sprite;
-        public float Acceleration { get; set; }
-        public float MaxSpeed { get; set; }
-        public float Drag { get; set; }
+        public float Acceleration;
+        public float MaxSpeed;
+        public float Drag;
 
         public void Draw(SpriteBatch spriteBatch, Enemy enemy, EnemyData data)
         {
-            spriteBatch.Rect(sprite, enemy.transform.Position);
-            spriteBatch.Text(Core.Font, $"{(enemy.baseState ? "Agress" : (enemy.checkPosition ? "Check" : "Idle"))} | Health: {enemy.health}", enemy.transform.Position);
         }
 
         public void CheckState(Enemy enemy, EnemyData data)
@@ -39,12 +34,13 @@ namespace Tendeos.Physical.Content.EnemyComponents
                     speed -= Drag * Time.Delta;
                     if (speed < 0) speed = 0;
                 }
-            enemy.transform.body.velocity.X = speed;
+
+            enemy.Transform.body.velocity.X = speed;
 
             data.Set("speed", speed);
         }
 
-        public void AgressState(Enemy enemy, EnemyData data)
+        public void AggressState(Enemy enemy, EnemyData data)
         {
             Move(enemy, data);
         }
@@ -53,13 +49,14 @@ namespace Tendeos.Physical.Content.EnemyComponents
         {
             data.Get(out float speed, "speed");
 
-            if (enemy.transform.Position.X < enemy.lastPlayerPosition.X)
+            if (enemy.Transform.Position.X < enemy.LastPlayerPosition.X)
             {
                 if (speed < 0)
                 {
                     speed += Drag * Time.Delta;
                     if (speed > 0) speed = 0;
                 }
+
                 speed += Acceleration * Time.Delta;
                 if (speed > MaxSpeed) speed = MaxSpeed;
             }
@@ -70,16 +67,24 @@ namespace Tendeos.Physical.Content.EnemyComponents
                     speed -= Drag * Time.Delta;
                     if (speed < 0) speed = 0;
                 }
+
                 speed -= Acceleration * Time.Delta;
                 if (speed < -MaxSpeed) speed = -MaxSpeed;
             }
-            enemy.transform.body.velocity.X = speed;
+
+            enemy.Transform.body.velocity.X = speed;
+            
+            TransformUtils.StepEffect(enemy.OnFloor, enemy.Transform.flipX ? -1 : 1, enemy.Transform);
 
             data.Set("speed", speed);
         }
 
-        public void OnHit(float damage, Enemy enemy, EnemyData data) { }
+        public void OnHit(float damage, Enemy enemy, EnemyData data)
+        {
+        }
 
-        public void OnDie(Enemy enemy, EnemyData data) { }
+        public void OnDie(Enemy enemy, EnemyData data)
+        {
+        }
     }
 }

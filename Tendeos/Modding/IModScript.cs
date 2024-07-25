@@ -9,8 +9,8 @@ namespace Tendeos.Modding
         object get(string name);
         bool has(string name);
 
-        internal void Init();
+        void Init();
 
-        internal void Add(string name, object obj);
+        void Add(string name, object obj);
     }
 }

@@ -7,13 +7,13 @@ namespace Tendeos.Utils.SaveSystem
     public static class Save
     {
         private static object instance;
-        private static string name;
+        public static string Name { get; private set; }
 
         public static void Unload()
         {
             string pathToFolder = Path.Combine(Settings.AppData, "saves");
             if (!Directory.Exists(pathToFolder)) Directory.CreateDirectory(pathToFolder);
-            string path = Path.Combine(pathToFolder, $"{name}.save");
+            string path = Path.Combine(pathToFolder, $"{Name}.save");
             using FileStream stream = File.Open(path, FileMode.Create);
             using LZ4Stream zStream = new LZ4Stream(stream, LZ4StreamMode.Compress);
             ByteBuffer buffer = new ByteBuffer(zStream);
@@ -24,7 +24,7 @@ namespace Tendeos.Utils.SaveSystem
 
         public static async Task<bool> LoadAsync(string name)
         {
-            Save.name = name;
+            Name = name;
             string path = Path.Combine(Settings.AppData, "saves", $"{name}.save");
 
             if (!File.Exists(path)) return false;
@@ -49,7 +49,7 @@ namespace Tendeos.Utils.SaveSystem
 
         public static bool Load(string name)
         {
-            Save.name = name;
+            Save.Name = name;
             string path = Path.Combine(Settings.AppData, "saves", $"{name}.save");
 
             if (!File.Exists(path)) return false;
@@ -64,7 +64,7 @@ namespace Tendeos.Utils.SaveSystem
 
         public static void Create(string name)
         {
-            Save.name = name;
+            Save.Name = name;
         }
 
         public static void SetInstance(object saveInstance) => instance = saveInstance;

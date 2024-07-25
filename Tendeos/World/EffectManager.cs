@@ -1,5 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Tendeos.Utils.Graphics;
 using Effect = Tendeos.Utils.Effect;
 
 namespace Tendeos.World
@@ -12,6 +12,7 @@ namespace Tendeos.World
         {
             Effects.Add(effect);
         }
+
         public static void Remove(Effect effect)
         {
             Effects.Remove(effect);

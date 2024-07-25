@@ -4,7 +4,7 @@ namespace Tendeos.Utils
 {
     public class URandom
     {
-        private static Rand random = Rand.Shared;
+        private static Rand random = new(Rand.Shared.Next(int.MinValue, int.MaxValue));
 
         public static int SInt() => random.Next();
         public static int SInt(int max) => random.Next(max);
@@ -22,7 +22,7 @@ namespace Tendeos.Utils
 
         public URandom(uint seed)
         {
-            privateRandom = new Rand((int)(seed + int.MinValue));
+            privateRandom = new Rand((int) (seed + int.MinValue));
         }
 
         public int Int() => privateRandom.Next();

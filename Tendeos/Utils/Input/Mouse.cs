@@ -17,33 +17,48 @@ namespace Tendeos.Utils.Input
             previousKeyState = currentKeyState;
             currentKeyState = Microsoft.Xna.Framework.Input.Mouse.GetState();
             LeftUp = currentKeyState.LeftButton == ButtonState.Released;
-            LeftReleased = currentKeyState.LeftButton == ButtonState.Released && previousKeyState.LeftButton != ButtonState.Released;
+            LeftReleased = currentKeyState.LeftButton == ButtonState.Released &&
+                           previousKeyState.LeftButton != ButtonState.Released;
             LeftDown = currentKeyState.LeftButton == ButtonState.Pressed;
-            LeftPressed = currentKeyState.LeftButton == ButtonState.Pressed && previousKeyState.LeftButton != ButtonState.Pressed;
+            LeftPressed = currentKeyState.LeftButton == ButtonState.Pressed &&
+                          previousKeyState.LeftButton != ButtonState.Pressed;
             RightUp = currentKeyState.RightButton == ButtonState.Released;
-            RightReleased = currentKeyState.RightButton == ButtonState.Released && previousKeyState.RightButton != ButtonState.Released;
+            RightReleased = currentKeyState.RightButton == ButtonState.Released &&
+                            previousKeyState.RightButton != ButtonState.Released;
             RightDown = currentKeyState.RightButton == ButtonState.Pressed;
-            RightPressed = currentKeyState.RightButton == ButtonState.Pressed && previousKeyState.RightButton != ButtonState.Pressed;
+            RightPressed = currentKeyState.RightButton == ButtonState.Pressed &&
+                           previousKeyState.RightButton != ButtonState.Pressed;
             MiddleUp = currentKeyState.MiddleButton == ButtonState.Released;
-            MiddleReleased = currentKeyState.MiddleButton == ButtonState.Released && previousKeyState.MiddleButton != ButtonState.Released;
+            MiddleReleased = currentKeyState.MiddleButton == ButtonState.Released &&
+                             previousKeyState.MiddleButton != ButtonState.Released;
             MiddleDown = currentKeyState.MiddleButton == ButtonState.Pressed;
-            MiddlePressed = currentKeyState.MiddleButton == ButtonState.Pressed && previousKeyState.MiddleButton != ButtonState.Pressed;
+            MiddlePressed = currentKeyState.MiddleButton == ButtonState.Pressed &&
+                            previousKeyState.MiddleButton != ButtonState.Pressed;
             X1Up = currentKeyState.XButton1 == ButtonState.Released;
-            X1Released = currentKeyState.XButton1 == ButtonState.Released && previousKeyState.XButton1 != ButtonState.Released;
+            X1Released = currentKeyState.XButton1 == ButtonState.Released &&
+                         previousKeyState.XButton1 != ButtonState.Released;
             X1Down = currentKeyState.XButton1 == ButtonState.Pressed;
-            X1Pressed = currentKeyState.XButton1 == ButtonState.Pressed && previousKeyState.XButton1 != ButtonState.Pressed;
+            X1Pressed = currentKeyState.XButton1 == ButtonState.Pressed &&
+                        previousKeyState.XButton1 != ButtonState.Pressed;
             X2Up = currentKeyState.XButton2 == ButtonState.Released;
-            X2Released = currentKeyState.XButton2 == ButtonState.Released && previousKeyState.XButton2 != ButtonState.Released;
+            X2Released = currentKeyState.XButton2 == ButtonState.Released &&
+                         previousKeyState.XButton2 != ButtonState.Released;
             X2Down = currentKeyState.XButton2 == ButtonState.Pressed;
-            X2Pressed = currentKeyState.XButton2 == ButtonState.Pressed && previousKeyState.XButton2 != ButtonState.Pressed;
+            X2Pressed = currentKeyState.XButton2 == ButtonState.Pressed &&
+                        previousKeyState.XButton2 != ButtonState.Pressed;
             Point = currentKeyState.Position;
-            Position = Camera?.Screen2World(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
-            GUIPosition = Camera?.Screen2GUI(currentKeyState.Position.ToVector2()) ?? currentKeyState.Position.ToVector2();
+            Position = Camera?.Screen2World(currentKeyState.Position.ToVector2()) ??
+                       currentKeyState.Position.ToVector2();
+            GUIPosition = Camera?.Screen2GUI(currentKeyState.Position.ToVector2()) ??
+                          currentKeyState.Position.ToVector2();
             PointDelta = Point - previousKeyState.Position;
-            PositionDelta = Position - Camera?.Screen2World(previousKeyState.Position.ToVector2()) ?? previousKeyState.Position.ToVector2();
-            GUIPositionDelta = GUIPosition - Camera?.Screen2GUI(previousKeyState.Position.ToVector2()) ?? previousKeyState.Position.ToVector2();
+            PositionDelta = Position - Camera?.Screen2World(previousKeyState.Position.ToVector2()) ??
+                            previousKeyState.Position.ToVector2();
+            GUIPositionDelta = GUIPosition - Camera?.Screen2GUI(previousKeyState.Position.ToVector2()) ??
+                               previousKeyState.Position.ToVector2();
             Scroll = Math.Clamp(currentKeyState.ScrollWheelValue - previousKeyState.ScrollWheelValue, -1, 1);
-            XScroll = Math.Clamp(currentKeyState.HorizontalScrollWheelValue - previousKeyState.HorizontalScrollWheelValue, -1, 1);
+            XScroll = Math.Clamp(
+                currentKeyState.HorizontalScrollWheelValue - previousKeyState.HorizontalScrollWheelValue, -1, 1);
             onUpdate();
             return currentKeyState;
         }
@@ -83,6 +98,7 @@ namespace Tendeos.Utils.Input
 
 
         private static Action onUpdate = () => { };
+
         public static event Action OnUpdate
         {
             add => onUpdate += value;

@@ -3,5 +3,7 @@
 namespace Tendeos.Content.Utlis
 {
     [AttributeUsage(AttributeTargets.Method)]
-    public class GetNameAttribute : Attribute { }
+    public class GetNameAttribute : Attribute
+    {
+    }
 }

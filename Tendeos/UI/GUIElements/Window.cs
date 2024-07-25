@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System;
+﻿using System;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.Input;
@@ -10,9 +9,10 @@ namespace Tendeos.UI.GUIElements
     {
         protected readonly Icon addativeDraw;
         protected readonly bool dragable;
-        protected readonly Style style;
+        public readonly Style style;
 
-        public Window(Vec2 anchor, FRectangle rectangle, Style style, Icon addativeDraw = null, bool dragable = false) : base(anchor, rectangle)
+        public Window(Vec2 anchor, FRectangle rectangle, Style style, Icon addativeDraw = null, bool dragable = false, GUIElement[] childs = null) :
+            base(anchor, rectangle, childs)
         {
             this.dragable = dragable;
             this.style = style;
@@ -27,8 +27,10 @@ namespace Tendeos.UI.GUIElements
             {
                 if (style.Label != null)
                 {
-                    if (MouseOn && Mouse.LeftPressed && rectangle.Y + style.Label[0].Rect.Height > Mouse.GUIPosition.Y) Mouse.OnUpdate += Drag;
-                    if (!MouseOn || Mouse.LeftReleased || rectangle.Y + style.Label[0].Rect.Height <= Mouse.GUIPosition.Y) Mouse.OnUpdate -= Drag;
+                    if (MouseOn && Mouse.LeftPressed && rectangle.Y + style.Label[0].Rect.Height > Mouse.GUIPosition.Y)
+                        Mouse.OnUpdate += Drag;
+                    if (!MouseOn || Mouse.LeftReleased ||
+                        rectangle.Y + style.Label[0].Rect.Height <= Mouse.GUIPosition.Y) Mouse.OnUpdate -= Drag;
                 }
                 else
                 {
@@ -40,13 +42,15 @@ namespace Tendeos.UI.GUIElements
 
         public void Drag()
         {
-            rectangle.Location += Mouse.GUIPositionDelta;
+            Rectangle.Location += Mouse.GUIPositionDelta;
         }
 
         public override void Draw(SpriteBatch spriteBatch, FRectangle rectangle)
         {
             Draw(spriteBatch, rectangle, style);
-            if (style.Label != null) addativeDraw?.Invoke(spriteBatch, new FRectangle(0, 0, rectangle.Width, style.Label[0].Rect.Width), this);
+            if (style.Label != null)
+                addativeDraw?.Invoke(spriteBatch,
+                    new FRectangle(rectangle.X, rectangle.Y, rectangle.Width, style.Label[0].Rect.Height), this);
             else addativeDraw?.Invoke(spriteBatch, rectangle, this);
         }
 
@@ -54,10 +58,14 @@ namespace Tendeos.UI.GUIElements
         {
             if (style.Label != null)
             {
-                DrawRectWindow(spriteBatch, style.Rectangle, new FRectangle(rectangle.X, rectangle.Y + style.Label[0].Rect.Height, rectangle.Width, rectangle.Height - style.Label[0].Rect.Height));
-                spriteBatch.Rect(style.Label[0], rectangle.Location, 0, 1, 0, Origin.Zero, Origin.Zero);
-                spriteBatch.Rect(style.Label[1], new FRectangle(rectangle.X + style.Label[0].Rect.Width, rectangle.Y, rectangle.Width - style.Label[0].Rect.Width * 2, style.Label[0].Rect.Height));
-                spriteBatch.Rect(style.Label[2], new Vec2(rectangle.Right, rectangle.Y), 0, 1, 0, Origin.One, Origin.Zero);
+                DrawRectWindow(spriteBatch, style.Rectangle,
+                    new FRectangle(rectangle.X, rectangle.Y + style.Label[0].Rect.Height, rectangle.Width,
+                        rectangle.Height - style.Label[0].Rect.Height));
+                spriteBatch.Rect(style.Label[0], rectangle.Location, 1, 0, 0, 0);
+                spriteBatch.Rect(style.Label[1],
+                    new FRectangle(rectangle.X + style.Label[0].Rect.Width, rectangle.Y,
+                        rectangle.Width - style.Label[0].Rect.Width * 2, style.Label[0].Rect.Height));
+                spriteBatch.Rect(style.Label[2], new Vec2(rectangle.Right, rectangle.Y), 1, 0, 1, 0);
             }
             else
             {
@@ -68,7 +76,7 @@ namespace Tendeos.UI.GUIElements
         public class Style
         {
             public Sprite[] Rectangle { get; }
-            public Sprite[] Label { get; }
+            public Sprite[]? Label { get; }
 
             public Style(Sprite rectangle, Sprite? label = null)
             {

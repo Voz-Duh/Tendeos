@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using Tendeos.Utils;
+﻿using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 
 namespace Tendeos.UI.GUIElements
@@ -8,7 +7,8 @@ namespace Tendeos.UI.GUIElements
     {
         public readonly Sprite style;
 
-        public Image(Vec2 anchor, Vec2 offset, Sprite style) : base(anchor, new FRectangle(offset, style.Rect.Size.ToVector2()))
+        public Image(Vec2 anchor, Vec2 offset, Sprite style, GUIElement[] childs = null) : base(anchor,
+            new FRectangle(offset, style.Rect.Size.ToVector2()), childs)
         {
             this.style = style;
         }
