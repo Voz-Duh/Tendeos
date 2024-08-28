@@ -8,13 +8,13 @@
         <TieredCompilation>false</TieredCompilation>
         <LangVersion>latestmajor</LangVersion>
         <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <!-- Application manifest and icon settings -->
     <PropertyGroup>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <ApplicationIcon>Icon.ico</ApplicationIcon>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <!-- Platform-specific conditions -->
@@ -71,6 +71,7 @@
     <!-- Direct assembly references -->
     <ItemGroup>
         <Reference Include="Tendeos.Network" HintPath=".\Tendeos.Network.dll" />
+        <Reference Include="TextParser" HintPath=".\TextParser.dll" />
     </ItemGroup>
 
     <!-- Shader files -->

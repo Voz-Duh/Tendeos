@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Tendeos.Content;
-using Tendeos.Physical.Content;
 using Tendeos.Utils;
 using Tendeos.Utils.Graphics;
 using Tendeos.Utils.Input;
+using VozDuh.TextParser;
 
 namespace Tendeos.UI.GUIElements.DeveloperUI;
 
@@ -13,9 +12,23 @@ public class Console : WindowFiller
 {
     public static Console Instance { get; private set; }
     
-    public static readonly (string, string, string, (string, string)[])[] Literals ={("\"", "\"", "\\", new [] {("n", "\n"), ("t", "\t"), ("a", "\a"), ("r", "\r"), ("b", "\b"), ("v", "\v"), ("f", "\f"), ("\\", "\\") })};
-    public static readonly (string, string)[] Comments = { };
-    public static readonly (string, string)[] Groups = { };
+    public static readonly ParserSettings ParserSettings = new(
+        new Literals().With((
+            "\"", "\"", "\\",
+            new SpecialSymbols()
+                .With(("n", "\n"))
+                .And(("t", "\t"))
+                .And(("a", "\a"))
+                .And(("r", "\r"))
+                .And(("b", "\b"))
+                .And(("v", "\v"))
+                .And(("f", "\f"))
+                .And(("\\", "\\"))
+                .Cap
+        )).Cap,
+        new Groups(),
+        new Comments()
+    );
 
     public static (string, Type[], Delegate) CreateCommand(string command, Delegate action) =>
     (
@@ -54,9 +67,9 @@ public class Console : WindowFiller
 
         if ((MouseOn || inputField.MouseOn) && Keyboard.IsPressed(Keys.Enter))
         {
-            TokenManager reader = new(TextParser.CreateParser(inputField.Text, Literals, Comments, Groups));
+            TokenManager reader = new(new Parser(inputField.Text, ParserSettings));
             reader.RemoveWhitespaces();
-            if (!reader.Move || reader.Current != TokenType.KEYWORD)
+            if (!reader.Move || reader.Current != TokenType.Keyword)
                 Log("Invalid command.");
 
             bool valid = true;
@@ -77,7 +90,7 @@ public class Console : WindowFiller
                 {
                     TokenType type = GetTokenizedType(types[i]);
 
-                    if (type == TokenType.SPACE)
+                    if (type == TokenType.Space)
                     {
                         valid = false;
                         Log($"Invalid command argument type at {i}. Problem in command code.");
@@ -91,11 +104,11 @@ public class Console : WindowFiller
                         break;
                     }
                     
-                    if (type == TokenType.KEYWORD)
+                    if (type == TokenType.Keyword)
                         args[i] = reader.Current.Value == "true";
-                    else if (type == (TokenType.LITERAL | TokenType.KEYWORD))
+                    else if (type == (TokenType.Literal | TokenType.Keyword))
                         args[i] = reader.Current.Value;
-                    else if (type == TokenType.INTEGER)
+                    else if (type == TokenType.Integer)
                         args[i] = Convert.ChangeType(long.Parse(reader.Current.Value), types[i]);
                     else
                         args[i] = Convert.ChangeType(double.Parse(reader.Current.Value), types[i]);
@@ -131,19 +144,19 @@ public class Console : WindowFiller
         if (type == typeof(double)
             || type == typeof(float)
             || type == typeof(Half))
-            return TokenType.INTEGER | TokenType.FLOATING;
+            return TokenType.Integer | TokenType.Floating;
         if (type == typeof(long)
             || type == typeof(ulong)
             || type == typeof(int)
             || type == typeof(uint)
             || type == typeof(byte)
             || type == typeof(sbyte))
-            return TokenType.INTEGER;
+            return TokenType.Integer;
         if (type == typeof(string))
-            return TokenType.LITERAL | TokenType.KEYWORD;
+            return TokenType.Literal | TokenType.Keyword;
         if (type == typeof(bool))
-            return TokenType.KEYWORD;
+            return TokenType.Keyword;
 
-        return TokenType.SPACE;
+        return TokenType.Space;
     }
 }

@@ -18,10 +18,10 @@ namespace Tendeos.Inventory.Content
 
         [SpriteLoad("@_item")] public Sprite ItemSprite { get; set; }
 
-        [SpriteLoad("@_arm_l"), SplitSprite(1, 2, 1), SplitSprite(Player.armStates, Player.armStateLines, 1)]
+        [SpriteLoad("@_arm_l"), SplitSprite(1, 2, 1), SplitSprite(Player.ArmStates, Player.ArmStateLines, 1)]
         public Sprite[][] LeftArmSprite { get; set; }
 
-        [SpriteLoad("@_arm_r"), SplitSprite(1, 2, 1), SplitSprite(Player.armStates, Player.armStateLines, 1)]
+        [SpriteLoad("@_arm_r"), SplitSprite(1, 2, 1), SplitSprite(Player.ArmStates, Player.ArmStateLines, 1)]
         public Sprite[][] RightArmSprite { get; set; }
 
         [SpriteLoad("@"), SplitSprite(2, 1, 1), SplitSprite(1, 4, 1), SplitSprite(4, 1, 1)]

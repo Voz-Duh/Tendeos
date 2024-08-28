@@ -175,9 +175,13 @@ namespace Tendeos
 
         protected override void Draw(GameTime gameTime)
         {
-            if (!IsActive) return;
+            if (!IsActive)
+            {
+                base.Draw(gameTime);
+                return;
+            }
 
-            extraShootGuiDraw = b => { };
+            extraShootGuiDraw = _ => { };
             Time.gameTime = gameTime;
 
             if (!loaded)
@@ -200,12 +204,13 @@ namespace Tendeos
 
         protected override void Update(GameTime gameTime)
         {
-            if (!IsActive) return;
-
+            base.Update(gameTime);
             Keyboard.Update();
             Mouse.Update();
 
             Time.gameTime = gameTime;
+
+            if (!IsActive) return;
 
             if (Keyboard.IsPressed(Keys.Tab))
             {

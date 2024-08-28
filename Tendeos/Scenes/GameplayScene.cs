@@ -204,11 +204,7 @@ namespace Tendeos.Scenes
                                 rectangle: new FRectangle(0, -13, 66, 10),
                                 
                                 get: () => (ShadowMatrix.SmoothPower) Settings.GetInt("shdsmth"),
-                                set: v =>
-                                {
-                                    Settings.Set(Settings.Type.Int, "shdsmth", (int) v);
-                                    shadowMatrix.Smooth = v;
-                                }
+                                set: v => Settings.Set(Settings.Type.Int, "shdsmth", (int)(shadowMatrix.Smooth = v))
                             ),
                             new Toggle(
                                 style: Core.ToggleStyle,
@@ -463,11 +459,13 @@ namespace Tendeos.Scenes
             player.XMovement = 0;
             if (Controls.GoRight) player.XMovement++;
             if (Controls.GoLeft) player.XMovement--;
+            
+            if (Controls.Jump) player.Jump();
 
             player.LeftDown = !Mouse.OnGUI && Controls.UpHit;
             player.RightDown = !Mouse.OnGUI && Controls.DownHit;
             
-            player.LookDirection = Controls.GetRelativeCursorPosition(Mouse.Position);
+            player.LookDirection = Controls.GetRelativeCursorPosition(player.Position);
 
             this.player.MouseOnGUI = Mouse.OnGUI;
         }

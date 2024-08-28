@@ -6,5 +6,6 @@ namespace Tendeos.Physical.Content
     {
         [ToByte] public int BodyType;
         [ToByte] public bool Sex;
+        [ToByte] public int SkinColor;
     }
 }

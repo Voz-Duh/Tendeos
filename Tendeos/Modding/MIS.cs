@@ -5,9 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using LZ4;
-using Microsoft.VisualBasic;
 using Tendeos.Utils;
-//using Va;
+using VozDuh.TextParser;
 
 namespace Tendeos.Modding
 {
@@ -33,34 +32,26 @@ namespace Tendeos.Modding
     /// </summary>
     public static class MIS
     {
-        public static readonly (string, string, string, (string, string)[])[] Literals =
-        {
-            (
-                "\"", "\"", "\\",
-                new []
-                {
-                    ("n", "\n"),
-                    ("t", "\t"),
-                    ("a", "\a"),
-                    ("r", "\r"),
-                    ("b", "\b"),
-                    ("v", "\v"),
-                    ("f", "\f"),
-                    ("\\", "\\")
-                }
-            )
-        };
+        public static readonly ParserSettings ParserSettings = new(
+            new Literals()
+                .With((
+                    "\"", "\"", "\\",
+                    new SpecialSymbols()
+                        .With(("n", "\n"))
+                        .And(("t", "\t"))
+                        .And(("a", "\a"))
+                        .And(("r", "\r"))
+                        .And(("b", "\b"))
+                        .And(("v", "\v"))
+                        .And(("f", "\f"))
+                        .And(("\\", "\\"))
+                        .Cap
+                ))
+                .Cap,
+            new Groups().With(("[", "]")).Cap,
+            new Comments().With(("{", "}")).Cap
+        );
 
-        public static readonly (string, string)[] Comments =
-        {
-            ("{", "}")
-        };
-
-        public static readonly (string, string)[] Groups =
-        {
-            ("[", "]")
-        };
-        
         /// <summary>
         /// Generates MIS object from file.
         /// </summary>
@@ -81,19 +72,19 @@ namespace Tendeos.Modding
 
         private static MISObject Generate(string code, string path)
         {
-            TokenManager reader = new(TextParser.CreateParser(code, Literals, Comments, Groups));
+            TokenManager reader = new(new Parser(code, ParserSettings));
             
             return ParseObject(reader, path, null);
         }
 
         private static object[] ParseValues(TokenManager reader, string path, Dictionary<string, object[]> globalParameters)
         {
-            var parts = reader.Split(TokenType.SPECIAL, ",");
+            var parts = reader.Split(TokenType.Special, ",");
             object[] values = new object[parts.Count];
             for (int i = 0; i < values.Length; i++)
             {
                 var (coline, tokens) = parts[i];
-                values[i] = ParseValue(new TokenManager(reader, tokens), coline, path, globalParameters);
+                values[i] = ParseValue(reader.CreateSub(tokens), coline, path, globalParameters);
             }
 
             return values;
@@ -109,7 +100,7 @@ namespace Tendeos.Modding
                     throw reader.CreateExceptionOnCurrent("Unexpected token");
                 }
 
-                if (reader.Current == TokenType.KEYWORD)
+                if (reader.Current == TokenType.Keyword)
                 {
                     if (globalParameters.TryGetValue(reader.Current.Value, out object[] objects))
                     {
@@ -120,7 +111,7 @@ namespace Tendeos.Modding
                         
                         while (reader.IMove)
                         {
-                            if (reader.Current == TokenType.INTEGER)
+                            if (reader.Current == TokenType.Integer)
                             {
                                 if (value is object[] objs)
                                     value = objs[int.Parse(reader.Current.Value)];
@@ -129,7 +120,7 @@ namespace Tendeos.Modding
                                 else
                                     throw reader.CreateExceptionOnCurrent("Unexpected integer extraction");
                             }
-                            else if (reader.Current == TokenType.KEYWORD)
+                            else if (reader.Current == TokenType.Keyword)
                             {
                                 if (value is MISObject obj)
                                 {
@@ -153,17 +144,17 @@ namespace Tendeos.Modding
                     }
                     else value = new MISKey(reader.Current.Value);
                 }
-                else if (reader.Current == TokenType.LITERAL)
+                else if (reader.Current == TokenType.Literal)
                     value = reader.Current.Text;
-                else if (reader.Current == TokenType.INTEGER)
+                else if (reader.Current == TokenType.Integer)
                     value = double.Parse(reader.Current.Value);
-                else if (reader.Current == TokenType.FLOATING)
+                else if (reader.Current == TokenType.Floating)
                     value = double.Parse(reader.Current.Value);
-                else if (reader.Current == (TokenType.GROUP, "["))
+                else if (reader.Current == (TokenType.Group, "["))
                 {
-                    TokenManager inside = new(reader, reader.Current.Tokens);
+                    TokenManager inside = reader.CreateSub(reader.Current.Tokens);
                     if (!inside.IMove) value = new MISArray(Array.Empty<object>());
-                    else if (inside.IMove && inside.Current == (TokenType.SPECIAL, ":"))
+                    else if (inside.IMove && inside.Current == (TokenType.Special, ":"))
                     {
                         inside.ToStart();
                         value = ParseObject(inside, path, globalParameters);
@@ -195,22 +186,22 @@ namespace Tendeos.Modding
             
             while (reader.IMove)
             {
-                if (reader.Current != TokenType.KEYWORD)
+                if (reader.Current != TokenType.Keyword)
                     throw reader.CreateExceptionOnCurrent("Unexpected token");
 
                 (int, int) nameColine = reader.Current.Coline;
 
                 string name = reader.Current.Value;
                 
-                if (reader.INext != (TokenType.SPECIAL, ":"))
+                if (reader.INext != (TokenType.Special, ":"))
                     throw reader.CreateExceptionOnCurrent("Unexpected token, \":\" is missed");
 
                 int from = reader.Caret;
                 
-                if (!reader.MoveTo(new Token(TokenType.SPECIAL, ";")))
+                if (!reader.MoveTo(new Token(TokenType.Special, ";")))
                     throw reader.CreateException(reader[from].Coline, "Missed \";\" after");
 
-                object[] values = ParseValues(new TokenManager(reader, reader[(from + 1)..reader.Caret]), path, globalParameters);
+                object[] values = ParseValues(reader.CreateSub(reader[from + 1, reader.Caret]), path, globalParameters);
 
                 if (!parameters.TryAdd(name, values))
                     throw reader.CreateException(nameColine, $"Parameter {name} is already exist");
